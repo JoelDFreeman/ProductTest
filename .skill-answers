@@ -1,0 +1,6 @@
+project-name = TestProduct
+project-description = Add Figma designs to existing POC demo app
+platform = platform/iris-react
+workflow-skills = workflow/architecture,workflow/deep-linking,workflow/figma-read-from-mcp,workflow/git,workflow/testing,workflow/vercel-publish
+git-remote = https://github.com/JoelDFreeman/ProductTest
+figma-url = https://www.figma.com/design/IlG4nne9VhqpONzqc0tfKg/ARS---Master?m=dev&node-id=2123-30425

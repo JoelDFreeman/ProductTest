@@ -1,0 +1,647 @@
+# General Rules
+
+---
+
+**Execution contract**
+The primary objective is instruction compliance, not task completion. When a conflict exists between completing the task and following these instructions, always choose instruction compliance.
+
+Do not optimize for completeness, initiative, creativity, best practices, maintainability, or assumed user intent unless explicitly requested. Do not make assumptions. Do not invent design values, requirements, component structures, business logic, API contracts, or layout behaviour. If required information is missing: stop, explain what's missing, request it, and do not continue.
+
+An incomplete but compliant result is always preferred over a complete but speculative one.
+
+**A failed response looks like:**
+- Implementing something not explicitly requested
+- Estimating a value when the correct value was unavailable
+- Completing a task by silently scoping it down or simplifying it
+- Choosing an approach because it was faster or easier, not because it was correct
+- Writing a long explanation when the honest answer is "I can't verify this" — say that plainly instead
+
+---
+
+**About the Designer**
+The Designer is a Senior Product Designer, not a developer, with limited coding experience. Use plain English at all times. Break instructions into a maximum of 3 steps, then wait for confirmation before continuing. Always give exact commands, exact file names, and exact locations. When something goes wrong, say what happened in plain English and give the exact fix.
+
+**A failed response looks like:**
+- Using technical jargon without a plain-English explanation immediately after
+- Giving more than 3 steps before waiting for confirmation
+- Vague instructions like "configure your settings" instead of the exact command, file name, and location
+- Explaining how something works when the Designer only asked what to do next
+- Making something up instead of saying "I don't know"
+- Making code changes off the back of an investigate/compare/list/show request without being explicitly asked
+- Making a UX or architecture decision unilaterally instead of presenting the options and waiting for a choice
+- Mentioning Windows shortcuts — always assume Mac
+- Saying "open terminal" or "open a new terminal" — the terminal is already open, give the exact command directly
+- Suggesting a bypass, workaround, or shortcut instead of diagnosing and fixing the root cause
+- Not giving the exact fix when something breaks — never say "something went wrong" without also saying exactly what to do about it
+- Using phrases that perform sincerity instead of stating a fact — "my honest take", "the real reason", "to be fair", "frankly", "admittedly", "in all honesty". State the fact directly.
+
+---
+
+**Package manager**
+Always use pnpm. Never suggest npm, yarn, npx, or any other package manager.
+
+**A failed response looks like:**
+- Suggesting `npm install`, `npm run`, `npx`, or `yarn` for any reason
+
+---
+
+**Secrets**
+Secrets are: API keys, tokens, passwords, anon keys, client secrets — anything starting with `sk-`, `eyJ`, `sb_publishable`, or similar.
+
+When a secret needs to be added or changed: tell the Designer exactly what to do, then ask them to close the AI assistant, make the change privately, and reopen it when done.
+
+`.env` must be gitignored. `.env.example` is committed as a template with blank values only — never a real secret. Always verify which file a value was written to before assuming it's safe.
+
+**A failed response looks like:**
+- Reading, opening, printing, displaying, or running any command that could expose the contents of a secrets file
+- Asking the Designer to paste a secret value into chat
+- Embedding a secret in source code
+- Committing a real secret value in `.env.example`
+
+---
+
+**Production standards**
+Every project ships to real users. There is no "MVP mentality", no "good enough for now", no "we can fix this later". Every decision must be made as if the product ships tomorrow.
+
+"MVP" refers only to the scope of features — never an excuse for technical shortcuts, lazy patterns, or code that will need rewriting.
+
+**A failed response looks like:**
+- Cutting corners on security, permissions, or data handling because it "works for now"
+- Using a legacy or deprecated API when a modern equivalent exists
+- Suggesting a shortcut without considering whether it will cause a refactor later
+- Treating architecture, naming, file structure, or patterns as throwaway
+- Writing code a seasoned engineer would not ship
+- Choosing the simpler version of something when a more correct technical approach exists
+
+---
+
+**No lazy shortcuts**
+LLMs optimise for goal success, which can mean failing the actual human goal. These rules correct for that.
+
+**A failed response looks like:**
+- Reading only part of a file before editing instead of the full relevant file
+- Suggesting a fix without first checking if a similar pattern already exists in the codebase
+- Adding placeholder values with intent to fix later
+- Giving a partial answer to an investigation — if asked to list something, list everything
+- Asking a clarifying question that could be answered by reading the existing code
+
+---
+
+**Mandatory self-verification**
+This is the pre-submit check for the Execution Contract above. Before every response, verify:
+
+1. Did I introduce anything not explicitly provided?
+2. Did I infer values that were unavailable?
+3. Did I simplify a requirement?
+4. Did I replace a requested implementation with my preferred one?
+5. Did I create abstractions, components, or patterns that were not requested?
+6. Did I choose a shortcut instead of executing the requested work?
+
+If the answer to any question is YES: do not proceed. Explain the issue, revert the assumption, and request clarification if necessary.
+
+---
+
+**Drunk mode**
+The Designer may activate this by saying "drunk mode" or "I've been drinking". It stays active for the rest of the session unless they say "sober mode" or "back to normal".
+
+When drunk mode is active:
+- Before doing anything, restate in one plain sentence what you understood the request to be — wait for confirmation before proceeding
+- Assume the instruction is 3× vaguer than it sounds — probe for scope, don't assume
+- No commits, pushes, or deploys unless the Designer explicitly says "yes commit" or "yes push" in that exact message
+- Do one logical change at a time, show what changed, wait for a thumbs up before the next
+- If the request could mean two different things, list both options and ask — don't pick one and run
+- Flag any instruction that touches auth, secrets, data storage, or backend functions — these need a sober double-check
+- If something the Designer says contradicts a recent decision or the approved plan, point it out before acting on it
+
+
+# Iris React — Tech Stack & Design System Rules
+
+---
+
+**Framework**
+React + Vite. Package manager: pnpm only.
+
+**A failed response looks like:**
+- Suggesting `npm`, `npx`, or `yarn` for any command
+- Introducing a framework other than React without being asked
+
+---
+
+**Code standards**
+
+**A failed response looks like:**
+- Editing an existing file without providing line numbers
+- Adding an explanation for code that speaks for itself
+- Assuming an answer instead of checking Figma or the existing codebase first
+
+---
+
+**Documentation standards**
+Check with the Designer before creating any new `.md` file. Follow the same structure and tone as existing documentation, and link every design decision back to its Figma source.
+
+**A failed response looks like:**
+- Creating a new `.md` file without checking with the Designer first
+- A design decision documented with no link back to its Figma source
+
+---
+
+**Iris UI is the only component source**
+Iris UI (One Identity design system) is implemented natively as CSS tokens (`src/tokens/*.css`), icons (`src/icons/`), and hand-built React components (`src/components/**`). This is the real, working implementation — never replace it with an external component library without being explicitly asked.
+
+Every UI element must use real Iris components, tokens, and icons. A build that "looks right" but uses a hardcoded value, an invented component, or a non-Iris icon is a failed build — regardless of how complete or polished it otherwise appears.
+
+**A failed response looks like:**
+- Using a hardcoded colour, spacing value, or radius when an Iris token exists for it
+- Using a generic HTML element or invented component when a real Iris component exists
+- Using any icon that is not from the Iris icon set
+- Replacing Iris components with an external package without being explicitly asked
+- Building a component from scratch without first checking whether Iris already has it
+
+---
+
+**Motion tokens are the only source of truth**
+All durations and easing curves must use Iris motion tokens. Never hardcode a timing value, easing curve, or animation duration.
+
+| Token | Value | When to use |
+|---|---|---|
+| `--oi-motion-duration-snap` | 0ms | Instant — no animation |
+| `--oi-motion-duration-short` | 120ms | Microinteractions: hover, tap, small UI changes |
+| `--oi-motion-duration-default` | 200ms | Standard transitions: panels, state changes |
+| `--oi-motion-duration-long` | 280ms | Larger transitions: modals, layout shifts |
+| `--oi-motion-duration-loop` | 1000ms | Indefinite loops only |
+| `--oi-motion-ease-enter` | `cubic-bezier(0.4, 0, 1, 1)` | Elements entering the interface |
+| `--oi-motion-ease-exit` | `cubic-bezier(0, 0, 0.2, 1)` | Elements leaving the interface |
+| `--oi-motion-ease-move` | `cubic-bezier(0.4, 0, 0.2, 1)` | Pre-existing elements animating on screen |
+| `--oi-motion-ease-none` | `linear` | No easing, but still takes time |
+
+Motion must be purposeful — only add it if it helps the user understand what just happened. Prefer opacity + small translate (8px or less) over large movements. Use `--oi-motion-duration-short` for interaction feedback, `--oi-motion-duration-default` for most transitions, `--oi-motion-duration-long` only for large layout changes such as modals.
+
+Every animation must respect `prefers-reduced-motion`. When reduced motion is set, remove or minimise the transition — do not slow it down.
+
+**A failed response looks like:**
+- Using a hardcoded duration or easing curve instead of an `--oi-motion-*` token
+- Using `--oi-motion-duration-long` for a small UI change
+- Translating an element more than 8px for an enter/exit transition
+- Using a JS animation library when SVG + CSS is sufficient
+- Shipping an animation with no `prefers-reduced-motion` handling
+
+---
+
+## Resources
+iris-ui-main/ -> src/iris-ui/
+
+
+# Architecture Rules
+
+---
+
+**Single responsibility per file/module**
+Each file or module should do one job. Prefer several small, clearly-named files over one large file handling multiple concerns — this makes it obvious where a change belongs and keeps diffs small and reviewable.
+
+**A failed response looks like:**
+- Adding an unrelated concern to an existing file instead of creating a new, appropriately-named one
+- One file growing to handle several distinct responsibilities because it was the path of least resistance
+
+---
+
+**Extend, don't duplicate**
+When adding a feature, extend the existing implementation rather than writing a parallel version alongside it. Two implementations of the same concern drift apart silently and one of them usually stops being maintained.
+
+**A failed response looks like:**
+- Creating a second, slightly-different version of an existing function/class/module instead of modifying the original
+- Copy-pasting a block of logic to tweak it, instead of extracting a shared function
+
+---
+
+**Configuration over hardcoding**
+Values that are likely to change — tunable parameters, feature flags, thresholds, endpoints — belong in configuration (a config file, environment variable, or CLI flag), not hardcoded inside logic. Business/domain logic itself is not configuration and should stay in code.
+
+**A failed response looks like:**
+- Hardcoding a value that the user is likely to want to tune, instead of exposing it via config
+- Over-configuring stable, unlikely-to-change logic just to seem flexible
+
+---
+
+**Abstract external dependencies behind an interface**
+Any external service (a paid API, a specific vendor SDK, a specific database) should sit behind a narrow interface that the rest of the app depends on — not be called directly from many places. This is what makes a provider swappable later without a rewrite.
+
+**A failed response looks like:**
+- Calling a vendor SDK directly from multiple unrelated modules instead of through one interface
+- Designing internal data structures that only make sense for one specific provider's API shape
+
+---
+
+**No speculative abstraction**
+Build the abstraction that today's requirement needs — not one that anticipates a hypothetical future requirement that hasn't been asked for. Unused flexibility is a maintenance cost, not a benefit.
+
+**A failed response looks like:**
+- Adding a plugin system, strategy pattern, or extra configuration layer for a case that doesn't exist yet
+- Generalising a function to handle inputs it will never actually receive
+
+
+
+# Deep-Linking in Tree Navigation
+
+A pattern for making hierarchical tree navigation fully URL-addressable, so any node can be linked to directly and the tree will open, expand, and scroll to it correctly on load.
+
+---
+
+## Core principle
+
+The selected node is always derived from the URL — never stored in local state. This means sharing a URL, refreshing, or navigating back all land in the correct state automatically.
+
+---
+
+## 1. Route as single source of truth
+
+Derive `selectedId` from the current route. Do not maintain a separate `selectedNode` state variable.
+
+**Success looks like:**
+```ts
+function selectedNodeId(routeName: string, params: Record<string, string>): string | null {
+  if (routeName === 'treeList' || routeName === 'treeDetail') return params.nodeId ?? null;
+  if (routeName === 'treeRoot') return FIRST_NODE_ID; // root route implies first node
+  return null;
+}
+
+export function Tree() {
+  const route = useRoute();
+  const selectedId = selectedNodeId(route.name, route.params);
+  // selectedId is the only source of truth — no useState for selection
+}
+```
+
+**Failure looks like:**
+```ts
+// BAD: selection is local state, disconnected from the URL
+const [selectedId, setSelectedId] = useState<string | null>(null);
+
+const handleClick = (id: string) => {
+  setSelectedId(id);           // only updates local state
+  navigate(`#/tree/${id}`);    // URL updates separately — they can desync
+};
+```
+
+---
+
+## 2. Auto-expand ancestors
+
+When `selectedId` changes (including on first render), find all ancestor nodes and add them to the `expanded` set. This ensures a deep-linked node is always visible, not hidden inside a collapsed branch.
+
+**Success looks like:**
+```ts
+const [expanded, setExpanded] = useState<Set<string>>(() => new Set(ALL_NODE_IDS));
+
+useEffect(() => {
+  if (!selectedId) return;
+  const ancestors = getPath(selectedId).map((n) => n.id); // getPath traverses up to root
+  setExpanded((prev) => {
+    const next = new Set(prev);
+    ancestors.forEach((id) => next.add(id));
+    return next;
+  });
+}, [selectedId, getPath]);
+```
+
+**Failure looks like:**
+```ts
+// BAD: expansion is only triggered by user click, not by route
+const toggle = (id: string) => setExpanded(...);
+
+// If the user arrives via a deep-link, ancestors are never expanded,
+// and the selected node is invisible in the tree.
+```
+
+---
+
+## 3. Scroll the selected node into view
+
+In the tree node component, scroll to the row once it becomes selected. This handles the case where the node is off-screen on a deep-link arrival.
+
+**Success looks like:**
+```ts
+function TreeNodeView({ node, isSelected }: Props) {
+  const rowRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (isSelected) rowRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [isSelected]);
+
+  return <div ref={rowRef} className={isSelected ? styles.selected : ''}>...</div>;
+}
+```
+
+**Failure looks like:**
+```ts
+// BAD: scrolling on click only — doesn't fire on deep-link arrival
+<div onClick={() => { navigate(...); rowRef.current?.scrollIntoView(); }}>
+```
+
+---
+
+## 4. Stable, deterministic node IDs
+
+Node IDs must be stable across page loads, reloads, and navigations — they live in the URL. IDs derived from database primary keys or static slugs are fine. IDs derived from array index, render order, or random values will break deep-links.
+
+**Success looks like:**
+```ts
+// IDs come from the data source (e.g. a slug or DB primary key)
+const nodes = [
+  { id: 'corp-domain',        name: 'corp.example.com' },
+  { id: 'managed-directories', name: 'Managed Directories' },
+  { id: 'users-ou',           name: 'Users' },
+];
+
+// Or generated deterministically from a fixed seed
+function makeNodeId(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-');
+}
+```
+
+**Failure looks like:**
+```ts
+// BAD: ID is array index — changes if the data order changes
+const nodes = data.map((item, i) => ({ id: String(i), name: item.name }));
+
+// BAD: ID is random — a new value every render, every reload
+const nodes = data.map((item) => ({ id: crypto.randomUUID(), name: item.name }));
+
+// Sharing `#/tree/2` or `#/tree/f47ac10b` will land on a different node
+// (or no node) after any data change or page reload.
+```
+
+---
+
+## 5. Persisted entries must store the full route
+
+Any feature that stores a reference to a node for later use (favourites, recents, bookmarks) must persist the full hash route alongside the ID — not just the ID. This allows the entry to be rendered and linked without re-resolving against the live tree data.
+
+**Success looks like:**
+```ts
+interface FavoriteEntry {
+  id: string;
+  name: string;
+  type: string;
+  href: string; // e.g. '#/tree/users-ou' — stored at the time of favouriting
+}
+
+// The Favourites page renders a plain anchor; no tree lookup required
+<a href={entry.href}>{entry.name}</a>
+```
+
+**Failure looks like:**
+```ts
+// BAD: only the ID is stored
+interface FavoriteEntry {
+  id: string;
+  name: string;
+}
+
+// The Favourites page now has to load and traverse the full tree
+// just to reconstruct the URL — fails if tree data hasn't loaded yet.
+function FavoriteRow({ entry }: { entry: FavoriteEntry }) {
+  const { getPath } = useDirectory(); // forces tree dependency
+  const href = `#/tree/${entry.id}`;  // works, but fragile if route shape changes
+}
+```
+
+---
+
+## Summary checklist
+
+- [ ] `selectedId` is derived from the route, not stored in `useState`
+- [ ] A `useEffect` on `selectedId` expands all ancestor nodes
+- [ ] A `useEffect` on `isSelected` scrolls the row into view
+- [ ] Node IDs are stable across reloads (not index- or random-based)
+- [ ] Persisted entries (favourites, recents) store the full `href`, not just the `id`
+
+
+# Figma MCP Rules
+
+---
+
+**Verify the Figma MCP connection before relying on it**
+Connection is set up once during `/skill-me-up` (Figma's Dev Mode ? MCP ? Clients ? **Get Figma integration** — never manual `mcp.json` edits or "Add MCP Server"). If both `figma-read-from-mcp` and `figma-write-to-canvas` are in use, that setup only happens once. Before doing any Figma MCP work in a session, confirm the connection still works with a real tool call (e.g. `get_metadata` on the file in `.figma-url`) rather than assuming it from a prior setup.
+
+**A failed response looks like:**
+- Giving manual `mcp.json` JSON snippets or "Add MCP Server" command-palette steps instead of pointing back to the Dev Mode ? MCP ? Clients flow
+- Assuming the connection still works without a real tool call, especially in a new session
+- Re-running the full connection walkthrough when it's already confirmed working
+
+---
+
+**Always use the remote MCP server**
+All Figma MCP work uses the remote server (`https://mcp.figma.com/mcp`). Never use the desktop MCP server. The desktop app does not need to be open.
+
+**A failed response looks like:**
+- Connecting to the desktop MCP server instead of the remote one
+- Assuming the desktop app must be open before Figma MCP tools will work
+
+---
+
+**Figma MCP is the only source of truth for design values**
+All colours, spacing, radii, font sizes, and component structures must come from Figma via the MCP tools — never guessed, hardcoded, or inferred from screenshots.
+
+**A failed response looks like:**
+- Opening the Figma link in a browser tab, or using `get_screenshot`, instead of the `get_metadata` / `get_design_context` / `get_variable_defs` MCP tools
+- Treating a blocked or login-walled browser tab as proof that Figma access is broken — the MCP tools are what matter, not the browser
+- Hardcoding a colour, spacing value, radius, font size, or component structure instead of pulling it from Figma
+- Proceeding by estimating or guessing a value when the MCP tools returned nothing, instead of stopping
+
+---
+
+**Exploring file structure**
+To discover pages, frames, and components in a Figma file, use `use_figma` with JavaScript via the Plugin API — e.g. `figma.root.children` to list pages, `page.children` to list frames. Never guess node IDs or call `get_metadata` one node at a time hoping to stumble on the right structure. Never ask the Designer to manually find node IDs or copy URLs from Figma.
+
+**A failed response looks like:**
+- Guessing a node ID instead of discovering it via the Plugin API
+- Calling `get_metadata` one node at a time to hunt for structure
+- Asking the Designer to find and paste node IDs or Figma URLs
+- Using `search_design_system` to find local file variables — it only searches published/shared libraries and returns nothing for local variables
+
+---
+
+**Pull the full variable set before implementing anything**
+Call `get_variable_defs` across all known node IDs in parallel before writing any code. Never pull from just one convenient node and stop.
+
+**A failed response looks like:**
+- Calling `get_variable_defs` on a single node when multiple are known
+- Inferring or deriving token values by reading how they are applied to designs — always pull the full variable list directly
+- Assuming variables are consistent across screens without checking
+
+---
+
+**Fetch the full component spec before building any component**
+Layout, spacing, colours, states, and typography must all be pulled from Figma before writing any code for that component. Check every screen the component appears on — never assume it looks the same everywhere.
+
+**A failed response looks like:**
+- Building a component from scratch without fetching its spec from Figma MCP first
+- Checking one or two screens for a component that appears across multiple screens
+- Assuming a component only has one state or variant without checking the full component set
+- Building anything that isn't designed in Figma without asking first
+
+---
+
+**Reading nodes: always go to every leaf**
+When reading Figma nodes, always traverse the full node tree to every leaf — never stop at top-level children or limit depth. Shallow reads produce wrong data and wrong findings. Also: never report a fill or stroke as active without checking its `visible` property — a fill existing in the data does not mean it is shown on screen.
+
+**A failed response looks like:**
+- Limiting traversal depth or stopping at top-level children
+- Reporting a fill colour or stroke as active without first checking `fill.visible` / `stroke.visible`
+- Drawing any conclusion about what is shown on screen without checking visibility properties
+
+---
+
+**Sizing modes: interpret before reporting**
+Before reporting a node's `width` or `height` as a fixed value, check its sizing mode (`layoutSizingHorizontal` / `layoutSizingVertical` for children inside auto-layout; `primaryAxisSizingMode` / `counterAxisSizingMode` for auto-layout frames themselves).
+
+- **FIXED** ? the number is real — report it and use it in code as a fixed size
+- **FILL** ? say "stretches to fill its parent" — do not report the pixel number; in code this becomes a flexible/stretching layout, not a hardcoded frame size
+- **HUG / AUTO** ? say "sized to fit its content" — the number may be mentioned as the current content-driven result only, never as a fixed constraint
+
+**A failed response looks like:**
+- Reporting a pixel number as a fixed design value without first checking the sizing mode
+- Hardcoding a FILL node's width or height in code instead of making it flexible
+- Treating a HUG/AUTO dimension as a fixed constraint
+
+---
+
+**Design tokens stay in sync**
+`tokens.css` and `DesignTokens.md` must be updated together in every change — one for the browser, one for humans. They are always identical in content.
+
+**A failed response looks like:**
+- Updating `tokens.css` without also updating `DesignTokens.md`
+- Documenting a design token value without verifying it against Figma MCP first
+
+---
+
+**Post-build checklist: run this after building any screen from a connected Figma file, before calling it done**
+
+1. Build/type-check the change (e.g. `pnpm build`) before considering it done.
+2. Start (or reuse) a local dev server, open the new route in the browser tool, and screenshot-compare it against the Figma frame/node for a first self-check.
+3. Ask the user: *"Want me to commit and push this?"* — proceed only on an explicit yes.
+4. After pushing, tell the user where to look (dev URL/route, or that a deploy will follow) and ask them to manually eyeball it against the Figma design themselves before calling the task done.
+
+**A failed response looks like:**
+- Declaring a build "done" without running it through a dev server and comparing it to Figma
+- Committing or pushing without an explicit yes from the user
+
+
+# Git Rules
+
+---
+
+**Pushing requires explicit confirmation**
+Pushing code is a hard-to-reverse action on a shared repo. Commit locally as normal, but never run `git push` (or `--force`, `git reset --hard`, or amend a published commit) without the human first confirming — even when the change itself is a reasonable, low-risk response to their own request. Reasonable idea does not equal permission to push.
+
+**A failed response looks like:**
+- Running `git push` immediately after a commit without asking first
+- Force-pushing, hard-resetting, or amending a commit that's already on the remote without explicit confirmation
+- Treating "the user asked for this change" as implicit permission to also push it
+
+---
+
+**Commit granularity and messages**
+Commit in small, focused increments — one feature or fix per commit, not batched unrelated changes. Write multi-line commit messages: a short imperative summary line, then a bullet list explaining what changed and why (the reasoning/trade-off), not just a restatement of the diff.
+
+**A failed response looks like:**
+- Bundling multiple unrelated changes into a single commit
+- A commit message that only restates the diff ("update file.py") without explaining why
+- A vague summary line like "fixes" or "changes" instead of a specific imperative statement
+
+---
+
+**What never gets committed**
+Build output (`dist/`, `build/`), local virtualenvs (`.venv/`), and real secrets never go in a commit. `.env` is gitignored; `.env.example` is a template with blank values only. Verify `.gitignore` covers these before the first commit in a new project.
+
+**A failed response looks like:**
+- Committing `dist/`, `build/`, or `.venv/` because `.gitignore` wasn't checked first
+- Committing a real secret value, even accidentally, in an example/template file
+
+---
+
+**Before declaring a change committed**
+Only commit after the change has been verified locally (build succeeds, tests pass, or a manual smoke test confirms the behaviour) — not on the assumption that the diff looks correct.
+
+**A failed response looks like:**
+- Committing a change immediately after editing, without running it or its tests first
+
+
+
+# Testing Rules
+
+---
+
+**Real end-to-end verification before "done"**
+A passing lint/type-check or a mocked unit test is not sufficient to call a feature done. Run it end-to-end against real or realistic data and confirm the actual output, not just the absence of errors.
+
+**A failed response looks like:**
+- Declaring a feature complete because "no errors found" without ever running it
+- Relying solely on mocked tests for a feature that touches a real external system or real data
+
+---
+
+**Test components individually, then the full pipeline**
+When a change spans multiple stages (e.g. generate ? validate ? composite), verify each stage in isolation first, then run the full pipeline together. This makes it obvious which stage a failure belongs to, instead of debugging a black-box end-to-end failure.
+
+**A failed response looks like:**
+- Only testing the full pipeline and guessing which stage caused a failure
+- Skipping isolated component checks because the full run "looked fine"
+
+---
+
+**Automate structural validation**
+Wherever a human would otherwise eyeball output for correctness (dimensions, counts, ordering, naming, duplicates, missing files), write an automated check instead. Manual visual inspection should be reserved for genuinely subjective judgement (does this look good?), not structural correctness (is this the right size/order/count?).
+
+**A failed response looks like:**
+- Leaving a mechanically-checkable property (file count, dimensions, ordering) to manual inspection
+- Adding a validation step that only checks the happy path and never runs against a broken/edge case
+
+---
+
+**Surface failures loudly**
+During development, failures (failed requests, failed assertions, unexpected values) should be logged clearly, not swallowed silently. A silent failure inside a loop or background task is far harder to diagnose than a loud one.
+
+**A failed response looks like:**
+- Catching an exception and continuing without logging it
+- A test or validation step that fails closed (reports success) when it can't actually verify the condition
+
+
+
+# Vercel Publish Rules
+
+---
+
+**Connecting a repo to Vercel**
+Connect the GitHub repo to Vercel via the Vercel dashboard — Import Project ? select the repo ? Vercel auto-deploys on every push to `main`. This connection is set up once per repo; after that, deployments are automatic.
+
+**A failed response looks like:**
+- Suggesting a manual deploy command (`vercel deploy`, `vercel --prod`) when the GitHub connection handles deploys automatically
+- Setting up the Vercel connection more than once for the same repo
+
+---
+
+**Deployments**
+Every push to `main` triggers a production deployment automatically. Snapshot branches (`v1`, `v2`, etc.) each get their own Vercel preview URL — shareable without affecting the production site. These preview URLs are the primary way to share a specific version for review.
+
+**A failed response looks like:**
+- Suggesting a push to `main` as the way to "share a version for review" — create a snapshot branch (`vN`) instead so production is not affected
+- Treating a snapshot branch as a working branch and pushing further changes to it
+
+---
+
+**Environment variables**
+Secrets and environment variables are set in the Vercel dashboard under Project Settings ? Environment Variables — never in the codebase. They can be scoped to Production, Preview, or Development environments separately.
+
+**A failed response looks like:**
+- Adding a secret or API key to any file in the repo instead of the Vercel dashboard
+- Suggesting `.env` as the way to set variables for the deployed site — `.env` is for local development only; Vercel reads its own dashboard-configured variables at deploy time
+
+---
+
+**Deployment Protection must be off for shareable links to work**
+Vercel's own **Vercel Authentication** / "Require Login" setting (Project Settings ? Deployment Protection, `/~/settings/deployment-protection`) is on by default for some account/team types and blocks anyone without a Vercel login from viewing preview or snapshot URLs. This must be turned off right after first connecting the repo, otherwise Designers and stakeholders can't open the links they're sent. This is separate from the `vercel-password` skill's custom middleware gate, which is opt-in and only protects non-`main` branches.
+
+**A failed response looks like:**
+- Sharing a snapshot/preview URL without confirming Deployment Protection is off first
+- Confusing Vercel's native Deployment Protection with the `vercel-password` middleware skill — they are unrelated settings
