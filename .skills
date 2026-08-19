@@ -6,7 +6,7 @@
 # not from the generated master-skills.md. Never infer project intent from
 # the skill names listed below.
 workflow/general
-platform/iris-react
+platform/iris-react-with-shell
 workflow/architecture
 workflow/deep-linking
 workflow/figma-read-from-mcp
