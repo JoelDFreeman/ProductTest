@@ -2,6 +2,10 @@
   max-width: 894px;
 }
 
+.body {
+  padding: 0;
+}
+
 .content {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
@@ -16,7 +20,6 @@
 }
 
 .help {
-  border-left: 1px solid var(--oi-border-color-default);
   padding: var(--oi-spacing-l);
   color: var(--oi-content-color-secondary);
 }
@@ -103,7 +106,6 @@
   }
 
   .help {
-    border-left: 0;
     border-top: 1px solid var(--oi-border-color-default);
   }
 }

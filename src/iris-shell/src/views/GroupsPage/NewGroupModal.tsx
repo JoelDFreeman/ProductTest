@@ -36,6 +36,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
     directory: directories[0] ?? EMPTY_DRAFT.directory,
   }));
   const [step, setStep] = useState<1 | 2>(1);
+  const [furthestStep, setFurthestStep] = useState<1 | 2>(1);
 
   const setTextField = (field: 'name' | 'displayName' | 'description') => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setDraft((current) => ({ ...current, [field]: event.target.value }));
@@ -46,6 +47,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
   const close = () => {
     setDraft({ ...EMPTY_DRAFT, directory: directories[0] ?? EMPTY_DRAFT.directory });
     setStep(1);
+    setFurthestStep(1);
     onClose();
   };
 
@@ -58,6 +60,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
       leadingIcon="UsersThree"
       size="l"
       className={styles.modal}
+      bodyClassName={styles.body}
       footer={
         <div className={styles.footerContent}>
           <span className={styles.step}>Step {step} of 2</span>
@@ -69,6 +72,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
               onClick={() => {
                 if (step === 1) {
                   setStep(2);
+                  setFurthestStep(2);
                   return;
                 }
                 onCreate({ ...draft, name: draft.name.trim(), displayName: draft.displayName.trim(), description: draft.description.trim() });
@@ -81,7 +85,17 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
         </div>
       }
     >
-      <Stepper items={[{ label: 'General' }, { label: 'Group options' }]} activeIndex={step - 1} ariaLabel="New group steps" />
+      <Stepper
+        items={[{ label: 'General' }, { label: 'Group options' }]}
+        activeIndex={step - 1}
+        completedThrough={furthestStep - 1}
+        onStepChange={(index) => {
+          const nextStep = (index + 1) as 1 | 2;
+          setStep(nextStep);
+          setFurthestStep((current) => Math.max(current, nextStep) as 1 | 2);
+        }}
+        ariaLabel="New group steps"
+      />
       <div className={styles.content}>
         <div className={styles.form}>
           {step === 1 ? <>
