@@ -53,6 +53,7 @@ const EMPTY_DRAFT: Draft = {
 export function NewUserModal({ open, onClose, objectKind, directories, onCreate }: NewUserModalProps) {
   const [draft, setDraft] = useState<Draft>(() => ({ ...EMPTY_DRAFT, directory: directories[0] ?? 'Entra 1' }));
   const [step, setStep] = useState<1 | 2>(1);
+  const [furthestStep, setFurthestStep] = useState<1 | 2>(1);
   const [accountOptions, setAccountOptions] = useState({
     changePassword: true,
     preventPasswordChange: false,
@@ -81,6 +82,7 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
   const close = () => {
     setDraft({ ...EMPTY_DRAFT, directory: directories[0] ?? 'Entra 1' });
     setStep(1);
+    setFurthestStep(1);
     onClose();
   };
 
@@ -93,6 +95,7 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
       leadingIcon="User"
       size="l"
       className={styles.modal}
+      bodyClassName={styles.body}
       footer={
         <div className={styles.footerContent}>
           <span className={styles.step}>Step {step} of 2</span>
@@ -102,6 +105,7 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
             onClick={() => {
               if (step === 1) {
                 setStep(2);
+                setFurthestStep(2);
                 return;
               }
               onCreate({
@@ -122,7 +126,17 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
         </div>
       }
     >
-      <Stepper items={[{ label: 'General' }, { label: 'Account' }]} activeIndex={step - 1} ariaLabel="New user steps" />
+      <Stepper
+        items={[{ label: 'General' }, { label: 'Account' }]}
+        activeIndex={step - 1}
+        completedThrough={furthestStep - 1}
+        onStepChange={(index) => {
+          const nextStep = (index + 1) as 1 | 2;
+          setStep(nextStep);
+          setFurthestStep((current) => Math.max(current, nextStep) as 1 | 2);
+        }}
+        ariaLabel="New user steps"
+      />
       <div className={styles.content}>
         <div className={styles.form}>
         {step === 1 ? <>
