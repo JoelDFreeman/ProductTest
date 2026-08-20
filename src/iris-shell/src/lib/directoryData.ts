@@ -225,6 +225,12 @@ export function getNodePath(nodeId: string): RawNode[] {
   return path;
 }
 
+export function isActiveDirectoryLocation(location?: string): boolean {
+  if (!location) return false;
+  if (/^AD-\d/i.test(location) || /^o[12]d-/i.test(location)) return true;
+  return getNodePath(location).some((node) => /active director|o1d|o2d|ad-\d/i.test(node.name));
+}
+
 /* ------------------------------------------------------------------ */
 /*  Deterministic leaf generation                                     */
 /* ------------------------------------------------------------------ */
@@ -332,6 +338,8 @@ function makeLeaf(node: RawNode, index: number, rng: () => number, path: string)
 }
 
 const leafCache = new Map<string, DirectoryObject[]>();
+const movedObjectParents = new Map<string, string>();
+const movedObjects = new Map<string, DirectoryObject>();
 
 function getLeaves(node: RawNode): DirectoryObject[] {
   const cached = leafCache.get(node.id);
@@ -366,7 +374,14 @@ export function getChildren(nodeId: string): DirectoryObject[] {
   const node = nodeById.get(nodeId);
   if (!node) return [];
   const containers = (node.children ?? []).map(nodeAsObject);
-  return [...containers, ...getLeaves(node)];
+  const leaves = getLeaves(node).filter((object) => (movedObjectParents.get(object.id) ?? object.parentId) === nodeId);
+  const movedIn = Array.from(movedObjects.values()).filter((object) => movedObjectParents.get(object.id) === nodeId && object.parentId !== nodeId && !leaves.some((item) => item.id === object.id));
+  return [...containers, ...leaves, ...movedIn];
+}
+
+export function moveDirectoryObject(object: DirectoryObject, targetNodeId: string): void {
+  movedObjectParents.set(object.id, targetNodeId);
+  movedObjects.set(object.id, { ...object, parentId: targetNodeId, details: { ...object.details, location: getNodePath(targetNodeId).map((node) => node.name).join(' / ') } });
 }
 
 /** Leaf objects only — the set the detail prev/next pager iterates. */

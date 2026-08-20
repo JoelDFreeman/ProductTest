@@ -12,6 +12,9 @@ export interface ToastProps {
   onDismiss: () => void;
   supportingText?: string;
   action?: () => void;
+  actionLabel?: string;
+  secondaryAction?: () => void;
+  secondaryLabel?: string;
   /** Auto-dismiss delay in ms. */
   durationMs?: number;
 }
@@ -28,7 +31,7 @@ export interface ToastProps {
  * AI panel, modals, and side sheets without inheriting their stacking
  * context.
  */
-export function Toast({ message, supportingText, action, onDismiss, durationMs = 5000 }: ToastProps) {
+export function Toast({ message, supportingText, action, actionLabel = 'View', secondaryAction, secondaryLabel = 'Dismiss', onDismiss, durationMs = 5000 }: ToastProps) {
   // Two-stage state so the leave transition has time to play after the
   // owner clears `message`. `shown` holds the last non-null text and is
   // cleared on a short delay after the prop goes null.
@@ -89,8 +92,8 @@ export function Toast({ message, supportingText, action, onDismiss, durationMs =
         {supportingText && <p className={styles.supporting}>{supportingText}</p>}
         {action && (
           <div className={styles.actions}>
-            <button type="button" className={styles.view} onClick={action}>View</button>
-            <button type="button" className={styles.dismissText} onClick={onDismiss}>Dismiss</button>
+            <button type="button" className={styles.view} onClick={action}>{actionLabel}</button>
+            <button type="button" className={styles.dismissText} onClick={secondaryAction ?? onDismiss}>{secondaryLabel}</button>
           </div>
         )}
       </div>

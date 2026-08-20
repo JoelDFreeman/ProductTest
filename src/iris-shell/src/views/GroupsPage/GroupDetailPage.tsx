@@ -17,6 +17,8 @@ import { GroupOwnership } from './GroupOwnership.js';
 import { GroupManagedUnits } from './GroupManagedUnits.js';
 import { GroupRoles } from './GroupRoles.js';
 import { GroupHistory } from './GroupHistory.js';
+import { isActiveDirectoryLocation } from '../../lib/directoryData.js';
+import type { Group } from './mockGroups.js';
 import { MoveGroupsModal } from './MoveGroupsModal.js';
 import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserModal.js';
 
@@ -35,7 +37,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
   const route = useRoute();
   const { getGroup, updateGroup, addGroup, removeGroup } = useGroups();
   const group = getGroup(groupId);
-  const isAdGroup = group?.location.startsWith('AD-') ?? false;
+  const isAdGroup = isActiveDirectoryLocation(group?.location);
   const [tab, setTab] = useState(route.name === 'groupDetail' ? route.params.tab ?? 'overview' : 'overview');
   const [editing, setEditing] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
@@ -163,13 +165,13 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
           <Card title={TABS.find((item) => item.value === tab)?.label}><p className={styles.placeholder}>Coming soon.</p></Card>
         )}
       </div>
-      <MoveGroupsModal open={moveOpen} count={1} directories={['Entra 1', 'Entra 2', 'AD-1', 'AD-2']} onClose={() => setMoveOpen(false)} onMove={(directory) => { updateGroup(group.id, { location: directory }); showToast(`${group.name} moved.`); }} />
+      {isAdGroup && <MoveGroupsModal open={moveOpen} count={1} onClose={() => setMoveOpen(false)} onMove={(directory) => { const previousLocation = group.location; updateGroup(group.id, { location: directory }); showToast(`${group.name} moved successfully`, () => { updateGroup(group.id, { location: previousLocation }); showToast('Move undone.'); }, undefined, 'Undo', () => navigate(`#/groups/${group.id}?tab=overview`), 'View object'); }} />}
       <DeleteUserModal open={deleteOpen} user={group} objectLabel="group" onClose={() => setDeleteOpen(false)} onDeleted={() => { removeGroup(group.id); setDeleteOpen(false); navigate('#/groups'); showToast(`${group.name} deleted.`); }} />
     </AppShell>
   );
 }
 
-function GroupOverview({ group }: { group: (typeof MOCK_GROUPS)[number] }) {
+function GroupOverview({ group }: { group: Group }) {
   const metrics = [
     ['Total Members', group.members],
     ['Users', 32],

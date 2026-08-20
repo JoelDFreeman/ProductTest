@@ -9,6 +9,7 @@ import {
   getNodePath,
   getObject,
   isContainerNode,
+  moveDirectoryObject,
   type DirectoryNodeView,
   type DirectoryObject,
 } from './directoryData.js';
@@ -38,6 +39,7 @@ export interface DirectoryContextValue {
   getNodeIcon: (nodeId: string) => string;
   /** Leaf siblings of an object (for the detail prev/next pager). */
   getSiblings: (nodeId: string) => DirectoryObject[];
+  moveObject: (object: DirectoryObject, targetNodeId: string) => void;
   selectedDirectories: Set<string>;
   setSelectedDirectories: (directories: Set<string>) => void;
 }
@@ -59,6 +61,7 @@ export function DirectoryProvider({ children }: { children: ReactNode }) {
       getNodeName: (nodeId) => getNode(nodeId)?.name,
       getNodeIcon,
       getSiblings: getLeafObjects,
+      moveObject: moveDirectoryObject,
       selectedDirectories,
       setSelectedDirectories,
     }),

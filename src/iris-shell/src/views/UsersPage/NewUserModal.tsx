@@ -30,6 +30,7 @@ interface Draft {
   name: string;
   displayName: string;
   userLogonName: string;
+  directory: string;
   suffix: string;
   preWindowsLogonName: string;
   password: string;

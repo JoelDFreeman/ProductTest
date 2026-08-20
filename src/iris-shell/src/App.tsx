@@ -55,7 +55,7 @@ export default function App() {
           {route.name === 'identityHome' && <IdentityManagerPage />}
           {route.name === 'safeguardHome' && <SafeguardPage />}
           <CommandPalette />
-          <Toast message={toast.message} supportingText={toast.supportingText} action={toast.action} onDismiss={toast.dismiss} />
+          <Toast message={toast.message} supportingText={toast.supportingText} action={toast.action} actionLabel={toast.actionLabel} secondaryAction={toast.secondaryAction} secondaryLabel={toast.secondaryLabel} onDismiss={toast.dismiss} />
         </AppShellProvider>
         </DirectoryProvider>
       </GroupsProvider>

@@ -27,6 +27,8 @@ import { ActionBar } from '../../components/ActionBar/ActionBar.js';
 import type { Crumb } from '../../components/AppHeader/AppHeader.js';
 import { ResetPasswordModal } from '../UserDetailPage/ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserModal.js';
+import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
+import { showToast } from '../../lib/toastStore.js';
 import styles from './TreeView.module.css';
 
 const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
@@ -62,7 +64,7 @@ export interface TreeListPageProps {
  * toolbar + ActionBar design as the Users listing (different columns + data).
  */
 export function TreeListPage({ nodeId }: TreeListPageProps) {
-  const { isContainer, getChildren, getPath, getNodeName, getNodeIcon } = useDirectory();
+  const { isContainer, getChildren, getPath, getNodeName, getNodeIcon, moveObject } = useDirectory();
   const { aiOpen } = useAppShell();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
 
@@ -72,6 +74,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
   const [selected, setSelected] = useState<Set<RowKey>>(() => new Set());
   const [resetTarget, setResetTarget] = useState<DirectoryObject | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DirectoryObject | null>(null);
+  const [moveTargets, setMoveTargets] = useState<DirectoryObject[]>([]);
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const filterIdRef = useRef(0);
@@ -124,6 +127,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
 
   const nodeName = getNodeName(nodeId);
   const known = isContainer(nodeId);
+  const isAdNode = getPath(nodeId).some((crumb) => /active director|o1d|o2d|ad-\d/i.test(crumb.name));
 
   const allRows = useMemo<DirectoryObject[]>(
     () => (known ? getChildren(nodeId) : []),
@@ -188,6 +192,13 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
           <Link
             href={hrefFor(o, nodeId)}
             className={styles.nameCell}
+            draggable={isAdNode && !o.isContainer}
+            onDragStart={(event) => {
+              if (!isAdNode || o.isContainer) return;
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData('application/x-ars-ad-object', JSON.stringify(o));
+              event.dataTransfer.setData('text/plain', JSON.stringify(o));
+            }}
             onClick={(e: MouseEvent<HTMLAnchorElement>) => {
               e.preventDefault();
               navigate(hrefFor(o, nodeId));
@@ -216,11 +227,13 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         cell: (o) => <span title={o.description}>{o.description}</span>,
       },
     ],
-    [nodeId],
+    [isAdNode, nodeId],
   );
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
+  const selectedObjects = allRows.filter((object) => selected.has(object.id) && !object.isContainer);
+  const canMoveSelected = isAdNode && selectedObjects.length > 0 && selectedObjects.length === selected.size;
   const pageRows = useMemo<DirectoryObject[]>(
     () => rows.slice((safePage - 1) * pageSize, safePage * pageSize),
     [rows, safePage, pageSize],
@@ -240,7 +253,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
                   ? ([{ kind: 'item', label: 'Reset password', icon: 'Password', onSelect: () => setResetTarget(o) }] as MenuEntry[])
         : []),
       { kind: 'item', label: 'Copy', icon: 'Copy' },
-      { kind: 'item', label: 'Move', icon: 'Folder' },
+      ...(isAdNode && !o.isContainer ? [{ kind: 'item' as const, label: 'Move', icon: 'Folder', onSelect: () => setMoveTargets([o]) }] : []),
       { kind: 'item', label: 'Properties', icon: 'UserList' },
       {
         kind: 'item',
@@ -467,7 +480,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
               onClick: () => setSelected(new Set(allRows.map((o) => o.id))),
             },
             { icon: 'Copy', label: 'Copy', iconOnly: aiOpen, onClick: () => undefined },
-            { icon: 'Folder', label: 'Move', iconOnly: aiOpen, onClick: () => undefined },
+            ...(canMoveSelected ? [{ icon: 'Folder', label: 'Move', iconOnly: aiOpen, onClick: () => setMoveTargets(selectedObjects) }] : []),
             { icon: 'UserList', label: 'Properties', iconOnly: aiOpen, onClick: () => undefined },
           ],
           [
@@ -487,6 +500,35 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
       )}
       {deleteTarget && (
         <DeleteUserModal open onClose={() => setDeleteTarget(null)} user={{ name: deleteTarget.name }} />
+      )}
+      {moveTargets.length > 0 && (
+        <MoveGroupsModal
+          open
+          count={moveTargets.length}
+          objectLabel={moveTargets.length === 1 ? OBJECT_TYPE_META[moveTargets[0].type].label : 'Object'}
+          onClose={() => setMoveTargets([])}
+          onMove={(targetNodeId) => {
+            const previousParents = new Map(moveTargets.map((object) => [object.id, object.parentId]));
+            moveTargets.forEach((object) => moveObject(object, targetNodeId));
+            const firstObject = moveTargets[0];
+            showToast(
+              `${moveTargets.length} object${moveTargets.length === 1 ? '' : 's'} moved successfully`,
+              () => {
+                previousParents.forEach((parentId, objectId) => {
+                  const object = moveTargets.find((item) => item.id === objectId);
+                  if (object) moveObject(object, parentId);
+                });
+                showToast('Move undone.');
+              },
+              undefined,
+              'Undo',
+              firstObject ? () => navigate(`#/tree/${targetNodeId}/${firstObject.id}`) : undefined,
+              'View object',
+            );
+            setMoveTargets([]);
+            setSelected(new Set());
+          }}
+        />
       )}
     </AppShell>
   );

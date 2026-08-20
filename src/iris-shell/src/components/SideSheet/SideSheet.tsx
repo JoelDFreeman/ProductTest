@@ -12,6 +12,7 @@ export interface SideSheetProps {
   onBack?: () => void;
   children?: ReactNode;
   footer?: ReactNode;
+  bodyClassName?: string;
   /** Override aria-labelledby with a literal label. */
   ariaLabel?: string;
   className?: string;
@@ -35,6 +36,7 @@ export function SideSheet({
   onBack,
   children,
   footer,
+  bodyClassName,
   ariaLabel,
   className,
 }: SideSheetProps) {
@@ -151,7 +153,7 @@ export function SideSheet({
           <IconButton icon="X" ariaLabel="Close" onClick={onClose} />
         </header>
 
-        <div ref={bodyRef} className={styles.body}>{children}</div>
+        <div ref={bodyRef} className={cx(styles.body, bodyClassName)}>{children}</div>
 
         {footer && <footer className={styles.footer}>{footer}</footer>}
       </div>

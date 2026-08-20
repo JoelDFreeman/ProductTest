@@ -16,8 +16,11 @@ import { InlineUserDetailsCard } from './InlineUserDetailsCard.js';
 import { OverviewSummary } from './OverviewSummary.js';
 import { ResetPasswordModal } from './ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from './DeleteUserModal/DeleteUserModal.js';
+import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
+import { showToast } from '../../lib/toastStore.js';
 import type { User } from '../UsersPage/mockUsers.js';
 import styles from './UserDetailPage.module.css';
+import { isActiveDirectoryLocation } from '../../lib/directoryData.js';
 
 const TABS = [
   { value: 'overview', label: 'Overview', icon: 'Briefcase' },
@@ -49,6 +52,7 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
   const [tab, setTab] = useState(() => route.name === 'userDetail' ? route.params.tab ?? 'general' : 'general');
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   /* ---- J / K jump to the next / previous user (Gmail/GitHub style) ---- */
   useEffect(() => {
@@ -99,6 +103,7 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
   const prevUser = users[idx - 1] ?? null;
   const nextUser = users[idx + 1] ?? null;
   const d = user.details;
+  const isAdUser = isActiveDirectoryLocation(user.location);
 
   return (
     <AppShell
@@ -143,6 +148,7 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
               align="end"
               items={[
                 { kind: 'item', label: 'Reset password', icon: 'Password', onSelect: () => setResetOpen(true) },
+                ...(isAdUser ? [{ kind: 'item' as const, label: 'Move', icon: 'Folder', onSelect: () => setMoveOpen(true) }] : []),
                 { kind: 'item', label: 'Delete', icon: 'Trash', danger: true, onSelect: () => setDeleteOpen(true) },
               ]}
               trigger={({ ref, onClick, expanded }) => (
@@ -168,13 +174,14 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
             user={user}
             onSave={(patch) => updateUser(user.id, patch)}
             onReset={() => setResetOpen(true)}
+            onMove={() => setMoveOpen(true)}
             onDelete={() => setDeleteOpen(true)}
           />
         )}
         {tab === 'user-details' && (
           <div className={styles.generalLayout}>
             <InlineUserDetailsCard user={user} onSave={(patch) => updateUser(user.id, patch)} />
-            <ObjectManagementCard onReset={() => setResetOpen(true)} onDelete={() => setDeleteOpen(true)} />
+            <ObjectManagementCard isAdUser={isAdUser} onReset={() => setResetOpen(true)} onMove={() => setMoveOpen(true)} onDelete={() => setDeleteOpen(true)} />
           </div>
         )}
         {tab !== 'overview' && tab !== 'general' && tab !== 'user-details' && (
@@ -195,6 +202,20 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
         onClose={() => setDeleteOpen(false)}
         user={user}
       />
+      {isAdUser && <MoveGroupsModal
+        open={moveOpen}
+        count={1}
+        objectLabel="User"
+        onClose={() => setMoveOpen(false)}
+        onMove={(directory) => {
+          const previousLocation = user.location;
+          updateUser(user.id, { location: directory });
+          showToast(`${user.name} moved successfully`, () => {
+            updateUser(user.id, { location: previousLocation });
+            showToast('Move undone.');
+          }, undefined, 'Undo', () => navigate(`#/users/${user.id}?tab=overview`), 'View object');
+        }}
+      />}
     </AppShell>
   );
 }
@@ -207,20 +228,21 @@ interface OverviewTabProps {
   user: User;
   onSave: (patch: UserPatch) => void;
   onReset: () => void;
+  onMove: () => void;
   onDelete: () => void;
 }
 
-function OverviewTab({ user, onSave, onReset, onDelete }: OverviewTabProps) {
+function OverviewTab({ user, onSave, onReset, onMove, onDelete }: OverviewTabProps) {
   return (
     <div className={styles.generalLayout}>
       <InlinePropertiesCard user={user} onSave={onSave} />
 
-      <ObjectManagementCard onReset={onReset} onDelete={onDelete} />
+      <ObjectManagementCard isAdUser={isActiveDirectoryLocation(user.location)} onReset={onReset} onMove={onMove} onDelete={onDelete} />
     </div>
   );
 }
 
-function ObjectManagementCard({ onReset, onDelete }: { onReset: () => void; onDelete: () => void }) {
+function ObjectManagementCard({ isAdUser, onReset, onMove, onDelete }: { isAdUser: boolean; onReset: () => void; onMove: () => void; onDelete: () => void }) {
   return (
     <Card
       className={styles.managementCard}
@@ -240,7 +262,7 @@ function ObjectManagementCard({ onReset, onDelete }: { onReset: () => void; onDe
         <div className={styles.managementGroup}>
           <LinkList
             links={[
-              { label: 'Move', disabled: true },
+              ...(isAdUser ? [{ label: 'Move', onClick: onMove }] : []),
               { label: 'Copy', disabled: true },
             ]}
           />
