@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { cx } from '../../lib/cx.js';
 import { navigate } from '../../lib/router.js';
 import { useFavorites } from '../../lib/useFavorites.js';
+import { useDirectory } from '../../lib/directoryStore.js';
 import { SegmentedControl } from '../SegmentedControl/SegmentedControl.js';
 import { MultiSelect, type MultiSelectOption } from '../MultiSelect/MultiSelect.js';
 import { NavItem } from '../NavItem/NavItem.js';
@@ -101,9 +102,7 @@ export function Sidebar({
   onViewChange,
   className,
 }: SidebarProps) {
-  const [directories, setDirectories] = useState<Set<string>>(
-    () => new Set(DIRECTORIES.map((d) => d.value)),
-  );
+  const { selectedDirectories, setSelectedDirectories } = useDirectory();
 
   // Shared active indicator that slides between nav rows. NavItem's built-in
   // bar is suppressed (hideIndicator) so this single element can animate
@@ -172,8 +171,8 @@ export function Sidebar({
               ariaLabel="Filter by directory"
               searchPlaceholder="Search directories"
               options={DIRECTORIES}
-              selected={directories}
-              onSelectionChange={setDirectories}
+              selected={selectedDirectories}
+              onSelectionChange={setSelectedDirectories}
               className={styles.directorySelect}
             />
           </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import {
   NODE_TREE,
@@ -38,11 +38,16 @@ export interface DirectoryContextValue {
   getNodeIcon: (nodeId: string) => string;
   /** Leaf siblings of an object (for the detail prev/next pager). */
   getSiblings: (nodeId: string) => DirectoryObject[];
+  selectedDirectories: Set<string>;
+  setSelectedDirectories: (directories: Set<string>) => void;
 }
 
 const DirectoryContext = createContext<DirectoryContextValue | null>(null);
 
 export function DirectoryProvider({ children }: { children: ReactNode }) {
+  const [selectedDirectories, setSelectedDirectories] = useState<Set<string>>(
+    () => new Set(['entra-1', 'entra-2', 'ad-1', 'ad-2']),
+  );
   // The underlying data is static + memoized, so the value never changes.
   const value = useMemo<DirectoryContextValue>(
     () => ({
@@ -54,8 +59,10 @@ export function DirectoryProvider({ children }: { children: ReactNode }) {
       getNodeName: (nodeId) => getNode(nodeId)?.name,
       getNodeIcon,
       getSiblings: getLeafObjects,
+      selectedDirectories,
+      setSelectedDirectories,
     }),
-    [],
+    [selectedDirectories],
   );
 
   return <DirectoryContext.Provider value={value}>{children}</DirectoryContext.Provider>;

@@ -10,6 +10,7 @@ import { useCallback, useSyncExternalStore } from 'react';
  */
 
 let current: string | null = null;
+let currentAction: (() => void) | undefined;
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -17,8 +18,9 @@ function emit() {
 }
 
 /** Show a toast from anywhere in the app. */
-export function showToast(message: string): void {
+export function showToast(message: string, action?: () => void): void {
   current = message;
+  currentAction = action;
   emit();
 }
 
@@ -29,14 +31,17 @@ function subscribe(cb: () => void): () => void {
 
 export interface ToastController {
   message: string | null;
+  action?: () => void;
   dismiss: () => void;
 }
 
 export function useToastMessage(): ToastController {
   const message = useSyncExternalStore(subscribe, () => current);
+  const action = useSyncExternalStore(subscribe, () => currentAction);
   const dismiss = useCallback(() => {
     current = null;
+    currentAction = undefined;
     emit();
   }, []);
-  return { message, dismiss };
+  return { message, action, dismiss };
 }

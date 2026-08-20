@@ -31,15 +31,6 @@ import styles from './TreeView.module.css';
 
 const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
 
-const CREATE_MENU_ITEMS: MenuEntry[] = [
-  { kind: 'item', label: 'User', icon: 'User' },
-  { kind: 'item', label: 'Group', icon: 'UsersThree' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Computer', icon: 'Devices' },
-  { kind: 'item', label: 'Organizational Unit', icon: 'FolderPlus' },
-  { kind: 'item', label: 'Contact', icon: 'AddressBook' },
-];
-
 /** Object types offered in the "Object Type" filter. */
 const OBJECT_TYPE_OPTIONS: FilterOption[] = [
   { value: 'ou', label: 'Organizational Unit', icon: 'Folder' },
@@ -138,6 +129,42 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
     () => (known ? getChildren(nodeId) : []),
     [known, getChildren, nodeId],
   );
+
+  const createMenuItems = useMemo<MenuEntry[]>(() => {
+    const pathNames = getPath(nodeId).map((crumb) => crumb.name).join(' ');
+    const context = `${pathNames} ${nodeName ?? ''} ${allRows.map((row) => row.type).join(' ')}`.toLowerCase();
+    const isAdDirectory = /active director|o1d|o2d|ad-\d/.test(context);
+    const isEntraDirectory = /entra/.test(context);
+
+    if (isAdDirectory) {
+      return [
+        { kind: 'item', label: 'New AD User', icon: 'WindowsLogo' },
+        { kind: 'item', label: 'Add User', icon: 'Plus' },
+        { kind: 'divider' },
+        { kind: 'item', label: 'New Group', icon: 'UsersThree' },
+        { kind: 'divider' },
+        { kind: 'item', label: 'New Organizational Unit', icon: 'FolderSimplePlus' },
+        { kind: 'item', label: 'New Group Managed Service Account', icon: 'UserCircle' },
+        { kind: 'item', label: 'New Shared Folder', icon: 'Folders' },
+        { kind: 'item', label: 'New Asset', icon: 'Desktop' },
+        { kind: 'divider' },
+        { kind: 'item', label: 'Bulk create', icon: 'Plus' },
+        { kind: 'item', label: 'Bulk invite', icon: 'Plus' },
+        { kind: 'item', label: 'Bulk delete', icon: 'Plus' },
+      ];
+    }
+
+    if (isEntraDirectory && /group/.test(context)) {
+      return [{ kind: 'item', label: 'New Group', icon: 'UsersThree' }];
+    }
+    if (isEntraDirectory && /device|computer/.test(context)) {
+      return [{ kind: 'item', label: 'Add Device', icon: 'Devices' }];
+    }
+    return [
+      { kind: 'item', label: 'New Entra User', icon: 'WindowsLogo' },
+      { kind: 'item', label: 'Add User', icon: 'Plus' },
+    ];
+  }, [allRows, getPath, nodeId, nodeName]);
 
   const rows = useMemo<DirectoryObject[]>(() => {
     const q = query.trim().toLowerCase();
@@ -337,7 +364,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
             <Menu
               ariaLabel="Create options"
               align="end"
-              items={CREATE_MENU_ITEMS}
+              items={createMenuItems}
               trigger={({ ref, onClick, expanded }) => (
                 <Button
                   ref={ref as React.Ref<HTMLButtonElement>}

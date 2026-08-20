@@ -1,0 +1,95 @@
+.card {
+  min-width: 0;
+}
+
+.actions {
+  display: inline-flex;
+  gap: var(--oi-spacing-s);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-l);
+  animation: mode-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oi-spacing-l);
+}
+
+.readList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-s);
+  animation: mode-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mode-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form,
+  .readList {
+    animation: none;
+  }
+}
+
+.readRow {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--oi-spacing-m);
+}
+
+.readLabel {
+  color: var(--oi-content-color-secondary);
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
+}
+
+.readValue {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--oi-content-color-primary);
+  cursor: text;
+  font: inherit;
+  line-height: var(--oi-text-body-s-line-height);
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.readValue:hover,
+.readValue:focus-visible {
+  outline: 1px solid var(--oi-border-color-focus);
+  outline-offset: 3px;
+  border-radius: var(--oi-border-radius-s);
+}
+
+.multiline {
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .readRow {
+    grid-template-columns: 1fr;
+    gap: var(--oi-spacing-xs);
+  }
+}

@@ -5,8 +5,9 @@
 
 .toast {
   position: fixed;
-  right: var(--oi-spacing-l);
-  bottom: var(--oi-spacing-l);
+  left: 50%;
+  right: auto;
+  bottom: 60px;
   z-index: 100;
 
   display: flex;
@@ -23,7 +24,7 @@
      (hidden) state carries the faster close clock; the visible state below
      carries the slower open clock, so arriving feels deliberate and leaving
      feels snappy from a single attribute flip. */
-  transform: translateY(var(--oi-spacing-l)) scale(0.97);
+  transform: translate(-50%, var(--oi-spacing-l)) scale(0.97);
   opacity: 0;
   filter: blur(2px);
   will-change: transform, opacity, filter;
@@ -34,7 +35,7 @@
 }
 
 .toast[data-visible='true'] {
-  transform: translateY(0) scale(1);
+  transform: translate(-50%, 0) scale(1);
   opacity: 1;
   filter: blur(0);
   transition:
@@ -74,6 +75,35 @@
   word-break: break-word;
 }
 
+.actions {
+  display: flex;
+  gap: var(--oi-spacing-s);
+  align-items: center;
+  margin-top: var(--oi-spacing-xs);
+}
+
+.view,
+.dismissText {
+  height: 24px;
+  padding-inline: var(--oi-spacing-s);
+  border-radius: var(--oi-border-radius-default);
+  font: inherit;
+  font-weight: var(--oi-text-body-s-strong-font-weight);
+  cursor: pointer;
+}
+
+.view {
+  border: 1px solid var(--oi-border-color-default);
+  background: var(--oi-background-color-primary);
+  color: var(--oi-content-color-primary);
+}
+
+.dismissText {
+  border: 0;
+  background: transparent;
+  color: var(--oi-content-color-secondary);
+}
+
 /* Absolutely positionedY(0) scale(1);
     filter: nonematch the Figma layout (14px from top/right of
    the card). Applied directly to the IconButton via its `className` prop
@@ -87,6 +117,6 @@
 @media (prefers-reduced-motion: reduce) {
   .toast {
     transition: opacity var(--oi-motion-duration-default) var(--oi-motion-ease-default);
-    transform: translateX(0);
+    transform: translate(-50%, 0);
   }
 }

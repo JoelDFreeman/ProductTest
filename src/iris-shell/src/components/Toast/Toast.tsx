@@ -10,6 +10,7 @@ export interface ToastProps {
   /** Called when the auto-dismiss timer fires or the user clicks the dismiss
    *  button. Owner clears its own `message` state in response. */
   onDismiss: () => void;
+  action?: () => void;
   /** Auto-dismiss delay in ms. */
   durationMs?: number;
 }
@@ -26,7 +27,7 @@ export interface ToastProps {
  * AI panel, modals, and side sheets without inheriting their stacking
  * context.
  */
-export function Toast({ message, onDismiss, durationMs = 3000 }: ToastProps) {
+export function Toast({ message, action, onDismiss, durationMs = 5000 }: ToastProps) {
   // Two-stage state so the leave transition has time to play after the
   // owner clears `message`. `shown` holds the last non-null text and is
   // cleared on a short delay after the prop goes null.
@@ -83,6 +84,12 @@ export function Toast({ message, onDismiss, durationMs = 3000 }: ToastProps) {
         <Icon name="Check" size="20px" />
       </span>
       <p className={styles.message}>{shown}</p>
+      {action && (
+        <div className={styles.actions}>
+          <button type="button" className={styles.view} onClick={action}>View</button>
+          <button type="button" className={styles.dismissText} onClick={onDismiss}>Dismiss</button>
+        </div>
+      )}
       <IconButton
         icon="X"
         ariaLabel="Dismiss notification"

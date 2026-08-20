@@ -54,6 +54,12 @@ export interface DataTableProps<TRow extends DataTableRow> {
   /** Render a custom control (e.g. a menu trigger) in each row's trailing
    *  action cell. Takes precedence over the default `onRowAction` button. */
   rowActions?: (row: TRow, i: number) => ReactNode;
+  /** Optional control rendered in the top-right table header cell. */
+  headerAction?: ReactNode;
+  /** Visual density for table headers and rows. */
+  density?: 'default' | 'compact';
+  /** Visual surface treatment for the table. */
+  appearance?: 'default' | 'light';
   /** Rendered inside the table body when `rows` is empty. */
   emptyState?: DataTableEmptyState;
   className?: string;
@@ -79,6 +85,9 @@ export function DataTable<TRow extends DataTableRow>({
   onSelectionChange,
   onRowAction,
   rowActions,
+  headerAction,
+  density = 'default',
+  appearance = 'default',
   emptyState,
   className,
 }: DataTableProps<TRow>) {
@@ -143,7 +152,7 @@ export function DataTable<TRow extends DataTableRow>({
       data-ovf-end={overflow.end ? '' : undefined}
       {...(ariaLabel ? { role: 'region', 'aria-label': ariaLabel, tabIndex: 0 } : {})}
     >
-      <div className={cx(styles.table, className)} role="table">
+      <div className={cx(styles.table, density === 'compact' && styles.compact, appearance === 'light' && styles.light, className)} role="table">
       <div className={styles.head} role="row">
         {selectable && (
           <HeadCell width="40px" className={styles.checkboxCell} pin="startInner">
@@ -170,7 +179,9 @@ export function DataTable<TRow extends DataTableRow>({
             <span className={styles.headLabel}>{col.header}</span>
           </HeadCell>
         ))}
-        <HeadCell width="44px" className={styles.actionCell} pin="end" aria-label="Row actions" />
+        <HeadCell width="44px" className={styles.actionCell} pin="end" aria-label="Table settings">
+          {headerAction}
+        </HeadCell>
       </div>
 
       <div className={styles.body} role="rowgroup">
