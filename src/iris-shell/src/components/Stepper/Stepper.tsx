@@ -1,4 +1,5 @@
 import { Icon } from '../Icon/Icon.js';
+import type { CSSProperties } from 'react';
 import styles from './Stepper.module.css';
 
 export interface StepperItem {
@@ -15,7 +16,12 @@ interface StepperProps {
 
 export function Stepper({ items, activeIndex, completedThrough = activeIndex, ariaLabel, onStepChange }: StepperProps) {
   return (
-    <div className={styles.root} role="tablist" aria-label={ariaLabel}>
+    <div
+      className={styles.root}
+      role="tablist"
+      aria-label={ariaLabel}
+      style={{ '--active-step-index': activeIndex } as CSSProperties}
+    >
       {items.map((item, index) => {
         const complete = index < completedThrough;
         const current = index === activeIndex;
@@ -33,7 +39,7 @@ export function Stepper({ items, activeIndex, completedThrough = activeIndex, ar
             disabled={!clickable}
           >
             <div className={styles.label}>
-              {complete ? <Icon name="CheckCircle" size="12px" /> : <span className={styles.marker}>{index + 1}</span>}
+              <span className={styles.visual}>{complete ? <Icon name="CheckCircle" size="12px" /> : <span className={styles.marker}>{index + 1}</span>}</span>
               <span>{item.label}</span>
             </div>
           </button>
