@@ -4,7 +4,7 @@ import { FormField } from '../../components/FormField/FormField.js';
 import { Modal } from '../../components/Modal/Modal.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Textarea } from '../../components/Textarea/Textarea.js';
-import { Icon } from '../../components/Icon/Icon.js';
+import { Stepper } from '../../components/Stepper/Stepper.js';
 import styles from './NewGroupModal.module.css';
 
 export interface NewGroupDraft {
@@ -81,15 +81,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
         </div>
       }
     >
-      <div className={styles.stepper} role="tablist" aria-label="New group steps">
-        <div className={step === 1 ? styles.stepperItemCurrent : styles.stepperItemComplete} role="tab" aria-selected={step === 1}>
-          <div className={styles.stepperLabel}>{step === 1 ? <img src="https://www.figma.com/api/mcp/asset/14dd93dd-8fc1-4041-8d81-04ea3518cba8.svg" alt="" /> : <Icon name="CheckCircle" size="12px" />}<span>General</span></div>
-        </div>
-        <div className={step === 2 ? styles.stepperItemCurrent : styles.stepperItem} role="tab" aria-selected={step === 2}>
-          <div className={styles.stepperLabel}><img src={step === 2 ? "https://www.figma.com/api/mcp/asset/14dd93dd-8fc1-4041-8d81-04ea3518cba8.svg" : "https://www.figma.com/api/mcp/asset/9abd6b49-b700-43d3-a108-1e3f3cc53af0.svg"} alt="" /><span>Group options</span></div>
-        </div>
-        <div className={styles.stepperDivider} aria-hidden="true" />
-      </div>
+      <Stepper items={[{ label: 'General' }, { label: 'Group options' }]} activeIndex={step - 1} ariaLabel="New group steps" />
       <div className={styles.content}>
         <div className={styles.form}>
           {step === 1 ? <>

@@ -130,7 +130,11 @@ export function GroupsPage() {
           };
           addGroup(createdGroup);
           setPage(1);
-          showToast(`${createdGroup.name} successfully created.`);
+          showToast(
+            `${createdGroup.name} successfully created`,
+            () => navigate(`#/groups/${createdGroup.id}?tab=overview`),
+            `Group created in ${createdGroup.location}. To open it, click View.`,
+          );
         }}
       />
       {deleteGroup && (

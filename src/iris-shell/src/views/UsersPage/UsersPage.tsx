@@ -657,8 +657,9 @@ export function UsersPage() {
           };
           addUser(createdUser);
           showToast(
-            `${fullName} successfully created. User created in ${draft.directory}.`,
+            `${fullName} successfully created`,
             () => navigate(`#/users/${createdUser.id}?tab=overview`),
+            `User created in ${draft.directory}. To open it, click View.`,
           );
         }}
       />
