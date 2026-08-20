@@ -1,0 +1,102 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: var(--oi-spacing-l);
+  align-items: start;
+}
+
+.container {
+  overflow: hidden;
+  border: 1px solid var(--oi-border-color-muted);
+  border-radius: var(--oi-border-radius-l);
+  background: var(--oi-background-color-primary);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oi-spacing-m);
+  padding: var(--oi-spacing-l);
+}
+
+.toolbar h2,
+.toolbar p {
+  margin: 0;
+}
+
+.toolbar h2 {
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-heading-05-font-size);
+}
+
+.toolbar p {
+  margin-top: var(--oi-spacing-xs);
+  color: var(--oi-content-color-tertiary);
+  font-size: var(--oi-text-caption-font-size);
+}
+
+.properties {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-xs);
+  padding: 0 var(--oi-spacing-l) var(--oi-spacing-l);
+  margin: 0;
+}
+
+.properties > div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--oi-spacing-m);
+  min-height: 20px;
+}
+
+.properties dt { color: var(--oi-content-color-secondary); }
+.properties dd { margin: 0; color: var(--oi-content-color-primary); }
+
+.actions { display: inline-flex; gap: var(--oi-spacing-s); }
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-m);
+  padding: 0 var(--oi-spacing-l) var(--oi-spacing-l);
+}
+
+.checkbox { display: flex; align-items: center; gap: var(--oi-spacing-xs); color: var(--oi-content-color-secondary); }
+
+.management {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-s);
+}
+
+.management h2,
+.management p { margin: 0; }
+.management h2 { font-size: var(--oi-text-heading-05-font-size); }
+.management p { color: var(--oi-content-color-tertiary); font-size: var(--oi-text-caption-font-size); }
+
+.actionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-xs);
+  padding: var(--oi-spacing-s);
+  border: 1px solid var(--oi-border-color-muted);
+  border-radius: var(--oi-border-radius-default);
+}
+
+.actionGroup button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--oi-content-color-link);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.danger button { color: var(--oi-color-red-600); }
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+}

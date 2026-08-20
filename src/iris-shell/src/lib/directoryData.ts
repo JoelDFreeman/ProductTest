@@ -45,13 +45,13 @@ export interface DirectoryObject {
 
 /** Presentation metadata per object type (label + shared-manifest icon). */
 export const OBJECT_TYPE_META: Record<DirectoryObjectType, { label: string; icon: string }> = {
-  ou: { label: 'Organizational Unit', icon: 'Folder' },
+  ou: { label: 'Organizational unit', icon: 'Folder' },
   container: { label: 'Container', icon: 'Folder' },
   user: { label: 'User', icon: 'User' },
   computer: { label: 'Computer', icon: 'Devices' },
   group: { label: 'Group', icon: 'UsersThree' },
   contact: { label: 'Contact', icon: 'AddressBook' },
-  gmsa: { label: 'Group Management Service Account', icon: 'UserCircle' },
+  gmsa: { label: 'Group management service account', icon: 'UserCircle' },
   agent: { label: 'Agent', icon: 'Robot' },
   application: { label: 'Application', icon: 'Browsers' },
 };
@@ -74,7 +74,7 @@ interface RawNode {
 
 const TREE: RawNode[] = [
   { id: 'access-templates', name: 'Access Templates', type: 'container', description: 'Reusable access-control templates.', icon: 'UserCircleCheck', leafCount: 24 },
-  { id: 'managed-units', name: 'Managed Units', type: 'container', description: 'Delegated administrative units.', icon: 'FolderStar', leafCount: 18 },
+  { id: 'managed-units', name: 'Managed units', type: 'container', description: 'Delegated administrative units.', icon: 'FolderStar', leafCount: 18 },
   {
     id: 'managed-directories',
     name: 'Managed Directories',

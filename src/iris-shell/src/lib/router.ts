@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 
 export type Route =
   | { name: 'userDetail'; params: { id: string; tab?: string } }
+  | { name: 'groupDetail'; params: { id: string; tab?: string } }
   | { name: 'usersList'; params: Record<string, never> }
   | { name: 'treeRoot'; params: Record<string, never> }
   | { name: 'treeList'; params: { nodeId: string } }
@@ -38,6 +39,7 @@ interface RouteDef {
 
 const ROUTES: RouteDef[] = [
   { name: 'userDetail', pattern: /^#\/users\/([^/?]+)(?:\?tab=([^&]+))?$/, keys: ['id', 'tab'] },
+  { name: 'groupDetail', pattern: /^#\/groups\/([^/?]+)(?:\?tab=([^&]+))?$/, keys: ['id', 'tab'] },
   { name: 'usersList', pattern: /^#\/users$/, keys: [] },
   { name: 'treeDetail', pattern: /^#\/tree\/([^/]+)\/([^/]+)$/, keys: ['nodeId', 'objectId'] },
   { name: 'treeList', pattern: /^#\/tree\/([^/]+)$/, keys: ['nodeId'] },

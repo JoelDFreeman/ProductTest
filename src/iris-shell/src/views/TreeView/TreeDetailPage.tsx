@@ -212,7 +212,7 @@ function GeneralTab({ object, canReset, onReset, onDelete }: GeneralTabProps) {
         { label: 'First name', value: d.firstName ?? '—' },
         { label: 'Last name', value: d.lastName ?? '—' },
         { label: 'Display name', value: d.displayName ?? '—' },
-        { label: 'User principle name', value: d.userPrincipalName ?? '—' },
+        { label: 'User principal name', value: d.userPrincipalName ?? '—' },
         { label: 'Authorization info', value: d.authorizationInfo || '—' },
         { label: 'Description', value: d.description },
       ]
@@ -240,7 +240,7 @@ function GeneralTab({ object, canReset, onReset, onDelete }: GeneralTabProps) {
       </Card>
 
       <Card
-        title="Object Management"
+              title="Object management"
         helper="Manage this object's access, location, and restriction to the domain."
       >
         <div className={styles.linkGroups}>
@@ -248,7 +248,7 @@ function GeneralTab({ object, canReset, onReset, onDelete }: GeneralTabProps) {
             links={[
               { label: 'Reset password', onClick: onReset, disabled: !canReset },
               { label: 'Reset Entra ID MFA', disabled: true },
-              { label: 'Revoke Sessions', disabled: true },
+              { label: 'Revoke sessions', disabled: true },
             ]}
           />
           <LinkList

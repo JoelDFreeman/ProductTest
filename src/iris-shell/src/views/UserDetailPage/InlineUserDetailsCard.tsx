@@ -74,8 +74,8 @@ export function InlineUserDetailsCard({ user, onSave }: InlineUserDetailsCardPro
   return (
     <div className={styles.stack}>
       <Card
-        title="User Details"
-        helper="Manage contact and location information."
+        title="User details"
+        helper="To manage contact and location information."
         actions={editing === 'details' ? <Actions onCancel={cancel} onSave={submitDetails} /> : <Button variant="secondary" size="s" onClick={() => startEditing('details')}>Edit</Button>}
       >
         {editing === 'details' ? (
@@ -110,7 +110,7 @@ export function InlineUserDetailsCard({ user, onSave }: InlineUserDetailsCardPro
       </Card>
 
       <Card
-        title="Job Info"
+        title="Job info"
         helper="Manage employment information."
         actions={editing === 'job' ? <Actions onCancel={cancel} onSave={submitJob} /> : <Button variant="secondary" size="s" onClick={() => startEditing('job')}>Edit</Button>}
       >

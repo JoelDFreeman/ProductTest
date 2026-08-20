@@ -117,7 +117,7 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
               close();
             }}
           >
-            {step === 1 ? <>Save &amp; continue <span aria-hidden="true">→</span></> : 'Create Object'}
+            {step === 1 ? 'Save and continue' : 'Create object'}
           </Button>
         </div>
       }
@@ -193,7 +193,7 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
         </div>
         <aside className={styles.help}>
           <h3>Add new object</h3>
-          <p>Manage identity and display names. Complete the required fields to continue.</p>
+          <p>To manage identity and display names, complete the required fields.</p>
         </aside>
       </div>
     </Modal>

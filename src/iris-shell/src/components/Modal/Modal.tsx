@@ -22,6 +22,7 @@ export interface ModalProps {
   children?: ReactNode;
   /** Footer slot — usually a row of Buttons. */
   footer?: ReactNode;
+  bodyClassName?: string;
   /** Element to focus when the modal opens. Defaults to the first focusable
    *  element in the dialog (usually the close button). */
   initialFocusRef?: RefObject<HTMLElement | null>;
@@ -44,6 +45,7 @@ export function Modal({
   size = 'm',
   children,
   footer,
+  bodyClassName,
   initialFocusRef,
   ariaLabel,
   className,
@@ -158,7 +160,7 @@ export function Modal({
           />
         </header>
 
-        <div className={styles.body}>{children}</div>
+        <div className={cx(styles.body, bodyClassName)}>{children}</div>
 
         {footer && <footer className={styles.footer}>{footer}</footer>}
       </div>

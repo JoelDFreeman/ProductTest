@@ -1,0 +1,19 @@
+.form {
+  display: grid;
+  gap: var(--oi-spacing-s);
+}
+
+.form label {
+  color: var(--oi-content-color-primary);
+  font-weight: 600;
+}
+
+.form select {
+  min-height: 40px;
+  padding: 0 var(--oi-spacing-s);
+  border: 1px solid var(--oi-border-color-muted);
+  border-radius: var(--oi-border-radius-default);
+  color: var(--oi-content-color-primary);
+  background: var(--oi-background-color-primary);
+  font: inherit;
+}

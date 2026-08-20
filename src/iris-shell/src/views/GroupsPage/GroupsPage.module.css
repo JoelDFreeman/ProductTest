@@ -1,0 +1,34 @@
+.toolbarSeparator {
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  background: var(--oi-border-color-default);
+}
+
+.tableWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: var(--oi-spacing-m) var(--oi-spacing-xl);
+  container-type: inline-size;
+  border-top: 1px solid var(--oi-border-color-muted);
+}
+
+.pagination > * {
+  flex: 1;
+}
+
+.nameCell {
+  color: var(--oi-content-color-link);
+  font-weight: var(--oi-text-body-s-strong-font-weight);
+}
+
+.statusBadge {
+  height: 24px;
+  padding-inline: var(--oi-spacing-xs);
+}

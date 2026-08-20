@@ -50,7 +50,7 @@ export function ResetPasswordModal({ open, onClose, user }: ResetPasswordModalPr
       onClose={onClose}
       size="s"
       className={styles.modal}
-      title={isSuccess ? 'Password successfully reset' : 'Reset password'}
+      title={isSuccess ? 'Password Successfully Reset' : 'Reset Password'}
       subtitle={
         isSuccess ? (
           <>

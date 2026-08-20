@@ -209,19 +209,19 @@ function directoryKey(location: string): string {
 
 /** Object types a user can filter by, mirroring the Create menu's icons. */
 const OBJECT_TYPE_OPTIONS: FilterOption[] = [
-  { value: 'ou', label: 'Organizational Unit', icon: 'FolderPlus' },
+  { value: 'ou', label: 'Organizational unit', icon: 'FolderPlus' },
   { value: 'user', label: 'User', icon: 'User' },
   { value: 'computer', label: 'Computer', icon: 'Devices' },
   { value: 'group', label: 'Group', icon: 'UsersThree' },
   { value: 'sharedFolder', label: 'Shared folder', icon: 'Folders' },
   { value: 'contact', label: 'Contact', icon: 'AddressBook' },
-  { value: 'gmsa', label: 'Group Management Service Account', icon: 'UserCircle' },
+  { value: 'gmsa', label: 'Group management service account', icon: 'UserCircle' },
 ];
 
 /** Fields the user can add as filter chips (drives both menus + the chips). */
 const FILTER_FIELDS: FilterFieldConfig[] = [
-  { id: 'displayName', label: 'Display Name', placeholder: 'Select value' },
-  { id: 'objectType', label: 'Object Type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
+  { id: 'displayName', label: 'Display name', placeholder: 'Select value' },
+  { id: 'objectType', label: 'Object type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
   { id: 'tags', label: 'Tags', placeholder: 'Select tag', options: [] },
   { id: 'location', label: 'Location', placeholder: 'Select location', options: [] },
   { id: 'dateActive', label: 'Date active', type: 'date' },
@@ -232,14 +232,14 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
 const PAGE_ACTIONS_MENU_ITEMS: MenuEntry[] = [
   { kind: 'item', label: 'Customize', icon: 'Pencil' },
   { kind: 'divider' },
-  { kind: 'item', label: 'Add to Favorites', icon: 'Star' },
+  { kind: 'item', label: 'Add to favorites', icon: 'Star' },
   { kind: 'divider' },
   { kind: 'item', label: 'Ask AI', icon: 'Sparkle' },
 ];
 
 const TABLE_SETTINGS_MENU_ITEMS: MenuEntry[] = [
-  { kind: 'item', label: 'Adjust Columns', icon: 'Columns' },
-  { kind: 'item', label: 'Add Columns', icon: 'ColumnsPlusLeft' },
+  { kind: 'item', label: 'Adjust columns', icon: 'Columns' },
+  { kind: 'item', label: 'Add columns', icon: 'ColumnsPlusLeft' },
   { kind: 'divider' },
   { kind: 'item', label: 'Export', icon: 'Export' },
   { kind: 'divider' },
@@ -262,13 +262,13 @@ export function UsersPage() {
     const entraSelected = selectedDirectories.has('entra-1') || selectedDirectories.has('entra-2');
     const adSelected = selectedDirectories.has('ad-1') || selectedDirectories.has('ad-2');
     const items: MenuEntry[] = [];
-    if (entraSelected) items.push({ kind: 'item', label: 'New Entra User', icon: 'WindowsLogo', onSelect: () => { setNewUserKind('entra'); setNewUserOpen(true); } });
+    if (entraSelected) items.push({ kind: 'item', label: 'New Entra user', icon: 'WindowsLogo', onSelect: () => { setNewUserKind('entra'); setNewUserOpen(true); } });
     if (adSelected) {
       if (items.length > 0) items.push({ kind: 'divider' });
-      items.push({ kind: 'item', label: 'New AD User', icon: 'WindowsLogo', onSelect: () => { setNewUserKind('ad'); setNewUserOpen(true); } });
+      items.push({ kind: 'item', label: 'New AD user', icon: 'WindowsLogo', onSelect: () => { setNewUserKind('ad'); setNewUserOpen(true); } });
     }
     if (items.length > 0) items.push({ kind: 'divider' });
-    items.push({ kind: 'item', label: 'Add User', icon: 'Plus' });
+    items.push({ kind: 'item', label: 'Add user', icon: 'Plus' });
     return items;
   }, [selectedDirectories]);
   const [query, setQuery] = useState('');
@@ -372,13 +372,13 @@ export function UsersPage() {
   // Quick-action menu shown from each row's trailing "more" button. Reset
   // password and Delete open their respective modals; the rest are PoC no-ops.
   const rowMenuItems = (u: User): MenuEntry[] => [
-    { kind: 'item', label: 'Reset Password', icon: 'Password', onSelect: () => setResetUser(u) },
+    { kind: 'item', label: 'Reset password', icon: 'Password', onSelect: () => setResetUser(u) },
     { kind: 'item', label: 'Copy', icon: 'Copy' },
     { kind: 'item', label: 'Move', icon: 'Folder' },
     { kind: 'item', label: 'Properties', icon: 'UserList', onSelect: () => navigate(`#/users/${u.id}?tab=general`) },
     { kind: 'divider' },
     { kind: 'item', label: 'Connections', icon: 'Plugs', onSelect: () => navigate(`#/users/${u.id}?tab=connections`) },
-    { kind: 'item', label: 'Managed Units', icon: 'Cube', onSelect: () => navigate(`#/users/${u.id}?tab=managed-units`) },
+    { kind: 'item', label: 'Managed units', icon: 'Cube', onSelect: () => navigate(`#/users/${u.id}?tab=managed-units`) },
     { kind: 'item', label: 'Memberships', icon: 'UsersThree', onSelect: () => navigate(`#/users/${u.id}?tab=memberships`) },
     { kind: 'item', label: 'Roles', icon: 'IdentificationBadge', onSelect: () => navigate(`#/users/${u.id}?tab=roles`) },
     { kind: 'divider' },
@@ -416,7 +416,7 @@ export function UsersPage() {
         search={
           <TextInput
             iconLead="MagnifyingGlass"
-            placeholder="Search by name, email, object ID etc."
+            placeholder="Search by name, email, or object ID"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
