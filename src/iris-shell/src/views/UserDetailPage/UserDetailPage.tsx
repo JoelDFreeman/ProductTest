@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent, type Ref } from 'react';
 import { AppShell } from '../AppShell/AppShell.js';
-import { navigate } from '../../lib/router.js';
+import { navigate, useRoute } from '../../lib/router.js';
 import { useUsers, type UserPatch } from '../../lib/usersStore.js';
 import { isTypingTarget } from '../../lib/keyboard.js';
 import { Tabs } from '../../components/Tabs/Tabs.js';
@@ -8,11 +8,12 @@ import { ContentHeader } from '../../components/ContentHeader/ContentHeader.js';
 import { IconButton } from '../../components/IconButton/IconButton.js';
 import { Button } from '../../components/Button/Button.js';
 import { Card } from '../../components/Card/Card.js';
-import { DescriptionList } from '../../components/DescriptionList/DescriptionList.js';
 import { Link, type LinkTone } from '../../components/Link/Link.js';
 import { Menu } from '../../components/Menu/Menu.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
-import { EditPropertiesSheet } from './EditPropertiesSheet.js';
+import { InlinePropertiesCard } from './InlinePropertiesCard.js';
+import { InlineUserDetailsCard } from './InlineUserDetailsCard.js';
+import { OverviewSummary } from './OverviewSummary.js';
 import { ResetPasswordModal } from './ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from './DeleteUserModal/DeleteUserModal.js';
 import type { User } from '../UsersPage/mockUsers.js';
@@ -20,9 +21,16 @@ import styles from './UserDetailPage.module.css';
 
 const TABS = [
   { value: 'overview', label: 'Overview', icon: 'Briefcase' },
-  { value: 'profile', label: 'Profile', icon: 'IdentificationCard' },
-  { value: 'certificates', label: 'Certificates', icon: 'Certificate' },
-  { value: 'history', label: 'History', icon: 'ClockCounterClockwise' },
+  { value: 'general', label: 'General' },
+  { value: 'user-details', label: 'User Details' },
+  { value: 'account', label: 'Account' },
+  { value: 'connections', label: 'Connections' },
+  { value: 'memberships', label: 'Memberships (8)' },
+  { value: 'managed-units', label: 'Managed Units' },
+  { value: 'roles', label: 'Roles' },
+  { value: 'authorization', label: 'Authorization' },
+  { value: 'object', label: 'Object' },
+  { value: 'history', label: 'History' },
 ];
 
 export interface UserDetailPageProps {
@@ -36,25 +44,11 @@ export interface UserDetailPageProps {
  */
 export function UserDetailPage({ userId }: UserDetailPageProps) {
   const { users, getUser, getUserIndex, updateUser } = useUsers();
+  const route = useRoute();
   const user = getUser(userId);
-  const [tab, setTab] = useState('overview');
-  const [editOpen, setEditOpen] = useState(false);
+  const [tab, setTab] = useState(() => route.name === 'userDetail' ? route.params.tab ?? 'general' : 'general');
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-
-  /* ---- ⌘E / Ctrl+E opens the Edit properties sheet ---- */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.repeat && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
-        // Don't hijack the key while the user is typing in a field.
-        if (isTypingTarget(e.target)) return;
-        e.preventDefault();
-        setEditOpen(true);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   /* ---- J / K jump to the next / previous user (Gmail/GitHub style) ---- */
   useEffect(() => {
@@ -168,27 +162,27 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
       />
 
       <div className={styles.content}>
-        {tab === 'overview' && (
+        {tab === 'overview' && <OverviewSummary user={user} />}
+        {tab === 'general' && (
           <OverviewTab
             user={user}
-            onEdit={() => setEditOpen(true)}
+            onSave={(patch) => updateUser(user.id, patch)}
             onReset={() => setResetOpen(true)}
             onDelete={() => setDeleteOpen(true)}
           />
         )}
-        {tab !== 'overview' && (
+        {tab === 'user-details' && (
+          <div className={styles.generalLayout}>
+            <InlineUserDetailsCard user={user} onSave={(patch) => updateUser(user.id, patch)} />
+            <ObjectManagementCard onReset={() => setResetOpen(true)} onDelete={() => setDeleteOpen(true)} />
+          </div>
+        )}
+        {tab !== 'overview' && tab !== 'general' && tab !== 'user-details' && (
           <Card title={TABS.find((t) => t.value === tab)?.label}>
             <p className={styles.placeholder}>Coming soon.</p>
           </Card>
         )}
       </div>
-
-      <EditPropertiesSheet
-        open={editOpen}
-        user={user}
-        onClose={() => setEditOpen(false)}
-        onSave={(patch: UserPatch) => updateUser(user.id, patch)}
-      />
 
       <ResetPasswordModal
         open={resetOpen}
@@ -211,67 +205,47 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
 
 interface OverviewTabProps {
   user: User;
-  onEdit: () => void;
+  onSave: (patch: UserPatch) => void;
   onReset: () => void;
   onDelete: () => void;
 }
 
-function OverviewTab({ user, onEdit, onReset, onDelete }: OverviewTabProps) {
-  const d = user.details;
-
-  const properties = [
-    { label: 'Full Name', value: d.fullName },
-    { label: 'Display name', value: d.displayName },
-    { label: 'Initials', value: d.initials },
-    { label: 'Description', value: d.longDescription },
-  ];
-
+function OverviewTab({ user, onSave, onReset, onDelete }: OverviewTabProps) {
   return (
-    <div className={styles.overview}>
-      <Card
-        title="Properties"
-        helper="Manage user authentication protocols, credential resets, and session tokens."
-        actions={
-          <Tooltip label="Edit properties" shortcut={['⌘', 'E']}>
-            <Button variant="secondary" size="s" onClick={onEdit}>
-              Edit
-            </Button>
-          </Tooltip>
-        }
-      >
-        <DescriptionList items={properties} />
-      </Card>
+    <div className={styles.generalLayout}>
+      <InlinePropertiesCard user={user} onSave={onSave} />
 
-      <div className={styles.cardGrid}>
-        <Card
-          title="Account security & identity"
-          helper="Manage user authentication protocols, credential resets, and session tokens."
-        >
+      <ObjectManagementCard onReset={onReset} onDelete={onDelete} />
+    </div>
+  );
+}
+
+function ObjectManagementCard({ onReset, onDelete }: { onReset: () => void; onDelete: () => void }) {
+  return (
+    <Card
+      className={styles.managementCard}
+      title="Object Management"
+      helper="Manage this object's access, location, and restriction to the domain."
+    >
+      <div className={styles.managementGroups}>
+        <div className={styles.managementGroup}>
           <LinkList
             links={[
               { label: 'Reset password', onClick: onReset },
               { label: 'Reset Entra ID MFA', disabled: true },
-              { label: 'Revoke Sessions', disabled: true },
+              { label: 'Revoke sessions', disabled: true },
             ]}
           />
-        </Card>
-
-        <Card
-          title="Management & organization"
-          helper="Reallocate, duplicate, or adjust the placement of this resource."
-        >
+        </div>
+        <div className={styles.managementGroup}>
           <LinkList
             links={[
               { label: 'Move', disabled: true },
               { label: 'Copy', disabled: true },
             ]}
           />
-        </Card>
-
-        <Card
-          title="Danger zone"
-          helper="Permanently remove, deactivate, or deprovision this resource."
-        >
+        </div>
+        <div className={styles.managementGroup}>
           <LinkList
             tone="danger"
             links={[
@@ -280,9 +254,9 @@ function OverviewTab({ user, onEdit, onReset, onDelete }: OverviewTabProps) {
               { label: 'Delete', onClick: onDelete },
             ]}
           />
-        </Card>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -305,7 +279,7 @@ function LinkList({ links, tone = 'brand' }: LinkListProps) {
           <Link
             href="#"
             tone={tone}
-            className={l.disabled ? styles.linkDisabled : undefined}
+            className={l.disabled ? `${styles.linkDisabled} ${tone === 'danger' ? styles.linkDisabledDanger : styles.linkDisabledBrand}` : undefined}
             aria-disabled={l.disabled || undefined}
             tabIndex={l.disabled ? -1 : undefined}
             onClick={(e: MouseEvent<HTMLAnchorElement>) => {

@@ -15,7 +15,9 @@ export type DirectoryObjectType =
   | 'computer'
   | 'group'
   | 'contact'
-  | 'gmsa';
+  | 'gmsa'
+  | 'agent'
+  | 'application';
 
 export interface DirectoryObjectDetails {
   firstName?: string;
@@ -50,6 +52,8 @@ export const OBJECT_TYPE_META: Record<DirectoryObjectType, { label: string; icon
   group: { label: 'Group', icon: 'UsersThree' },
   contact: { label: 'Contact', icon: 'AddressBook' },
   gmsa: { label: 'Group Management Service Account', icon: 'UserCircle' },
+  agent: { label: 'Agent', icon: 'Robot' },
+  application: { label: 'Application', icon: 'Browsers' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -64,6 +68,7 @@ interface RawNode {
   icon?: string;
   /** How many leaf objects to synthesize for this node's listing. */
   leafCount?: number;
+  objectType?: DirectoryObjectType;
   children?: RawNode[];
 }
 
@@ -121,7 +126,20 @@ const TREE: RawNode[] = [
         type: 'container',
         description: 'Microsoft Entra ID tenants.',
         children: [
-          { id: 'entra-3bf67d', name: '3bf67d.onmicrosoft.com', type: 'container', description: 'Primary Entra tenant.', icon: 'SquaresFour', leafCount: 128 },
+          {
+            id: 'entra-3bf67d',
+            name: '3bf67d.onmicrosoft.com',
+            type: 'container',
+            description: 'Primary Entra tenant.',
+            icon: 'SquaresFour',
+            children: [
+              { id: 'entra-users', name: 'Users', type: 'container', description: 'Entra user objects.', icon: 'Users', leafCount: 32, objectType: 'user' },
+              { id: 'entra-groups', name: 'Groups', type: 'container', description: 'Entra group objects.', icon: 'UsersThree', leafCount: 18, objectType: 'group' },
+              { id: 'entra-devices', name: 'Devices', type: 'container', description: 'Entra device objects.', icon: 'Devices', leafCount: 24, objectType: 'computer' },
+              { id: 'entra-agents', name: 'Agents', type: 'container', description: 'Entra agent objects.', icon: 'Robot', leafCount: 12, objectType: 'agent' },
+              { id: 'entra-applications', name: 'Applications', type: 'container', description: 'Entra application objects.', icon: 'Browsers', leafCount: 20, objectType: 'application' },
+            ],
+          },
         ],
       },
     ],
@@ -258,7 +276,7 @@ const LEAF_TYPES: DirectoryObjectType[] = [
 const pick = <T,>(rng: () => number, arr: T[]): T => arr[Math.floor(rng() * arr.length)];
 
 function makeLeaf(node: RawNode, index: number, rng: () => number, path: string): DirectoryObject {
-  const type = pick(rng, LEAF_TYPES);
+  const type = node.objectType ?? pick(rng, LEAF_TYPES);
   const description = pick(rng, DESCRIPTIONS);
   const id = `${node.id}-o${index}`;
 
@@ -276,6 +294,15 @@ function makeLeaf(node: RawNode, index: number, rng: () => number, path: string)
     return {
       id, name, type, description, parentId: node.id, isContainer: false,
       details: { description, location: path, memberCount: 1 + Math.floor(rng() * 40), created: '2024-08-14' },
+    };
+  }
+  if (type === 'agent' || type === 'application') {
+    const name = type === 'agent'
+      ? `${pick(rng, ['Sync', 'Provisioning', 'Directory'])} Agent ${index + 1}`
+      : `${pick(rng, ['Access', 'Identity', 'Admin'])} Application ${index + 1}`;
+    return {
+      id, name, type, description, parentId: node.id, isContainer: false,
+      details: { description, location: path, created: '2024-09-18' },
     };
   }
   // user / contact

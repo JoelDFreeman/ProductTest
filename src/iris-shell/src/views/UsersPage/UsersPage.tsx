@@ -2,12 +2,15 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AppShell } from '../AppShell/AppShell.js';
 import { navigate } from '../../lib/router.js';
 import { useUsers } from '../../lib/usersStore.js';
+import { useDirectory } from '../../lib/directoryStore.js';
+import { showToast } from '../../lib/toastStore.js';
 import { useAppShell } from '../../lib/appShellContext.js';
 import { isTypingTarget } from '../../lib/keyboard.js';
 import { cx } from '../../lib/cx.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { IconButton } from '../../components/IconButton/IconButton.js';
 import { Icon } from '../../components/Icon/Icon.js';
+import { Avatar } from '../../components/Avatar/Avatar.js';
 import { Menu, type MenuEntry } from '../../components/Menu/Menu.js';
 import {
   Filters,
@@ -26,23 +29,23 @@ import { Pagination } from '../../components/Pagination/Pagination.js';
 import { ActionBar } from '../../components/ActionBar/ActionBar.js';
 import { ResetPasswordModal } from '../UserDetailPage/ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserModal.js';
+import { NewUserModal, type NewUserModalProps } from './NewUserModal.js';
 import type { User } from './mockUsers.js';
 import styles from './UsersPage.module.css';
 
-/** Map a status string to its badge tone + icon. Unknown statuses fall back
- *  to a neutral question mark so the column never breaks visually. */
-function statusBadge(status: string): { tone: BadgeTone; icon: string } {
+/** Map a status string to its semantic badge tone. */
+function statusBadge(status: string): { tone: BadgeTone } {
   switch (status.toLowerCase()) {
     case 'active':
-      return { tone: 'success', icon: 'CheckCircle' };
+      return { tone: 'success' };
     case 'inactive':
     case 'disabled':
-      return { tone: 'error', icon: 'XCircle' };
+      return { tone: 'error' };
     case 'unknown':
     case 'pending':
-      return { tone: 'warning', icon: 'WarningCircle' };
+      return { tone: 'warning' };
     default:
-      return { tone: 'neutral', icon: 'Question' };
+      return { tone: 'neutral' };
   }
 }
 
@@ -120,7 +123,7 @@ function CopyObjectIdButton({ objectId, userName }: { objectId: string; userName
 const COLUMNS: DataTableColumn<User>[] = [
   {
     key: 'name',
-    header: 'Name',
+    header: 'Displayname',
     icon: 'IdentificationCard',
     width: '180px',
     cell: (u) => (
@@ -129,10 +132,13 @@ const COLUMNS: DataTableColumn<User>[] = [
         className={styles.nameCell}
         onClick={(e: MouseEvent<HTMLAnchorElement>) => {
           e.preventDefault();
-          navigate(`#/users/${u.id}`);
+          navigate(`#/users/${u.id}?tab=overview`);
         }}
       >
-        {u.name}
+        <span className={styles.nameContent}>
+          <Avatar src={u.avatarUrl} name={u.name} size="s" />
+          <span>{u.name}</span>
+        </span>
       </Link>
     ),
   },
@@ -142,9 +148,9 @@ const COLUMNS: DataTableColumn<User>[] = [
     icon: 'UserCircleCheck',
     width: '128px',
     cell: (u) => {
-      const { tone, icon } = statusBadge(u.status);
+      const { tone } = statusBadge(u.status);
       return (
-        <Badge tone={tone} icon={icon}>
+        <Badge tone={tone} className={styles.statusBadge}>
           {u.status}
         </Badge>
       );
@@ -160,33 +166,46 @@ const COLUMNS: DataTableColumn<User>[] = [
     cell: (u) => <span title={u.description}>{u.description}</span>,
   },
   {
-    key: 'email',
-    header: 'Email',
-    icon: 'Envelope',
-    width: '200px',
-    cell: (u) => (
-      <Link href={`mailto:${u.email}`} title={u.email} className={styles.emailCell}>
-        {u.email}
-      </Link>
-    ),
-  },
-  {
-    key: 'objectId',
-    header: 'Object ID',
+    key: 'tags',
+    header: 'Tags',
     icon: 'Tag',
-    minWidth: '246px',
-    maxWidth: '360px',
+    minWidth: '190px',
+    maxWidth: '320px',
     grow: 1,
     cell: (u) => (
-      <span className={styles.objectIdCell}>
-        <span className={cx(styles.mono, styles.objectIdValue)} title={u.objectId}>
-          {u.objectId}
-        </span>
-        <CopyObjectIdButton objectId={u.objectId} userName={u.name} />
+      <span className={styles.tagsCell}>
+        {getTags(u).map((tag) => (
+          <span key={tag} className={styles.tag}>
+            <Icon name="X" size="12px" />
+            <span>{tag}</span>
+          </span>
+        ))}
       </span>
     ),
   },
+  {
+    key: 'location',
+    header: 'Location',
+    icon: 'BuildingOffice',
+    width: '180px',
+    cell: (u) => <span>{getLocation(u)}</span>,
+  },
 ];
+
+function getTags(user: User): string[] {
+  return user.tags ?? (user.status.toLowerCase() === 'active' ? ['HR', 'Engineering'] : ['Security', 'Platform']);
+}
+
+function getLocation(user: User): string {
+  return user.location ?? 'Entra 1';
+}
+
+function directoryKey(location: string): string {
+  if (location === 'Entra 2') return 'entra-2';
+  if (location.startsWith('AD-1\\')) return 'ad-1';
+  if (location.startsWith('AD-2\\')) return 'ad-2';
+  return 'entra-1';
+}
 
 /** Object types a user can filter by, mirroring the Create menu's icons. */
 const OBJECT_TYPE_OPTIONS: FilterOption[] = [
@@ -203,45 +222,58 @@ const OBJECT_TYPE_OPTIONS: FilterOption[] = [
 const FILTER_FIELDS: FilterFieldConfig[] = [
   { id: 'displayName', label: 'Display Name', placeholder: 'Select value' },
   { id: 'objectType', label: 'Object Type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
-  { id: 'tags', label: 'Tags', placeholder: 'Select tag' },
-  { id: 'location', label: 'Location', placeholder: 'Select location' },
+  { id: 'tags', label: 'Tags', placeholder: 'Select tag', options: [] },
+  { id: 'location', label: 'Location', placeholder: 'Select location', options: [] },
   { id: 'dateActive', label: 'Date active', type: 'date' },
   { id: 'dateCreated', label: 'Date created', type: 'date' },
 ];
 
 /** Page-level actions shown in the heading's overflow menu. */
 const PAGE_ACTIONS_MENU_ITEMS: MenuEntry[] = [
-  { kind: 'item', label: 'Export CSV', icon: 'Export' },
-  { kind: 'divider' },
   { kind: 'item', label: 'Customize', icon: 'Pencil' },
-  { kind: 'item', label: 'Add page to favorites', icon: 'Star' },
+  { kind: 'divider' },
+  { kind: 'item', label: 'Add to Favorites', icon: 'Star' },
+  { kind: 'divider' },
+  { kind: 'item', label: 'Ask AI', icon: 'Sparkle' },
+];
+
+const TABLE_SETTINGS_MENU_ITEMS: MenuEntry[] = [
+  { kind: 'item', label: 'Adjust Columns', icon: 'Columns' },
+  { kind: 'item', label: 'Add Columns', icon: 'ColumnsPlusLeft' },
+  { kind: 'divider' },
+  { kind: 'item', label: 'Export', icon: 'Export' },
+  { kind: 'divider' },
+  { kind: 'item', label: 'Ask AI', icon: 'Sparkle' },
 ];
 
 /** Items-per-page choices offered below the users table. */
-const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
-
-const ADD_USER_MENU_ITEMS: MenuEntry[] = [
-  { kind: 'item', label: 'User', icon: 'User' },
-  { kind: 'item', label: 'Group', icon: 'UsersThree' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Computer', icon: 'Devices' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Organizational Unit', icon: 'FolderPlus' },
-  { kind: 'item', label: 'Shared Folder', icon: 'Folders' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Contact', icon: 'AddressBook' },
-  { kind: 'item', label: 'Group Management Service Account', icon: 'UserCircle' },
-];
+const PAGE_SIZE_OPTIONS = [15, 20, 30, 40, 50];
 
 /**
  * UsersPage — the Directory Management → Users listing view.
  */
 export function UsersPage() {
-  const { users } = useUsers();
+  const { users, addUser } = useUsers();
+  const { selectedDirectories } = useDirectory();
   const { aiOpen, setAiOpen, setAiContext } = useAppShell();
+  const [newUserOpen, setNewUserOpen] = useState(false);
+  const [newUserKind, setNewUserKind] = useState<'entra' | 'ad'>('entra');
+  const createMenuItems = useMemo<MenuEntry[]>(() => {
+    const entraSelected = selectedDirectories.has('entra-1') || selectedDirectories.has('entra-2');
+    const adSelected = selectedDirectories.has('ad-1') || selectedDirectories.has('ad-2');
+    const items: MenuEntry[] = [];
+    if (entraSelected) items.push({ kind: 'item', label: 'New Entra User', icon: 'WindowsLogo', onSelect: () => { setNewUserKind('entra'); setNewUserOpen(true); } });
+    if (adSelected) {
+      if (items.length > 0) items.push({ kind: 'divider' });
+      items.push({ kind: 'item', label: 'New AD User', icon: 'WindowsLogo', onSelect: () => { setNewUserKind('ad'); setNewUserOpen(true); } });
+    }
+    if (items.length > 0) items.push({ kind: 'divider' });
+    items.push({ kind: 'item', label: 'Add User', icon: 'Plus' });
+    return items;
+  }, [selectedDirectories]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[1]);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [selected, setSelected] = useState<Set<RowKey>>(() => new Set());
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -280,7 +312,19 @@ export function UsersPage() {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
   const clearFilters = () => setActiveFilters([]);
 
-  const filterMenuItems: MenuEntry[] = FILTER_FIELDS.map((f) => {
+  const filterFields = useMemo<FilterFieldConfig[]>(() => {
+    const tags = Array.from(new Set(users.flatMap((u) => getTags(u)))).sort();
+    const locations = Array.from(new Set(users.map((u) => getLocation(u)))).sort();
+    return FILTER_FIELDS.map((field) =>
+      field.id === 'tags'
+        ? { ...field, options: tags.map((value) => ({ value, label: value })) }
+        : field.id === 'location'
+          ? { ...field, options: locations.map((value) => ({ value, label: value })) }
+          : field,
+    );
+  }, [users]);
+
+  const filterMenuItems: MenuEntry[] = filterFields.map((f) => {
     // Fields without a value-selection UI would produce a chip the user can't
     // configure, so disable them until that UI lands.
     const supported = fieldHasValueUi(f);
@@ -294,13 +338,20 @@ export function UsersPage() {
 
   const rows = useMemo<User[]>(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter((u) =>
+    const filtered = users.filter((u) => selectedDirectories.has(directoryKey(getLocation(u))) &&
       [u.name, u.description, u.email, u.objectId].some((v) =>
         v.toLowerCase().includes(q),
       ),
     );
-  }, [users, query]);
+    return filtered.filter((user) =>
+      activeFilters.every((filter) => {
+        if (!filter.value) return true;
+        if (filter.fieldId === 'tags') return getTags(user).includes(filter.value);
+        if (filter.fieldId === 'location') return getLocation(user) === filter.value;
+        return true;
+      }),
+    );
+  }, [users, query, activeFilters, selectedDirectories]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -324,12 +375,12 @@ export function UsersPage() {
     { kind: 'item', label: 'Reset Password', icon: 'Password', onSelect: () => setResetUser(u) },
     { kind: 'item', label: 'Copy', icon: 'Copy' },
     { kind: 'item', label: 'Move', icon: 'Folder' },
-    { kind: 'item', label: 'Properties', icon: 'UserList' },
+    { kind: 'item', label: 'Properties', icon: 'UserList', onSelect: () => navigate(`#/users/${u.id}?tab=general`) },
     { kind: 'divider' },
-    { kind: 'item', label: 'Connections', icon: 'Plugs' },
-    { kind: 'item', label: 'Managed Units', icon: 'Cube' },
-    { kind: 'item', label: 'Memberships', icon: 'UsersThree' },
-    { kind: 'item', label: 'Roles', icon: 'IdentificationBadge' },
+    { kind: 'item', label: 'Connections', icon: 'Plugs', onSelect: () => navigate(`#/users/${u.id}?tab=connections`) },
+    { kind: 'item', label: 'Managed Units', icon: 'Cube', onSelect: () => navigate(`#/users/${u.id}?tab=managed-units`) },
+    { kind: 'item', label: 'Memberships', icon: 'UsersThree', onSelect: () => navigate(`#/users/${u.id}?tab=memberships`) },
+    { kind: 'item', label: 'Roles', icon: 'IdentificationBadge', onSelect: () => navigate(`#/users/${u.id}?tab=roles`) },
     { kind: 'divider' },
     { kind: 'item', label: 'Deprovision', icon: 'Prohibit', danger: true },
     { kind: 'item', label: 'Deactivate', icon: 'XCircle', danger: true },
@@ -385,23 +436,22 @@ export function UsersPage() {
               onOpenChange={setFilterMenuOpen}
               trigger={({ ref, onClick, expanded }) => (
                 <Tooltip label="Add filter" shortcut={['⌘', '⇧', 'F']}>
-                  <Button
+                  <IconButton
                     ref={ref as React.Ref<HTMLButtonElement>}
-                    iconLead="FunnelSimple"
-                    variant="secondary"
+                    icon="FunnelSimple"
+                    ariaLabel="Add filter"
                     aria-haspopup="menu"
                     aria-expanded={expanded}
                     onClick={onClick}
                   >
-                    Filter
-                  </Button>
+                  </IconButton>
                 </Tooltip>
               )}
             />
             <Menu
               ariaLabel="Create options"
               align="end"
-              items={ADD_USER_MENU_ITEMS}
+              items={createMenuItems}
               trigger={({ ref, onClick, expanded }) => (
                 <Button
                   ref={ref as React.Ref<HTMLButtonElement>}
@@ -423,7 +473,7 @@ export function UsersPage() {
           activeFilters.length > 0 ? (
             <Filters
               filters={activeFilters}
-              fields={FILTER_FIELDS}
+              fields={filterFields}
               onAddFilter={addFilter}
               onValueChange={setFilterValue}
               onRemove={removeFilter}
@@ -438,6 +488,8 @@ export function UsersPage() {
           rows={pageRows}
           columns={COLUMNS}
           ariaLabel="Users"
+          density="compact"
+          appearance="light"
           selected={selected}
           onSelectionChange={setSelected}
           rowLabel={(u) => u.name}
@@ -459,6 +511,24 @@ export function UsersPage() {
               )}
             />
           )}
+          headerAction={
+            <Menu
+              ariaLabel="Table settings"
+              align="end"
+              items={TABLE_SETTINGS_MENU_ITEMS}
+              trigger={({ ref, onClick, expanded }) => (
+                <IconButton
+                  ref={ref as React.Ref<HTMLButtonElement>}
+                  icon="SlidersHorizontal"
+                  ariaLabel="Table settings"
+                  size="s"
+                  aria-haspopup="menu"
+                  aria-expanded={expanded}
+                  onClick={onClick}
+                />
+              )}
+            />
+          }
           emptyState={
             query
               ? {
@@ -484,6 +554,9 @@ export function UsersPage() {
             pageSize={pageSize}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
             onPageSizeChange={handlePageSizeChange}
+            pageSizeSuffix="/ Page"
+            showBoundaryControls
+            appearance="compact"
             ariaLabel="Users pages"
           />
         </div>
@@ -505,7 +578,15 @@ export function UsersPage() {
             },
             { icon: 'Copy', label: 'Copy', iconOnly: aiOpen, onClick: () => undefined },
             { icon: 'Folder', label: 'Move', iconOnly: aiOpen, onClick: () => undefined },
-            { icon: 'UserList', label: 'Properties', iconOnly: aiOpen, onClick: () => undefined },
+            {
+              icon: 'UserList',
+              label: 'Properties',
+              iconOnly: aiOpen,
+              onClick: () => {
+                const selectedUser = users.find((user) => selected.has(user.id));
+                if (selectedUser) navigate(`#/users/${selectedUser.id}?tab=general`);
+              },
+            },
             {
               icon: 'Sparkle',
               label: 'Ask AI',
@@ -540,6 +621,47 @@ export function UsersPage() {
       {deleteUser && (
         <DeleteUserModal open onClose={() => setDeleteUser(null)} user={deleteUser} />
       )}
+      <NewUserModal
+        open={newUserOpen}
+        objectKind={newUserKind}
+        directories={newUserKind === 'ad'
+          ? ['AD-1', 'AD-2'].filter((directory) => selectedDirectories.has(directory === 'AD-1' ? 'ad-1' : 'ad-2'))
+          : ['Entra 1', 'Entra 2'].filter((directory) => selectedDirectories.has(directory === 'Entra 1' ? 'entra-1' : 'entra-2'))}
+        onClose={() => setNewUserOpen(false)}
+        onCreate={(draft: Parameters<NewUserModalProps['onCreate']>[0]) => {
+          const fullName = `${draft.firstName} ${draft.lastName}`.trim();
+          const createdUser: User = {
+            id: `${draft.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
+            name: fullName,
+            status: draft.inactive ? 'Inactive' : 'Active',
+            description: `Newly created ${newUserKind === 'ad' ? 'AD' : 'Entra'} user.`,
+            email: `${draft.userLogonName.toLowerCase()}@example.com`,
+            objectId: `new-${Date.now()}`,
+            location: draft.directory,
+            tags: ['New'],
+            details: {
+              firstName: draft.firstName,
+              lastName: draft.lastName,
+              fullName,
+              displayName: draft.displayName,
+              userPrincipalName: `${draft.userLogonName}@${draft.directory.replace(/[^a-zA-Z0-9]/g, '')}`,
+              authorizationInfo: '',
+              directory: draft.directory.replace(/[^a-zA-Z0-9]/g, ''),
+              initials: draft.initials,
+              longDescription: 'Newly created Entra user.',
+              city: '', state: '', postalCode: '', country: '', businessPhone: '', mobilePhone: '',
+              email: `${draft.userLogonName.toLowerCase()}@example.com`, otherEmails: '', faxPhone: '',
+              mailNickname: draft.name, jobTitle: '', companyName: '', department: '', employeeId: '',
+              employeeType: '', hireDate: '', login: draft.userLogonName, type: 'User', managementUnit: 'Management',
+            },
+          };
+          addUser(createdUser);
+          showToast(
+            `${fullName} successfully created. User created in ${draft.directory}.`,
+            () => navigate(`#/users/${createdUser.id}?tab=overview`),
+          );
+        }}
+      />
     </AppShell>
   );
 }

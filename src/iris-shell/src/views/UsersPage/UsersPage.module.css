@@ -48,6 +48,41 @@
   font-weight: var(--oi-text-body-s-strong-font-weight);
 }
 
+.nameContent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oi-spacing-s);
+  min-width: 0;
+}
+
+.statusBadge {
+  height: 24px;
+  padding-inline: var(--oi-spacing-xs);
+}
+
+.tagsCell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oi-spacing-xs);
+  min-width: 0;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oi-spacing-xs);
+  max-width: 140px;
+  padding: 1px var(--oi-spacing-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--oi-border-color-default);
+  border-radius: var(--oi-border-radius-max);
+  color: var(--oi-content-color-secondary);
+  font-size: var(--oi-text-caption-font-size);
+  line-height: var(--oi-text-caption-line-height);
+}
+
 /* Email column — kept clickable (mailto:) but with default primary content
    color so it sits at the same visual weight as the rest of the row. Brand
    color reasserts on hover so the affordance stays discoverable. */

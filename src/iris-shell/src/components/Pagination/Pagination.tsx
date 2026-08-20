@@ -44,6 +44,9 @@ export interface PaginationProps {
   pageSizeSuffix?: string;
   /** Accessible label for the per-page menu (default `'Items per page'`). */
   pageSizeMenuLabel?: string;
+  showBoundaryControls?: boolean;
+  /** Visual appearance for page controls. */
+  appearance?: 'default' | 'compact';
   className?: string;
 }
 
@@ -121,6 +124,8 @@ export function Pagination({
   pageSizeLabel = (n) => `${n} per page`,
   pageSizeSuffix = 'per page',
   pageSizeMenuLabel = 'Items per page',
+  showBoundaryControls = false,
+  appearance = 'default',
   className,
 }: PaginationProps) {
   // Clamp to a valid page so out-of-range props can't produce invalid
@@ -174,7 +179,7 @@ export function Pagination({
   if (variant === 'simplified') {
     const nav = (
       <nav
-        className={cx(styles.root, styles.simplified, className)}
+        className={cx(styles.root, styles.simplified, appearance === 'compact' && styles.compact, className)}
         aria-label={ariaLabel}
       >
         <button
@@ -212,7 +217,12 @@ export function Pagination({
   const items = getPaginationRange(safePage, pageCount, siblingCount, boundaryCount);
 
   const nav = (
-    <nav className={cx(styles.root, className)} aria-label={ariaLabel}>
+    <nav className={cx(styles.root, appearance === 'compact' && styles.compact, className)} aria-label={ariaLabel}>
+      {showBoundaryControls && (
+        <button type="button" className={styles.item} onClick={() => onPageChange(1)} disabled={atStart} aria-label="First page">
+          <Icon name="CaretDoubleLeft" size="16px" />
+        </button>
+      )}
       <button
         type="button"
         className={styles.item}
@@ -252,6 +262,11 @@ export function Pagination({
       >
         <Icon name="CaretRight" size="16px" />
       </button>
+      {showBoundaryControls && (
+        <button type="button" className={styles.item} onClick={() => onPageChange(pageCount)} disabled={atEnd} aria-label="Last page">
+          <Icon name="CaretDoubleRight" size="16px" />
+        </button>
+      )}
     </nav>
   );
 

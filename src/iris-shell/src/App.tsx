@@ -50,7 +50,7 @@ export default function App() {
           {route.name === 'identityHome' && <IdentityManagerPage />}
           {route.name === 'safeguardHome' && <SafeguardPage />}
           <CommandPalette />
-          <Toast message={toast.message} onDismiss={toast.dismiss} />
+          <Toast message={toast.message} action={toast.action} onDismiss={toast.dismiss} />
         </AppShellProvider>
       </DirectoryProvider>
     </UsersProvider>

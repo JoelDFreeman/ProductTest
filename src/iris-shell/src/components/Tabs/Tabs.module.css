@@ -107,6 +107,7 @@
   line-height: var(--oi-text-body-s-line-height);
   font-weight: var(--oi-text-body-s-font-weight);
   color: var(--oi-content-color-tertiary);
+  white-space: nowrap;
 }
 
 /* Reserve the bold (selected) width at all times so activating a tab doesn't

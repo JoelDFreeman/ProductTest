@@ -17,22 +17,35 @@
   padding: var(--oi-spacing-l) var(--oi-spacing-xl) var(--oi-spacing-xl);
 }
 
-.overview {
+.generalLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  align-items: start;
+  gap: var(--oi-spacing-l);
+}
+
+@media (max-width: 960px) {
+  .generalLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.managementGroups {
   display: flex;
   flex-direction: column;
   gap: var(--oi-spacing-s);
 }
 
-.cardGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--oi-spacing-s);
+.managementCard {
+  padding: 0;
+  background: transparent;
+  border: 0;
 }
 
-@media (max-width: 960px) {
-  .cardGrid {
-    grid-template-columns: 1fr;
-  }
+.managementGroup {
+  padding: var(--oi-spacing-s);
+  border: 0.5px var(--oi-border-style-solid) var(--oi-border-color-default);
+  border-radius: var(--oi-border-radius-default);
 }
 
 /* ---------- link lists inside cards ---------- */
@@ -53,9 +66,16 @@
 }
 
 .linkDisabled {
-  color: var(--oi-content-color-disabled);
   pointer-events: none;
   cursor: default;
+}
+
+.linkDisabledBrand {
+  color: var(--oi-content-color-link);
+}
+
+.linkDisabledDanger {
+  color: var(--oi-color-red-600);
 }
 
 .placeholder {
