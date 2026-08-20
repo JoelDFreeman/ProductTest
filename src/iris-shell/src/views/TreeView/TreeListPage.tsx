@@ -33,7 +33,7 @@ const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
 
 /** Object types offered in the "Object Type" filter. */
 const OBJECT_TYPE_OPTIONS: FilterOption[] = [
-  { value: 'ou', label: 'Organizational Unit', icon: 'Folder' },
+  { value: 'ou', label: 'Organizational unit', icon: 'Folder' },
   { value: 'user', label: 'User', icon: 'User' },
   { value: 'computer', label: 'Computer', icon: 'Devices' },
   { value: 'group', label: 'Group', icon: 'UsersThree' },
@@ -43,7 +43,7 @@ const OBJECT_TYPE_OPTIONS: FilterOption[] = [
 /** Fields the user can add as filter chips (drives both menus + the chips). */
 const FILTER_FIELDS: FilterFieldConfig[] = [
   { id: 'name', label: 'Name', placeholder: 'Select value' },
-  { id: 'objectType', label: 'Object Type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
+  { id: 'objectType', label: 'Object type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
   { id: 'location', label: 'Location', placeholder: 'Select location' },
   { id: 'dateCreated', label: 'Date created', type: 'date' },
 ];
@@ -138,15 +138,15 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
 
     if (isAdDirectory) {
       return [
-        { kind: 'item', label: 'New AD User', icon: 'WindowsLogo' },
-        { kind: 'item', label: 'Add User', icon: 'Plus' },
+        { kind: 'item', label: 'New AD user', icon: 'WindowsLogo' },
+        { kind: 'item', label: 'Add user', icon: 'Plus' },
         { kind: 'divider' },
-        { kind: 'item', label: 'New Group', icon: 'UsersThree' },
+        { kind: 'item', label: 'New group', icon: 'UsersThree' },
         { kind: 'divider' },
-        { kind: 'item', label: 'New Organizational Unit', icon: 'FolderSimplePlus' },
-        { kind: 'item', label: 'New Group Managed Service Account', icon: 'UserCircle' },
-        { kind: 'item', label: 'New Shared Folder', icon: 'Folders' },
-        { kind: 'item', label: 'New Asset', icon: 'Desktop' },
+        { kind: 'item', label: 'New organizational unit', icon: 'FolderSimplePlus' },
+        { kind: 'item', label: 'New group managed service account', icon: 'UserCircle' },
+        { kind: 'item', label: 'New shared folder', icon: 'Folders' },
+        { kind: 'item', label: 'New asset', icon: 'Desktop' },
         { kind: 'divider' },
         { kind: 'item', label: 'Bulk create', icon: 'Plus' },
         { kind: 'item', label: 'Bulk invite', icon: 'Plus' },
@@ -155,14 +155,14 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
     }
 
     if (isEntraDirectory && /group/.test(context)) {
-      return [{ kind: 'item', label: 'New Group', icon: 'UsersThree' }];
+      return [{ kind: 'item', label: 'New group', icon: 'UsersThree' }];
     }
     if (isEntraDirectory && /device|computer/.test(context)) {
-      return [{ kind: 'item', label: 'Add Device', icon: 'Devices' }];
+      return [{ kind: 'item', label: 'Add device', icon: 'Devices' }];
     }
     return [
-      { kind: 'item', label: 'New Entra User', icon: 'WindowsLogo' },
-      { kind: 'item', label: 'Add User', icon: 'Plus' },
+      { kind: 'item', label: 'New Entra user', icon: 'WindowsLogo' },
+      { kind: 'item', label: 'Add user', icon: 'Plus' },
     ];
   }, [allRows, getPath, nodeId, nodeName]);
 
@@ -237,7 +237,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
     const fav = isFavorite(o.id);
     return [
       ...(canReset
-        ? ([{ kind: 'item', label: 'Reset Password', icon: 'Password', onSelect: () => setResetTarget(o) }] as MenuEntry[])
+                  ? ([{ kind: 'item', label: 'Reset password', icon: 'Password', onSelect: () => setResetTarget(o) }] as MenuEntry[])
         : []),
       { kind: 'item', label: 'Copy', icon: 'Copy' },
       { kind: 'item', label: 'Move', icon: 'Folder' },
@@ -328,7 +328,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         search={
           <TextInput
             iconLead="MagnifyingGlass"
-            placeholder="Search by name, email, object ID etc."
+            placeholder="Search by name, email, or object ID"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);

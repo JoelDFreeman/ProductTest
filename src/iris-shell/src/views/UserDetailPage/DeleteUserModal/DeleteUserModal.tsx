@@ -15,6 +15,7 @@ export interface DeleteUserModalProps {
   open: boolean;
   onClose: () => void;
   user: DeleteTarget;
+  objectLabel?: string;
   /** Called after the user confirms the (PoC) deletion. */
   onDeleted?: (user: DeleteTarget) => void;
 }
@@ -27,7 +28,7 @@ export interface DeleteUserModalProps {
  * shake) and reveals an inline error. A match simply closes the modal (and
  * calls `onDeleted` for callers that want to react).
  */
-export function DeleteUserModal({ open, onClose, user, onDeleted }: DeleteUserModalProps) {
+export function DeleteUserModal({ open, onClose, user, objectLabel = 'user', onDeleted }: DeleteUserModalProps) {
   const inputId = useId();
   const helpId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,10 +70,10 @@ export function DeleteUserModal({ open, onClose, user, onDeleted }: DeleteUserMo
       onClose={onClose}
       size="s"
       className={styles.modal}
-      title="Delete user"
+      title={`Delete ${objectLabel.charAt(0).toUpperCase()}${objectLabel.slice(1)}`}
       subtitle={
         <>
-          Are you sure you want to delete the user <strong>{user.name}</strong>? This action cannot
+          Are you sure you want to delete the {objectLabel} <strong>{user.name}</strong>? This action cannot
           be undone.
         </>
       }
@@ -85,7 +86,7 @@ export function DeleteUserModal({ open, onClose, user, onDeleted }: DeleteUserMo
             Cancel
           </Button>
           <Button variant="danger" onClick={handleDelete}>
-            Delete User
+            <>Delete {objectLabel}</>
           </Button>
         </>
       }
@@ -98,7 +99,7 @@ export function DeleteUserModal({ open, onClose, user, onDeleted }: DeleteUserMo
           <TextInput
             id={inputId}
             ref={inputRef}
-            placeholder="User"
+            placeholder={objectLabel}
             value={confirmText}
             onChange={handleChange}
             invalid={error}

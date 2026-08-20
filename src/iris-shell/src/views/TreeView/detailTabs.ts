@@ -10,11 +10,11 @@ import type { DirectoryObjectType } from '../../lib/directoryData.js';
 const USER_TABS: TabItem[] = [
   { value: 'overview', label: 'Overview', icon: 'Briefcase' },
   { value: 'general', label: 'General', icon: 'IdentificationCard' },
-  { value: 'user-details', label: 'User Details', icon: 'IdentificationBadge' },
+  { value: 'user-details', label: 'User details', icon: 'IdentificationBadge' },
   { value: 'account', label: 'Account', icon: 'UserCircle' },
   { value: 'connections', label: 'Connections', icon: 'Plugs' },
   { value: 'memberships', label: 'Memberships', icon: 'UsersThree' },
-  { value: 'managed-units', label: 'Managed Units', icon: 'FolderStar' },
+  { value: 'managed-units', label: 'Managed units', icon: 'FolderStar' },
   { value: 'roles', label: 'Roles', icon: 'ShieldCheck' },
   { value: 'authorization', label: 'Authorization', icon: 'Key' },
   { value: 'object', label: 'Object', icon: 'Cube' },
@@ -24,7 +24,7 @@ const USER_TABS: TabItem[] = [
 const COMPUTER_TABS: TabItem[] = [
   { value: 'overview', label: 'Overview', icon: 'Briefcase' },
   { value: 'general', label: 'General', icon: 'Devices' },
-  { value: 'operating-system', label: 'Operating System', icon: 'Cube' },
+  { value: 'operating-system', label: 'Operating system', icon: 'Cube' },
   { value: 'connections', label: 'Connections', icon: 'Plugs' },
   { value: 'object', label: 'Object', icon: 'Cube' },
   { value: 'history', label: 'History', icon: 'ClockCounterClockwise' },
@@ -34,7 +34,7 @@ const GROUP_TABS: TabItem[] = [
   { value: 'overview', label: 'Overview', icon: 'Briefcase' },
   { value: 'general', label: 'General', icon: 'UsersThree' },
   { value: 'members', label: 'Members', icon: 'Users' },
-  { value: 'managed-units', label: 'Managed Units', icon: 'FolderStar' },
+  { value: 'managed-units', label: 'Managed units', icon: 'FolderStar' },
   { value: 'object', label: 'Object', icon: 'Cube' },
   { value: 'history', label: 'History', icon: 'ClockCounterClockwise' },
 ];

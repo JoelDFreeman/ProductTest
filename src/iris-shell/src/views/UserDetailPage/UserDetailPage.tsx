@@ -22,11 +22,11 @@ import styles from './UserDetailPage.module.css';
 const TABS = [
   { value: 'overview', label: 'Overview', icon: 'Briefcase' },
   { value: 'general', label: 'General' },
-  { value: 'user-details', label: 'User Details' },
+  { value: 'user-details', label: 'User details' },
   { value: 'account', label: 'Account' },
   { value: 'connections', label: 'Connections' },
   { value: 'memberships', label: 'Memberships (8)' },
-  { value: 'managed-units', label: 'Managed Units' },
+  { value: 'managed-units', label: 'Managed units' },
   { value: 'roles', label: 'Roles' },
   { value: 'authorization', label: 'Authorization' },
   { value: 'object', label: 'Object' },
@@ -224,7 +224,7 @@ function ObjectManagementCard({ onReset, onDelete }: { onReset: () => void; onDe
   return (
     <Card
       className={styles.managementCard}
-      title="Object Management"
+      title="Object management"
       helper="Manage this object's access, location, and restriction to the domain."
     >
       <div className={styles.managementGroups}>

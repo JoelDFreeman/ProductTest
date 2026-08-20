@@ -31,7 +31,7 @@ const CONTEXT_ITEMS: MenuEntry[] = [
   { kind: 'submenu', label: 'Create', icon: 'Plus', items: CREATE_ITEMS },
   { kind: 'item', label: 'View properties', icon: 'UserList' },
   { kind: 'item', label: 'Move', icon: 'Folder' },
-  { kind: 'item', label: 'Add to Favorites', icon: 'Heart' },
+  { kind: 'item', label: 'Add to favorites', icon: 'Heart' },
   { kind: 'divider' },
   { kind: 'item', label: 'Delete', icon: 'Trash', danger: true },
 ];

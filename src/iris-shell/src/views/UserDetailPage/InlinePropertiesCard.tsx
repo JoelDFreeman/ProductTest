@@ -91,7 +91,7 @@ export function InlinePropertiesCard({ user, onSave }: InlinePropertiesCardProps
     <Card
       className={styles.card}
       title="Properties"
-      helper="Manage identity and display names."
+      helper="To manage identity and display names."
       actions={
         editing ? (
           <div className={styles.actions}>

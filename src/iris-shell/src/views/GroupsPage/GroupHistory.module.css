@@ -1,0 +1,26 @@
+.container {
+  overflow: hidden;
+  border: 1px solid var(--oi-border-color-muted);
+  border-radius: var(--oi-border-radius-l);
+  background: var(--oi-background-color-primary);
+}
+
+.toolbar {
+  padding: var(--oi-spacing-l);
+}
+
+.toolbar h2,
+.toolbar p {
+  margin: 0;
+}
+
+.toolbar h2 {
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-heading-05-font-size);
+}
+
+.toolbar p {
+  margin-top: var(--oi-spacing-xs);
+  color: var(--oi-content-color-tertiary);
+  font-size: var(--oi-text-caption-font-size);
+}
