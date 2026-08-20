@@ -9,6 +9,7 @@ import {
 } from '../../lib/directoryData.js';
 import { Icon } from '../Icon/Icon.js';
 import { Menu, type MenuEntry } from '../Menu/Menu.js';
+import { showToast } from '../../lib/toastStore.js';
 import styles from './Tree.module.css';
 
 // Object types offered under the context menu's "Create" submenu. Mirrors
@@ -53,11 +54,12 @@ function selectedNodeId(routeName: string, params: Record<string, string>): stri
  * the route so deep-links and drill-in stay in sync.
  */
 export function Tree() {
-  const { nodeTree, getPath } = useDirectory();
+  const { nodeTree, getPath, moveObject } = useDirectory();
   const route = useRoute();
   const selectedId = selectedNodeId(route.name, route.params as Record<string, string>);
 
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   // Fully unfurled by default; users can still collapse individual nodes.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(ALL_NODE_IDS));
 
@@ -105,6 +107,26 @@ export function Tree() {
             expanded={expanded}
             onToggle={toggle}
             onContextMenu={openContextMenu}
+            onDropObject={(object, targetNodeId) => {
+              const targetName = getPath(targetNodeId).at(-1)?.name ?? targetNodeId;
+              if (!getPath(targetNodeId).some((crumb) => /active director|o1d|o2d|ad-\d/i.test(crumb.name))) return;
+              const previousParentId = object.parentId;
+              moveObject(object, targetNodeId);
+              showToast(
+                `${object.name} moved to ${targetName} successfully.`,
+                () => {
+                  moveObject(object, previousParentId);
+                  showToast('Move undone.');
+                },
+                undefined,
+                'Undo',
+                () => navigate(`#/tree/${targetNodeId}/${object.id}`),
+                'View object',
+              );
+              setDropTargetId(null);
+            }}
+            dropTargetId={dropTargetId}
+            onDropTargetChange={setDropTargetId}
             separatorBefore={node.id === 'managed-directories'}
           />
         ))}
@@ -129,6 +151,9 @@ interface TreeNodeViewProps {
   expanded: Set<string>;
   onToggle: (id: string) => void;
   onContextMenu: (e: MouseEvent) => void;
+  onDropObject: (object: import('../../lib/directoryData.js').DirectoryObject, targetNodeId: string) => void;
+  dropTargetId: string | null;
+  onDropTargetChange: (id: string | null) => void;
   separatorBefore?: boolean;
 }
 
@@ -139,6 +164,9 @@ function TreeNodeView({
   expanded,
   onToggle,
   onContextMenu,
+  onDropObject,
+  dropTargetId,
+  onDropTargetChange,
   separatorBefore,
 }: TreeNodeViewProps) {
   const hasChildren = node.hasChildren;
@@ -159,9 +187,26 @@ function TreeNodeView({
       <li>
         <div
           ref={rowRef}
-          className={cx(styles.row, isSelected && styles.rowSelected)}
+          className={cx(styles.row, isSelected && styles.rowSelected, dropTargetId === node.id && styles.rowDropTarget)}
           style={{ paddingLeft: `calc(${depth} * var(--oi-spacing-m))` }}
           onContextMenu={onContextMenu}
+          onDragOver={(event) => {
+            if (event.dataTransfer.types.includes('application/x-ars-ad-object') || event.dataTransfer.types.includes('text/plain')) {
+              event.preventDefault();
+              onDropTargetChange(node.id);
+            }
+          }}
+          onDragLeave={() => onDropTargetChange(null)}
+          onDrop={(event) => {
+            const raw = event.dataTransfer.getData('application/x-ars-ad-object') || event.dataTransfer.getData('text/plain');
+            if (!raw) return;
+            event.preventDefault();
+            try {
+              onDropObject(JSON.parse(raw), node.id);
+            } catch {
+              onDropTargetChange(null);
+            }
+          }}
         >
           {hasChildren ? (
             <button
@@ -209,6 +254,9 @@ function TreeNodeView({
                 expanded={expanded}
                 onToggle={onToggle}
                 onContextMenu={onContextMenu}
+                onDropObject={onDropObject}
+                dropTargetId={dropTargetId}
+                onDropTargetChange={onDropTargetChange}
               />
             ))}
           </ul>

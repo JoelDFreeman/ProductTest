@@ -9,6 +9,7 @@ import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserMod
 import { MoveGroupsModal } from './MoveGroupsModal.js';
 import type { Group } from './mockGroups.js';
 import styles from './GroupOwnership.module.css';
+import { isActiveDirectoryLocation } from '../../lib/directoryData.js';
 
 export function GroupOwnership({ group }: { group: Group }) {
   const [editing, setEditing] = useState(false);
@@ -16,6 +17,7 @@ export function GroupOwnership({ group }: { group: Group }) {
   const [fields, setFields] = useState<Record<string, string>>({});
   const [moveOpen, setMoveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const isAdGroup = isActiveDirectoryLocation(group.location);
   const { updateGroup, addGroup, removeGroup } = useGroups();
   const setField = (field: string) => (value: string) => setFields((current) => ({ ...current, [field]: value }));
   const editActions = editing ? <div className={styles.actions}><Button variant="secondary" size="s" onClick={() => setEditing(false)}>Cancel</Button><Button variant="primary" size="s" onClick={() => { setEditing(false); showToast(`${group.name} ownership saved.`); }}>Save</Button></div> : <Button variant="secondary" size="s" onClick={() => setEditing(true)}>Edit</Button>;
@@ -48,10 +50,10 @@ export function GroupOwnership({ group }: { group: Group }) {
       <section className={styles.management} aria-label="Object management">
         <h2>Object management</h2>
         <p>To manage this object's access, location, and restriction to the domain.</p>
-        <div className={styles.actionGroup}><button type="button" onClick={() => setMoveOpen(true)}>Move</button><button type="button" onClick={() => { addGroup({ ...group, id: `group-copy-${Date.now()}`, name: `Copy of ${group.name}` }); showToast(`${group.name} copied.`); }}>Copy</button></div>
+        <div className={styles.actionGroup}>{isAdGroup && <button type="button" onClick={() => setMoveOpen(true)}>Move</button>}<button type="button" onClick={() => { addGroup({ ...group, id: `group-copy-${Date.now()}`, name: `Copy of ${group.name}` }); showToast(`${group.name} copied.`); }}>Copy</button></div>
         <div className={`${styles.actionGroup} ${styles.danger}`}><button type="button" onClick={() => { updateGroup(group.id, { status: 'Inactive' }); showToast(`${group.name} deprovisioned.`); }}>Deprovision</button><button type="button" onClick={() => setDeleteOpen(true)}>Delete</button></div>
       </section>
-      <MoveGroupsModal open={moveOpen} count={1} directories={['Entra 1', 'Entra 2', 'AD-1', 'AD-2']} onClose={() => setMoveOpen(false)} onMove={(directory) => { updateGroup(group.id, { location: directory }); showToast(`${group.name} moved.`); }} />
+      {isAdGroup && <MoveGroupsModal open={moveOpen} count={1} onClose={() => setMoveOpen(false)} onMove={(directory) => { const previousLocation = group.location; updateGroup(group.id, { location: directory }); showToast(`${group.name} moved successfully`, () => { updateGroup(group.id, { location: previousLocation }); showToast('Move undone.'); }, undefined, 'Undo', () => navigate(`#/groups/${group.id}?tab=overview`), 'View object'); }} />}
       <DeleteUserModal open={deleteOpen} user={group} objectLabel="group" onClose={() => setDeleteOpen(false)} onDeleted={() => { removeGroup(group.id); navigate('#/groups'); showToast(`${group.name} deleted.`); }} />
     </div>
   );

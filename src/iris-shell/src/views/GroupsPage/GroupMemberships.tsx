@@ -65,7 +65,9 @@ export function GroupMemberships({ group }: { group: Group }) {
         open={addMembersOpen}
         onClose={() => setAddMembersOpen(false)}
         onAdd={(newMembers) => {
-          const additions = newMembers.filter((item) => !memberRows.some((existing) => existing.id === item.id));
+          const additions: Member[] = newMembers
+            .filter((item) => !memberRows.some((existing) => existing.id === item.id))
+            .map((item) => ({ id: item.id, name: item.name, type: item.type === 'User' ? 'User' : 'Group', location: '' }));
           setMemberRows((current) => [...current, ...additions]);
           if (additions.length > 0) showToast(`${additions.length} member${additions.length === 1 ? '' : 's'} added to ${group.name}.`);
         }}

@@ -229,6 +229,7 @@ export const MOCK_USERS: User[] = [
     objectId: 'g9j7h8i0-3k5f-0l8g-he9i-7d8e9f0a1b2c',
     // The Figma "Ethan Brooks (MKim)" example overrides the derived fields.
     details: {
+      ...makeDetails('Markus Kim', 'Markus.Kim3'),
       firstName: 'Markus',
       lastName: 'Kim',
       fullName: 'Markus Kim',

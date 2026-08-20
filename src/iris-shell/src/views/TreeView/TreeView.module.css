@@ -48,6 +48,14 @@
   min-width: 0;
 }
 
+.nameCell[draggable='true'] {
+  cursor: grab;
+}
+
+.nameCell[draggable='true']:active {
+  cursor: grabbing;
+}
+
 .nameIcon {
   display: inline-flex;
   flex-shrink: 0;

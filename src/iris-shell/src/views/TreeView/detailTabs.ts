@@ -52,6 +52,8 @@ const TABS_BY_TYPE: Record<DirectoryObjectType, TabItem[]> = {
   computer: COMPUTER_TABS,
   group: GROUP_TABS,
   gmsa: GROUP_TABS,
+  agent: CONTAINER_TABS,
+  application: CONTAINER_TABS,
   ou: CONTAINER_TABS,
   container: CONTAINER_TABS,
 };

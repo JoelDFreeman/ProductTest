@@ -17,3 +17,78 @@
   background: var(--oi-background-color-primary);
   font: inherit;
 }
+.modal {
+  width: min(512px, calc(100vw - 12px));
+}
+
+.body {
+  padding: 0;
+}
+
+.browseLayout {
+  min-height: 100%;
+}
+
+.treePanel {
+  overflow: auto;
+  min-height: 480px;
+  padding: var(--oi-spacing-m) var(--oi-spacing-s);
+}
+
+.treeRow {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  gap: var(--oi-spacing-xs);
+}
+
+.treeRowSelected {
+  background: var(--oi-background-color-secondary);
+}
+
+.caret,
+.caretSpacer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--oi-content-color-secondary);
+}
+
+.caret {
+  cursor: pointer;
+}
+
+.treeLabel {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  gap: var(--oi-spacing-xs);
+  height: 32px;
+  padding: 0 var(--oi-spacing-s) 0 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--oi-content-color-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.treeLabel span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .treePanel {
+    min-height: 400px;
+  }
+}
