@@ -8,8 +8,8 @@
 .root::before {
   position: absolute;
   top: 0;
-  left: calc(var(--active-step-index) * 200px);
-  width: 200px;
+  left: var(--active-step-left);
+  width: var(--active-step-width);
   height: 2px;
   background: var(--oi-button-background-primary);
   content: '';
@@ -49,6 +49,10 @@
   text-align: left;
   appearance: none;
   line-height: normal;
+}
+
+.item:first-child {
+  padding-left: var(--oi-spacing-l);
 }
 
 .label {

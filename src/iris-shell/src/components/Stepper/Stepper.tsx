@@ -20,7 +20,10 @@ export function Stepper({ items, activeIndex, completedThrough = activeIndex, ar
       className={styles.root}
       role="tablist"
       aria-label={ariaLabel}
-      style={{ '--active-step-index': activeIndex } as CSSProperties}
+      style={{
+        '--active-step-left': activeIndex === 0 ? 'var(--oi-spacing-l)' : `${activeIndex * 200}px`,
+        '--active-step-width': activeIndex === 0 ? 'calc(200px - var(--oi-spacing-l))' : '200px',
+      } as CSSProperties}
     >
       {items.map((item, index) => {
         const complete = index < completedThrough;
