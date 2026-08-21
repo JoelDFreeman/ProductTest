@@ -99,6 +99,15 @@
   background-color: var(--oi-background-color-brand);
 }
 
+.row:hover .cell {
+  background-color: var(--oi-background-color-secondary);
+}
+
+.rowSelected .cell,
+.rowSelected:hover .cell {
+  background-color: var(--oi-background-color-brand);
+}
+
 .cell {
   display: inline-flex;
   align-items: center;
