@@ -45,6 +45,10 @@
 /* Name link in the table — slightly heavier weight to anchor the row's
    identity. Inherits Link's brand color and hover treatment otherwise. */
 .nameCell {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
   font-weight: var(--oi-text-body-s-strong-font-weight);
 }
 
