@@ -148,6 +148,11 @@
   color: var(--oi-content-color-tertiary);
 }
 
+.light .rowSelected .cell,
+.light .rowSelected:hover .cell {
+  background-color: var(--oi-background-color-brand);
+}
+
 .cell:last-child {
   border-right: 0;
 }
