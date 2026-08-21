@@ -378,7 +378,6 @@ export function UsersPage() {
           rows={pageRows}
           columns={COLUMNS}
           ariaLabel="Users"
-          density="compact"
           appearance="light"
           selected={selected}
           onSelectionChange={setSelected}
