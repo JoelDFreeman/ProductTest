@@ -340,6 +340,7 @@ function makeLeaf(node: RawNode, index: number, rng: () => number, path: string)
 const leafCache = new Map<string, DirectoryObject[]>();
 const movedObjectParents = new Map<string, string>();
 const movedObjects = new Map<string, DirectoryObject>();
+const createdObjects = new Map<string, DirectoryObject>();
 
 function getLeaves(node: RawNode): DirectoryObject[] {
   const cached = leafCache.get(node.id);
@@ -376,7 +377,12 @@ export function getChildren(nodeId: string): DirectoryObject[] {
   const containers = (node.children ?? []).map(nodeAsObject);
   const leaves = getLeaves(node).filter((object) => (movedObjectParents.get(object.id) ?? object.parentId) === nodeId);
   const movedIn = Array.from(movedObjects.values()).filter((object) => movedObjectParents.get(object.id) === nodeId && object.parentId !== nodeId && !leaves.some((item) => item.id === object.id));
-  return [...containers, ...leaves, ...movedIn];
+  const created = Array.from(createdObjects.values()).filter((object) => object.parentId === nodeId);
+  return [...containers, ...leaves, ...movedIn, ...created];
+}
+
+export function addDirectoryObject(object: DirectoryObject): void {
+  createdObjects.set(object.id, object);
 }
 
 export function moveDirectoryObject(object: DirectoryObject, targetNodeId: string): void {

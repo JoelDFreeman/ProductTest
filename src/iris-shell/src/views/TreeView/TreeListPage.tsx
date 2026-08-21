@@ -20,6 +20,8 @@ import type { Crumb } from '../../components/AppHeader/AppHeader.js';
 import { ResetPasswordModal } from '../UserDetailPage/ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserModal.js';
 import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
+import { NewUserModal, type NewUserModalProps } from '../UsersPage/NewUserModal.js';
+import { NewGroupModal, type NewGroupDraft } from '../GroupsPage/NewGroupModal.js';
 import { showToast } from '../../lib/toastStore.js';
 import styles from './TreeView.module.css';
 import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
@@ -43,7 +45,7 @@ export interface TreeListPageProps {
  */
 export function TreeListPage({ nodeId }: TreeListPageProps) {
   const { appliedFilters } = useAdvancedSearch();
-  const { isContainer, getChildren, getPath, getNodeName, getNodeIcon, moveObject } = useDirectory();
+  const { isContainer, getChildren, getPath, getNodeName, getNodeIcon, moveObject, addObject } = useDirectory();
   const { aiOpen } = useAppShell();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
 
@@ -54,6 +56,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
   const [resetTarget, setResetTarget] = useState<DirectoryObject | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DirectoryObject | null>(null);
   const [moveTargets, setMoveTargets] = useState<DirectoryObject[]>([]);
+  const [createKind, setCreateKind] = useState<'user' | 'group' | null>(null);
 
   // Reset transient view state when the selected node changes.
   useEffect(() => {
@@ -79,10 +82,10 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
 
     if (isAdDirectory) {
       return [
-        { kind: 'item', label: 'New AD user', icon: 'WindowsLogo' },
-        { kind: 'item', label: 'Add user', icon: 'Plus' },
+        { kind: 'item', label: 'New AD user', icon: 'WindowsLogo', onSelect: () => setCreateKind('user') },
+        { kind: 'item', label: 'Add user', icon: 'Plus', onSelect: () => setCreateKind('user') },
         { kind: 'divider' },
-        { kind: 'item', label: 'New group', icon: 'UsersThree' },
+        { kind: 'item', label: 'New group', icon: 'UsersThree', onSelect: () => setCreateKind('group') },
         { kind: 'divider' },
         { kind: 'item', label: 'New organizational unit', icon: 'FolderSimplePlus' },
         { kind: 'item', label: 'New group managed service account', icon: 'UserCircle' },
@@ -106,6 +109,35 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
       { kind: 'item', label: 'Add user', icon: 'Plus' },
     ];
   }, [allRows, getPath, nodeId, nodeName]);
+
+  const createUser = (draft: Parameters<NewUserModalProps['onCreate']>[0]) => {
+    const fullName = `${draft.firstName} ${draft.lastName}`.trim();
+    addObject({
+      id: `tree-user-${Date.now()}`,
+      name: fullName || draft.name,
+      type: 'user',
+      description: `Newly created AD user.`,
+      parentId: nodeId,
+      isContainer: false,
+      details: { firstName: draft.firstName, lastName: draft.lastName, displayName: draft.displayName, description: 'Newly created AD user.', location: nodeName ?? nodeId },
+    });
+    showToast(`${fullName || draft.name} successfully created`);
+    setCreateKind(null);
+  };
+
+  const createGroup = (draft: NewGroupDraft) => {
+    addObject({
+      id: `tree-group-${Date.now()}`,
+      name: draft.displayName || draft.name,
+      type: 'group',
+      description: draft.description,
+      parentId: nodeId,
+      isContainer: false,
+      details: { displayName: draft.displayName, description: draft.description, memberCount: 0, location: nodeName ?? nodeId },
+    });
+    showToast(`${draft.displayName || draft.name} successfully created`);
+    setCreateKind(null);
+  };
 
   const rows = useMemo<DirectoryObject[]>(() => {
     const q = query.trim().toLowerCase();
@@ -406,6 +438,8 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
           ],
         ]}
       />
+      {createKind === 'user' && <NewUserModal open objectKind="ad" directories={[nodeName ?? 'AD Folder']} onClose={() => setCreateKind(null)} onCreate={createUser} />}
+      {createKind === 'group' && <NewGroupModal open directories={[nodeName ?? 'AD Folder']} onClose={() => setCreateKind(null)} onCreate={createGroup} />}
 
       {resetTarget && (
         <ResetPasswordModal open onClose={() => setResetTarget(null)} user={{ name: resetTarget.name }} />
