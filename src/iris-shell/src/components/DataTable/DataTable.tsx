@@ -62,6 +62,8 @@ export interface DataTableProps<TRow extends DataTableRow> {
   appearance?: 'default' | 'light';
   /** Rendered inside the table body when `rows` is empty. */
   emptyState?: DataTableEmptyState;
+  /** Replaces the standard empty-state copy when a view needs a custom result state. */
+  emptyContent?: ReactNode;
   className?: string;
 }
 
@@ -89,6 +91,7 @@ export function DataTable<TRow extends DataTableRow>({
   density = 'default',
   appearance = 'default',
   emptyState,
+  emptyContent,
   className,
 }: DataTableProps<TRow>) {
   const selectable = !!selected && !!onSelectionChange;
@@ -188,19 +191,21 @@ export function DataTable<TRow extends DataTableRow>({
         {rows.length === 0 && emptyState && (
           <div role="row" className={styles.emptyRow}>
             <div role="cell" className={styles.emptyCell}>
-              <p className={styles.emptyTitle}>{emptyState.title}</p>
-              {emptyState.description && (
-                <p className={styles.emptyDescription}>{emptyState.description}</p>
-              )}
-              {emptyState.actionLabel && emptyState.onAction && (
-                <button
-                  type="button"
-                  className={styles.emptyAction}
-                  onClick={emptyState.onAction}
-                >
-                  {emptyState.actionLabel}
-                </button>
-              )}
+              {emptyContent ?? <>
+                <p className={styles.emptyTitle}>{emptyState.title}</p>
+                {emptyState.description && (
+                  <p className={styles.emptyDescription}>{emptyState.description}</p>
+                )}
+                {emptyState.actionLabel && emptyState.onAction && (
+                  <button
+                    type="button"
+                    className={styles.emptyAction}
+                    onClick={emptyState.onAction}
+                  >
+                    {emptyState.actionLabel}
+                  </button>
+                )}
+              </>}
             </div>
           </div>
         )}

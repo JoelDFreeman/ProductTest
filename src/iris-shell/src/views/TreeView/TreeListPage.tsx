@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AppShell } from '../AppShell/AppShell.js';
 import { navigate } from '../../lib/router.js';
 import { useAppShell } from '../../lib/appShellContext.js';
-import { isTypingTarget } from '../../lib/keyboard.js';
 import { useDirectory } from '../../lib/directoryStore.js';
 import { OBJECT_TYPE_META, type DirectoryObject } from '../../lib/directoryData.js';
 import { useFavorites } from '../../lib/useFavorites.js';
@@ -14,13 +13,6 @@ import { Link } from '../../components/Link/Link.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { ContentHeader } from '../../components/ContentHeader/ContentHeader.js';
 import { Menu, type MenuEntry } from '../../components/Menu/Menu.js';
-import {
-  Filters,
-  fieldHasValueUi,
-  type ActiveFilter,
-  type FilterFieldConfig,
-  type FilterOption,
-} from '../../components/Filters/Filters.js';
 import { DataTable, type DataTableColumn, type RowKey } from '../../components/DataTable/DataTable.js';
 import { Pagination } from '../../components/Pagination/Pagination.js';
 import { ActionBar } from '../../components/ActionBar/ActionBar.js';
@@ -30,25 +22,11 @@ import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserMod
 import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
 import { showToast } from '../../lib/toastStore.js';
 import styles from './TreeView.module.css';
+import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
+import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
+import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
 
 const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
-
-/** Object types offered in the "Object Type" filter. */
-const OBJECT_TYPE_OPTIONS: FilterOption[] = [
-  { value: 'ou', label: 'Organizational unit', icon: 'Folder' },
-  { value: 'user', label: 'User', icon: 'User' },
-  { value: 'computer', label: 'Computer', icon: 'Devices' },
-  { value: 'group', label: 'Group', icon: 'UsersThree' },
-  { value: 'contact', label: 'Contact', icon: 'AddressBook' },
-];
-
-/** Fields the user can add as filter chips (drives both menus + the chips). */
-const FILTER_FIELDS: FilterFieldConfig[] = [
-  { id: 'name', label: 'Name', placeholder: 'Select value' },
-  { id: 'objectType', label: 'Object type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
-  { id: 'location', label: 'Location', placeholder: 'Select location' },
-  { id: 'dateCreated', label: 'Date created', type: 'date' },
-];
 
 /** Href for a row: containers drill in; leaves open detail. */
 function hrefFor(obj: DirectoryObject, nodeId: string): string {
@@ -64,6 +42,7 @@ export interface TreeListPageProps {
  * toolbar + ActionBar design as the Users listing (different columns + data).
  */
 export function TreeListPage({ nodeId }: TreeListPageProps) {
+  const { appliedFilters } = useAdvancedSearch();
   const { isContainer, getChildren, getPath, getNodeName, getNodeIcon, moveObject } = useDirectory();
   const { aiOpen } = useAppShell();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
@@ -75,55 +54,13 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
   const [resetTarget, setResetTarget] = useState<DirectoryObject | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DirectoryObject | null>(null);
   const [moveTargets, setMoveTargets] = useState<DirectoryObject[]>([]);
-  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
-  const filterIdRef = useRef(0);
 
   // Reset transient view state when the selected node changes.
   useEffect(() => {
     setQuery('');
     setPage(1);
     setSelected(new Set());
-    setActiveFilters([]);
   }, [nodeId]);
-
-  /* ---- ⌘⇧F / Ctrl+Shift+F opens the Add filter menu ---- */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (
-        !e.repeat &&
-        (e.metaKey || e.ctrlKey) &&
-        e.shiftKey &&
-        e.key.toLowerCase() === 'f'
-      ) {
-        if (isTypingTarget(e.target)) return;
-        e.preventDefault();
-        setFilterMenuOpen(true);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const addFilter = (fieldId: string) => {
-    filterIdRef.current += 1;
-    setActiveFilters((prev) => [...prev, { id: `f${filterIdRef.current}`, fieldId }]);
-  };
-  const setFilterValue = (id: string, value: string) =>
-    setActiveFilters((prev) => prev.map((f) => (f.id === id ? { ...f, value } : f)));
-  const removeFilter = (id: string) =>
-    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
-  const clearFilters = () => setActiveFilters([]);
-
-  const filterMenuItems: MenuEntry[] = FILTER_FIELDS.map((f) => {
-    const supported = fieldHasValueUi(f);
-    return {
-      kind: 'item',
-      label: f.label,
-      disabled: !supported,
-      onSelect: supported ? () => addFilter(f.id) : undefined,
-    };
-  });
 
   const nodeName = getNodeName(nodeId);
   const known = isContainer(nodeId);
@@ -172,13 +109,19 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
 
   const rows = useMemo<DirectoryObject[]>(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return allRows;
-    return allRows.filter((o) =>
+    const searchedRows = !q ? allRows : allRows.filter((o) =>
       [o.name, OBJECT_TYPE_META[o.type].label, o.description].some((v) =>
         v.toLowerCase().includes(q),
       ),
     );
-  }, [allRows, query]);
+    return searchedRows.filter((object) => appliedFilters.every((filter) => {
+      if (!filter.value) return true;
+      if (filter.fieldId === 'objectType') return OBJECT_TYPE_META[object.type].label.toLowerCase().includes(filter.value.toLowerCase());
+      if (filter.fieldId === 'location') return (object.details.location ?? '').toLowerCase().includes(filter.value.toLowerCase());
+      if (filter.fieldId === 'displayName') return object.name.toLowerCase().includes(filter.value.toLowerCase());
+      return true;
+    }));
+  }, [allRows, query, appliedFilters]);
 
   const columns = useMemo<DataTableColumn<DirectoryObject>[]>(
     () => [
@@ -353,27 +296,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         toolbarActions={
           <>
             <span className={styles.toolbarSeparator} aria-hidden="true" />
-            <Menu
-              ariaLabel="Filter by"
-              align="end"
-              items={filterMenuItems}
-              open={filterMenuOpen}
-              onOpenChange={setFilterMenuOpen}
-              trigger={({ ref, onClick, expanded }) => (
-                <Tooltip label="Add filter" shortcut={['⌘', '⇧', 'F']}>
-                  <Button
-                    ref={ref as React.Ref<HTMLButtonElement>}
-                    iconLead="FunnelSimple"
-                    variant="secondary"
-                    aria-haspopup="menu"
-                    aria-expanded={expanded}
-                    onClick={onClick}
-                  >
-                    Filter
-                  </Button>
-                </Tooltip>
-              )}
-            />
+            <AdvancedSearchButton shortcut={['⌘', '⇧', 'F']} />
             <Menu
               ariaLabel="Create options"
               align="end"
@@ -394,18 +317,6 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
               )}
             />
           </>
-        }
-        filters={
-          activeFilters.length > 0 ? (
-            <Filters
-              filters={activeFilters}
-              fields={FILTER_FIELDS}
-              onAddFilter={addFilter}
-              onValueChange={setFilterValue}
-              onRemove={removeFilter}
-              onClear={clearFilters}
-            />
-          ) : undefined
         }
       />
 
@@ -435,6 +346,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
               )}
             />
           )}
+          emptyContent={appliedFilters.length > 0 && !query ? <AppliedFiltersEmptyState /> : undefined}
           emptyState={
             query
               ? {

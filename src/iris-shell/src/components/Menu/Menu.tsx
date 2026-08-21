@@ -72,6 +72,8 @@ export interface MenuSubmenuEntry {
   kind: 'submenu';
   label: string;
   icon?: string;
+  selected?: boolean;
+  onOpen?: () => void;
   items: MenuEntry[];
 }
 
@@ -281,27 +283,6 @@ export function Menu({
     };
   }, [open, close]);
 
-  // Move focus into the menu once it's actually mounted so the whole menu is
-  // keyboard-operable (Arrow/Home/End nav + Enter to select). The menu only
-  // renders after `pos` is computed — a render *after* `open` flips true — so
-  // this must also depend on `pos`; a one-shot ref prevents re-focusing the
-  // first item on every scroll/resize reposition while the menu stays open.
-  const hasAutoFocused = useRef(false);
-  useEffect(() => {
-    if (!open) {
-      hasAutoFocused.current = false;
-      return;
-    }
-    if (hasAutoFocused.current || !menuRef.current) return;
-    const first = menuRef.current.querySelector<HTMLElement>(
-      '[role="menuitemradio"]:not([disabled]):not([aria-disabled="true"]), [role="menuitem"]:not([disabled]):not([aria-disabled="true"])',
-    );
-    if (first) {
-      first.focus();
-      hasAutoFocused.current = true;
-    }
-  }, [open, pos]);
-
   return (
     <>
       {trigger?.({ ref: triggerRef, onClick: toggle, expanded: !!open })}
@@ -349,6 +330,8 @@ function SubmenuItem({ item, close }: { item: MenuSubmenuEntry; close: () => voi
   };
   const openSub = () => {
     cancelClose();
+    item.onOpen?.();
+    rowRef.current?.focus();
     const r = rowRef.current?.getBoundingClientRect();
     if (r) setPos({ top: r.top, left: r.right });
     setOpen(true);

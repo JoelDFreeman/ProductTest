@@ -20,6 +20,9 @@ import { isActiveDirectoryLocation } from '../../lib/directoryData.js';
 import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserModal.js';
 import { MoveGroupsModal } from './MoveGroupsModal.js';
 import styles from './GroupsPage.module.css';
+import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
+import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
+import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
 
 const PAGE_ACTIONS: MenuEntry[] = [
   { kind: 'item', label: 'Customize', icon: 'Pencil' },
@@ -39,6 +42,7 @@ const TABLE_SETTINGS: MenuEntry[] = [
 ];
 
 export function GroupsPage() {
+  const { appliedFilters } = useAdvancedSearch();
   const { selectedDirectories } = useDirectory();
   const { groups, addGroup, updateGroup, removeGroup } = useGroups();
   const [query, setQuery] = useState('');
@@ -50,8 +54,14 @@ export function GroupsPage() {
   const [moveGroupsOpen, setMoveGroupsOpen] = useState(false);
   const rows = useMemo(() => groups.filter((group) => {
     const directoryKey = group.location.startsWith('AD-1') ? 'ad-1' : group.location.startsWith('AD-2') ? 'ad-2' : group.location === 'Entra 2' ? 'entra-2' : 'entra-1';
-    return selectedDirectories.has(directoryKey) && [group.name, group.description, group.location].some((value) => value.toLowerCase().includes(query.trim().toLowerCase()));
-  }), [groups, query, selectedDirectories]);
+    return selectedDirectories.has(directoryKey) && [group.name, group.description, group.location].some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) && appliedFilters.every((filter) => {
+      if (!filter.value) return true;
+      if (filter.fieldId === 'displayName') return group.name.toLowerCase().includes(filter.value.toLowerCase());
+      if (filter.fieldId === 'location') return group.location.toLowerCase().includes(filter.value.toLowerCase());
+      if (filter.fieldId === 'objectType') return 'group'.includes(filter.value.toLowerCase());
+      return true;
+    });
+  }), [groups, query, selectedDirectories, appliedFilters]);
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
   const pageRows = rows.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -104,10 +114,10 @@ export function GroupsPage() {
         title="Groups"
         actions={<Menu ariaLabel="Page actions" align="end" items={PAGE_ACTIONS} trigger={({ ref, onClick, expanded }) => <Tooltip label="More options"><IconButton ref={ref as Ref<HTMLButtonElement>} icon="DotsThree" ariaLabel="Page actions" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} /></Tooltip>} />}
         search={<TextInput iconLead="MagnifyingGlass" placeholder="Search groups" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} aria-label="Search groups" />}
-        toolbarActions={<><span className={styles.toolbarSeparator} aria-hidden="true" /><Button variant="primary" iconLead="Plus" onClick={() => setNewGroupOpen(true)}>Create</Button></>}
+        toolbarActions={<><span className={styles.toolbarSeparator} aria-hidden="true" /><AdvancedSearchButton /><Button variant="primary" iconLead="Plus" onClick={() => setNewGroupOpen(true)}>Create</Button></>}
       />
       <div className={styles.tableWrap}>
-        <DataTable rows={pageRows} columns={columns} selected={selected} onSelectionChange={setSelected} rowLabel={(group) => group.name} density="compact" appearance="light" rowActions={(group) => <Menu ariaLabel={`Actions for ${group.name}`} align="end" items={rowMenuItems(group)} trigger={({ ref, onClick, expanded }) => <IconButton ref={ref as Ref<HTMLButtonElement>} icon="DotsThree" ariaLabel={`Actions for ${group.name}`} size="s" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} />} />} headerAction={<Menu ariaLabel="Table settings" align="end" items={TABLE_SETTINGS} trigger={({ ref, onClick, expanded }) => <IconButton ref={ref as Ref<HTMLButtonElement>} icon="SlidersHorizontal" ariaLabel="Table settings" size="s" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} />} />} />
+        <DataTable rows={pageRows} columns={columns} selected={selected} onSelectionChange={setSelected} rowLabel={(group) => group.name} density="compact" appearance="light" emptyContent={appliedFilters.length > 0 && !query ? <AppliedFiltersEmptyState /> : undefined} emptyState={{ title: 'No groups found', description: 'This directory has no groups.' }} rowActions={(group) => <Menu ariaLabel={`Actions for ${group.name}`} align="end" items={rowMenuItems(group)} trigger={({ ref, onClick, expanded }) => <IconButton ref={ref as Ref<HTMLButtonElement>} icon="DotsThree" ariaLabel={`Actions for ${group.name}`} size="s" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} />} />} headerAction={<Menu ariaLabel="Table settings" align="end" items={TABLE_SETTINGS} trigger={({ ref, onClick, expanded }) => <IconButton ref={ref as Ref<HTMLButtonElement>} icon="SlidersHorizontal" ariaLabel="Table settings" size="s" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} />} />} />
       </div>
       {pageCount > 1 && <div className={styles.pagination}><Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} pageSize={pageSize} pageSizeOptions={[15, 30, 50]} onPageSizeChange={setPageSize} pageSizeSuffix="/ Page" showBoundaryControls appearance="compact" ariaLabel="Groups pages" /></div>}
       <ActionBar open={selected.size > 0} selectedCount={selected.size} totalCount={rows.length} onDismiss={() => setSelected(new Set())} groups={[[{ icon: 'Copy', label: 'Copy', onClick: () => copyGroups(selectedGroups) }, ...(canMoveSelected ? [{ icon: 'Folder', label: 'Move', onClick: () => setMoveGroupsOpen(true) }] : []), { icon: 'Trash', label: 'Delete', tone: 'danger', onClick: () => setDeleteGroup({ id: `selection-${Date.now()}`, name: `${selected.size} groups`, status: 'Active', description: '', members: 0, location: '', scope: 'Global' }) }]]} />
