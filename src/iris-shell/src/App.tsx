@@ -19,6 +19,7 @@ import { IdentityManagerPage } from './views/IdentityManagerPage/IdentityManager
 import { SafeguardPage } from './views/SafeguardPage/SafeguardPage.js';
 import { GroupsPage } from './views/GroupsPage/GroupsPage.js';
 import { GroupDetailPage } from './views/GroupsPage/GroupDetailPage.js';
+import { AdvancedSearchProvider } from './lib/advancedSearchStore.js';
 
 export default function App() {
   const route = useRoute();
@@ -27,6 +28,7 @@ export default function App() {
     <UsersProvider>
       <GroupsProvider>
         <DirectoryProvider>
+        <AdvancedSearchProvider>
         <AppShellProvider>
           {route.name === 'userDetail' && <UserDetailPage userId={route.params.id} />}
           {route.name === 'usersList' && <UsersPage />}
@@ -57,6 +59,7 @@ export default function App() {
           <CommandPalette />
           <Toast message={toast.message} supportingText={toast.supportingText} action={toast.action} actionLabel={toast.actionLabel} secondaryAction={toast.secondaryAction} secondaryLabel={toast.secondaryLabel} onDismiss={toast.dismiss} />
         </AppShellProvider>
+        </AdvancedSearchProvider>
         </DirectoryProvider>
       </GroupsProvider>
     </UsersProvider>

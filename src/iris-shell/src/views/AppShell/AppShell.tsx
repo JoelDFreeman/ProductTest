@@ -4,6 +4,7 @@ import { AppHeader, type Crumb, type HeaderUser } from '../../components/AppHead
 import { GlobalSidebar, type SidebarMode } from '../../components/GlobalSidebar/GlobalSidebar.js';
 import { Sidebar } from '../../components/Sidebar/Sidebar.js';
 import { AiPanel } from '../../components/AiPanel/AiPanel.js';
+import { AdvancedSearchSideSheet } from '../../components/AdvancedSearch/AdvancedSearchSideSheet.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { navigate, useRoute } from '../../lib/router.js';
 import { useSidebarPinned } from '../../lib/useSidebarPinned.js';
@@ -421,6 +422,7 @@ export function AppShell({
 
           <main className={styles.main}>{children}</main>
 
+          <AdvancedSearchSideSheet />
           <AiPanel open={aiOpen} onClose={() => setAiOpen(false)} />
         </div>
       </div>

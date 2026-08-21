@@ -1,0 +1,22 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.count {
+  position: absolute;
+  top: 1px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 2px;
+  background: var(--oi-button-background-primary);
+  color: var(--oi-content-color-constant);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  pointer-events: none;
+}

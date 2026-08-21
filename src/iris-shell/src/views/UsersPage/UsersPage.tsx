@@ -5,20 +5,12 @@ import { useUsers } from '../../lib/usersStore.js';
 import { useDirectory } from '../../lib/directoryStore.js';
 import { showToast } from '../../lib/toastStore.js';
 import { useAppShell } from '../../lib/appShellContext.js';
-import { isTypingTarget } from '../../lib/keyboard.js';
 import { cx } from '../../lib/cx.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { IconButton } from '../../components/IconButton/IconButton.js';
 import { Icon } from '../../components/Icon/Icon.js';
 import { Avatar } from '../../components/Avatar/Avatar.js';
 import { Menu, type MenuEntry } from '../../components/Menu/Menu.js';
-import {
-  Filters,
-  fieldHasValueUi,
-  type ActiveFilter,
-  type FilterFieldConfig,
-  type FilterOption,
-} from '../../components/Filters/Filters.js';
 import { Button } from '../../components/Button/Button.js';
 import { Badge, type BadgeTone } from '../../components/Badge/Badge.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
@@ -32,6 +24,9 @@ import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserMod
 import { NewUserModal, type NewUserModalProps } from './NewUserModal.js';
 import type { User } from './mockUsers.js';
 import styles from './UsersPage.module.css';
+import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
+import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
+import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
 
 /** Map a status string to its semantic badge tone. */
 function statusBadge(status: string): { tone: BadgeTone } {
@@ -207,27 +202,6 @@ function directoryKey(location: string): string {
   return 'entra-1';
 }
 
-/** Object types a user can filter by, mirroring the Create menu's icons. */
-const OBJECT_TYPE_OPTIONS: FilterOption[] = [
-  { value: 'ou', label: 'Organizational unit', icon: 'FolderPlus' },
-  { value: 'user', label: 'User', icon: 'User' },
-  { value: 'computer', label: 'Computer', icon: 'Devices' },
-  { value: 'group', label: 'Group', icon: 'UsersThree' },
-  { value: 'sharedFolder', label: 'Shared folder', icon: 'Folders' },
-  { value: 'contact', label: 'Contact', icon: 'AddressBook' },
-  { value: 'gmsa', label: 'Group management service account', icon: 'UserCircle' },
-];
-
-/** Fields the user can add as filter chips (drives both menus + the chips). */
-const FILTER_FIELDS: FilterFieldConfig[] = [
-  { id: 'displayName', label: 'Display name', placeholder: 'Select value' },
-  { id: 'objectType', label: 'Object type', placeholder: 'Select type', options: OBJECT_TYPE_OPTIONS },
-  { id: 'tags', label: 'Tags', placeholder: 'Select tag', options: [] },
-  { id: 'location', label: 'Location', placeholder: 'Select location', options: [] },
-  { id: 'dateActive', label: 'Date active', type: 'date' },
-  { id: 'dateCreated', label: 'Date created', type: 'date' },
-];
-
 /** Page-level actions shown in the heading's overflow menu. */
 const PAGE_ACTIONS_MENU_ITEMS: MenuEntry[] = [
   { kind: 'item', label: 'Customize', icon: 'Pencil' },
@@ -253,6 +227,7 @@ const PAGE_SIZE_OPTIONS = [15, 20, 30, 40, 50];
  * UsersPage — the Directory Management → Users listing view.
  */
 export function UsersPage() {
+  const { openSearch, appliedFilters } = useAdvancedSearch();
   const { users, addUser } = useUsers();
   const { selectedDirectories } = useDirectory();
   const { aiOpen, setAiOpen, setAiContext } = useAppShell();
@@ -275,66 +250,10 @@ export function UsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [selected, setSelected] = useState<Set<RowKey>>(() => new Set());
-  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
-  const filterIdRef = useRef(0);
 
   // Which user (if any) has a row-action modal open. `null` = closed.
   const [resetUser, setResetUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
-
-  /* ---- ⌘⇧F / Ctrl+Shift+F opens the Add filter menu ---- */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (
-        !e.repeat &&
-        (e.metaKey || e.ctrlKey) &&
-        e.shiftKey &&
-        e.key.toLowerCase() === 'f'
-      ) {
-        // Don't hijack the key while the user is typing in a field.
-        if (isTypingTarget(e.target)) return;
-        e.preventDefault();
-        setFilterMenuOpen(true);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const addFilter = (fieldId: string) => {
-    filterIdRef.current += 1;
-    setActiveFilters((prev) => [...prev, { id: `f${filterIdRef.current}`, fieldId }]);
-  };
-  const setFilterValue = (id: string, value: string) =>
-    setActiveFilters((prev) => prev.map((f) => (f.id === id ? { ...f, value } : f)));
-  const removeFilter = (id: string) =>
-    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
-  const clearFilters = () => setActiveFilters([]);
-
-  const filterFields = useMemo<FilterFieldConfig[]>(() => {
-    const tags = Array.from(new Set(users.flatMap((u) => getTags(u)))).sort();
-    const locations = Array.from(new Set(users.map((u) => getLocation(u)))).sort();
-    return FILTER_FIELDS.map((field) =>
-      field.id === 'tags'
-        ? { ...field, options: tags.map((value) => ({ value, label: value })) }
-        : field.id === 'location'
-          ? { ...field, options: locations.map((value) => ({ value, label: value })) }
-          : field,
-    );
-  }, [users]);
-
-  const filterMenuItems: MenuEntry[] = filterFields.map((f) => {
-    // Fields without a value-selection UI would produce a chip the user can't
-    // configure, so disable them until that UI lands.
-    const supported = fieldHasValueUi(f);
-    return {
-      kind: 'item',
-      label: f.label,
-      disabled: !supported,
-      onSelect: supported ? () => addFilter(f.id) : undefined,
-    };
-  });
 
   const rows = useMemo<User[]>(() => {
     const q = query.trim().toLowerCase();
@@ -344,14 +263,16 @@ export function UsersPage() {
       ),
     );
     return filtered.filter((user) =>
-      activeFilters.every((filter) => {
+      appliedFilters.every((filter) => {
         if (!filter.value) return true;
         if (filter.fieldId === 'tags') return getTags(user).includes(filter.value);
         if (filter.fieldId === 'location') return getLocation(user) === filter.value;
+        if (filter.fieldId === 'displayName') return user.details.displayName.toLowerCase().includes(filter.value.toLowerCase());
+        if (filter.fieldId === 'objectType') return 'user'.includes(filter.value.toLowerCase());
         return true;
       }),
     );
-  }, [users, query, activeFilters, selectedDirectories]);
+  }, [users, query, appliedFilters, selectedDirectories]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -428,26 +349,7 @@ export function UsersPage() {
         toolbarActions={
           <>
             <span className={styles.toolbarSeparator} aria-hidden="true" />
-            <Menu
-              ariaLabel="Filter by"
-              align="end"
-              items={filterMenuItems}
-              open={filterMenuOpen}
-              onOpenChange={setFilterMenuOpen}
-              trigger={({ ref, onClick, expanded }) => (
-                <Tooltip label="Add filter" shortcut={['⌘', '⇧', 'F']}>
-                  <IconButton
-                    ref={ref as React.Ref<HTMLButtonElement>}
-                    icon="FunnelSimple"
-                    ariaLabel="Add filter"
-                    aria-haspopup="menu"
-                    aria-expanded={expanded}
-                    onClick={onClick}
-                  >
-                  </IconButton>
-                </Tooltip>
-              )}
-            />
+            <AdvancedSearchButton shortcut={['⌘', '⇧', 'F']} />
             <Menu
               ariaLabel="Create options"
               align="end"
@@ -468,18 +370,6 @@ export function UsersPage() {
               )}
             />
           </>
-        }
-        filters={
-          activeFilters.length > 0 ? (
-            <Filters
-              filters={activeFilters}
-              fields={filterFields}
-              onAddFilter={addFilter}
-              onValueChange={setFilterValue}
-              onRemove={removeFilter}
-              onClear={clearFilters}
-            />
-          ) : undefined
         }
       />
 
@@ -529,6 +419,7 @@ export function UsersPage() {
               )}
             />
           }
+          emptyContent={appliedFilters.length > 0 && !query ? <AppliedFiltersEmptyState /> : undefined}
           emptyState={
             query
               ? {
