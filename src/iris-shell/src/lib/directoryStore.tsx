@@ -10,6 +10,7 @@ import {
   getObject,
   isContainerNode,
   moveDirectoryObject,
+  addDirectoryObject,
   type DirectoryNodeView,
   type DirectoryObject,
 } from './directoryData.js';
@@ -40,6 +41,7 @@ export interface DirectoryContextValue {
   /** Leaf siblings of an object (for the detail prev/next pager). */
   getSiblings: (nodeId: string) => DirectoryObject[];
   moveObject: (object: DirectoryObject, targetNodeId: string) => void;
+  addObject: (object: DirectoryObject) => void;
   selectedDirectories: Set<string>;
   setSelectedDirectories: (directories: Set<string>) => void;
 }
@@ -47,6 +49,7 @@ export interface DirectoryContextValue {
 const DirectoryContext = createContext<DirectoryContextValue | null>(null);
 
 export function DirectoryProvider({ children }: { children: ReactNode }) {
+  const [dataRevision, setDataRevision] = useState(0);
   const [selectedDirectories, setSelectedDirectories] = useState<Set<string>>(
     () => new Set(['entra-1', 'entra-2', 'ad-1', 'ad-2']),
   );
@@ -62,10 +65,14 @@ export function DirectoryProvider({ children }: { children: ReactNode }) {
       getNodeIcon,
       getSiblings: getLeafObjects,
       moveObject: moveDirectoryObject,
+      addObject: (object) => {
+        addDirectoryObject(object);
+        setDataRevision((revision) => revision + 1);
+      },
       selectedDirectories,
       setSelectedDirectories,
     }),
-    [selectedDirectories],
+    [selectedDirectories, dataRevision],
   );
 
   return <DirectoryContext.Provider value={value}>{children}</DirectoryContext.Provider>;
