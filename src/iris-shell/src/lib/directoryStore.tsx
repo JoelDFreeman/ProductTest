@@ -8,6 +8,7 @@ import {
   getNodeIcon,
   getNodePath,
   getObject,
+  updateDirectoryObjectDetails,
   isContainerNode,
   moveDirectoryObject,
   addDirectoryObject,
@@ -40,6 +41,7 @@ export interface DirectoryContextValue {
   getNodeIcon: (nodeId: string) => string;
   /** Leaf siblings of an object (for the detail prev/next pager). */
   getSiblings: (nodeId: string) => DirectoryObject[];
+  updateObjectDetails: (objectId: string, patch: Partial<DirectoryObject['details']>) => void;
   moveObject: (object: DirectoryObject, targetNodeId: string) => void;
   addObject: (object: DirectoryObject) => void;
   selectedDirectories: Set<string>;
@@ -64,6 +66,10 @@ export function DirectoryProvider({ children }: { children: ReactNode }) {
       getNodeName: (nodeId) => getNode(nodeId)?.name,
       getNodeIcon,
       getSiblings: getLeafObjects,
+      updateObjectDetails: (objectId, patch) => {
+        updateDirectoryObjectDetails(objectId, patch);
+        setDataRevision((revision) => revision + 1);
+      },
       moveObject: moveDirectoryObject,
       addObject: (object) => {
         addDirectoryObject(object);

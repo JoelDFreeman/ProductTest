@@ -6,17 +6,20 @@ import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Icon } from '../../components/Icon/Icon.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { showToast } from '../../lib/toastStore.js';
-import type { Group } from './mockGroups.js';
+import { useUsers } from '../../lib/usersStore.js';
+import { useGroups } from '../../lib/groupsStore.js';
+import type { Group, GroupNonUserMember } from './mockGroups.js';
 import styles from './GroupMemberships.module.css';
-import { AddMembersModal } from './AddMembersModal.js';
+import { AddUsersToGroupModal } from './AddUsersToGroupModal.js';
+import type { DirectoryMemberCandidate } from './AddUsersToGroupModal.js';
 
-interface Member { id: string; name: string; type: 'User' | 'Group'; location: string; }
-
-const MEMBERS: Member[] = [
-  { id: 'member-1', name: 'Isabella Clark', type: 'User', location: 'Entra 1' },
-  { id: 'member-2', name: 'Liam Bennett', type: 'User', location: 'Entra 1' },
-  { id: 'member-3', name: 'Security Readers', type: 'Group', location: 'AD-1\\Users' },
-];
+interface Member {
+  id: string;
+  name: string;
+  type: 'User' | 'Computer' | 'Group' | 'Service Account' | 'Contact';
+  location: string;
+  userId?: string;
+}
 
 const PARENT_GROUPS: Member[] = [
   { id: 'parent-1', name: 'Platform Access', type: 'Group', location: 'Entra 1' },
@@ -24,11 +27,28 @@ const PARENT_GROUPS: Member[] = [
 ];
 
 export function GroupMemberships({ group }: { group: Group }) {
-  const [memberRows, setMemberRows] = useState<Member[]>(MEMBERS);
+  const { users, updateUser } = useUsers();
+  const { updateGroup } = useGroups();
   const [query, setQuery] = useState('');
   const [view, setView] = useState<'all' | 'members' | 'membersOf'>('members');
   const [addMembersOpen, setAddMembersOpen] = useState(false);
-  const members = useMemo(() => memberRows.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())), [memberRows, query]);
+
+  const nonUserMembers = group.nonUserMembers ?? [];
+
+  const userMembers = useMemo<Member[]>(() => users
+    .filter((user) => (user.groupMembershipIds ?? []).includes(group.id))
+    .map((user) => ({
+      id: `user-${user.id}`,
+      userId: user.id,
+      name: user.name,
+      type: 'User',
+      location: user.location ?? '',
+    })), [group.id, users]);
+
+  const members = useMemo(
+    () => [...userMembers, ...nonUserMembers].filter((item) => item.name.toLowerCase().includes(query.toLowerCase())),
+    [nonUserMembers, query, userMembers],
+  );
   const memberColumns: DataTableColumn<Member>[] = [
     { key: 'name', header: 'Name', icon: 'IdentificationCard', minWidth: '180px', grow: 1, cell: (item) => item.name },
     { key: 'type', header: 'Type', icon: 'Tag', width: '100px', cell: (item) => item.type },
@@ -40,7 +60,13 @@ export function GroupMemberships({ group }: { group: Group }) {
     { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '150px', cell: (item) => item.location },
   ];
   const removeMember = (member: Member) => {
-    setMemberRows((current) => current.filter((item) => item.id !== member.id));
+    if (member.type === 'User' && member.userId) {
+      const user = users.find((item) => item.id === member.userId);
+      if (!user) return;
+      updateUser(user.id, { groupMembershipIds: (user.groupMembershipIds ?? []).filter((id) => id !== group.id) });
+    } else {
+      updateGroup(group.id, { nonUserMembers: nonUserMembers.filter((item) => item.id !== member.id) });
+    }
     showToast(`${member.name} removed from ${group.name}.`);
   };
 
@@ -61,17 +87,52 @@ export function GroupMemberships({ group }: { group: Group }) {
         <Button variant="primary" size="s" iconLead="Plus" onClick={() => setAddMembersOpen(true)}>Add Member</Button>
       </div>
       <DataTable rows={activeRows} columns={activeColumns} rowLabel={(member) => member.name} density="compact" appearance="light" headerAction={<IconButton icon="SlidersHorizontal" ariaLabel="Table settings" size="s" />} rowActions={view === 'members' ? (member) => <Tooltip label="Remove member from group"><IconButton icon="XCircle" ariaLabel={`Remove ${member.name} from group`} size="s" onClick={() => removeMember(member)} /></Tooltip> : undefined} />
-      <AddMembersModal
+      <AddUsersToGroupModal
         open={addMembersOpen}
+        excludedMemberIds={new Set([
+          ...userMembers.map((member) => member.userId).filter((id): id is string => !!id),
+          ...nonUserMembers.map((member) => member.id),
+        ])}
         onClose={() => setAddMembersOpen(false)}
-        onAdd={(newMembers) => {
-          const additions: Member[] = newMembers
-            .filter((item) => !memberRows.some((existing) => existing.id === item.id))
-            .map((item) => ({ id: item.id, name: item.name, type: item.type === 'User' ? 'User' : 'Group', location: '' }));
-          setMemberRows((current) => [...current, ...additions]);
-          if (additions.length > 0) showToast(`${additions.length} member${additions.length === 1 ? '' : 's'} added to ${group.name}.`);
+        onAdd={(selectedMembers) => {
+          let addedUsers = 0;
+          const nonUserAdditions: GroupNonUserMember[] = [];
+          for (const member of selectedMembers) {
+            if (member.type === 'User' && member.user) {
+              const current = member.user.groupMembershipIds ?? [];
+              if (current.includes(group.id)) continue;
+              updateUser(member.user.id, { groupMembershipIds: [...current, group.id] });
+              addedUsers += 1;
+              continue;
+            }
+            if (isNonUserCandidate(member)) {
+              nonUserAdditions.push(asNonUserMember(member));
+            }
+          }
+
+          if (nonUserAdditions.length > 0) {
+            updateGroup(group.id, { nonUserMembers: [...nonUserMembers, ...nonUserAdditions] });
+          }
+
+          const added = addedUsers + nonUserAdditions.length;
+          if (added > 0) showToast(`${added} member${added === 1 ? '' : 's'} added to ${group.name}.`);
         }}
       />
     </section>
   );
+}
+
+function asNonUserMember(member: NonUserDirectoryMemberCandidate): GroupNonUserMember {
+  return {
+    id: member.id,
+    name: member.name,
+    type: member.type,
+    location: member.location ?? '',
+  };
+}
+
+type NonUserDirectoryMemberCandidate = DirectoryMemberCandidate & { type: GroupNonUserMember['type'] };
+
+function isNonUserCandidate(member: DirectoryMemberCandidate): member is NonUserDirectoryMemberCandidate {
+  return member.type !== 'User';
 }

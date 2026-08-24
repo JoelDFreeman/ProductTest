@@ -41,6 +41,7 @@ export interface User {
   avatarUrl?: string;
   tags?: string[];
   location?: string;
+  groupMembershipIds?: string[];
   details: UserDetails;
 }
 
@@ -103,6 +104,12 @@ const STOCK_AVATARS = [
 
 const USER_LOCATIONS = ['Entra 1', 'Entra 2', 'AD-1\\Users', 'AD-2\\OU1'];
 
+function makeMembershipIds(seed: number): string[] {
+  const first = `group-${(seed % 12) + 1}`;
+  const second = `group-${((seed + 5) % 12) + 1}`;
+  return first === second ? [first] : [first, second];
+}
+
 /**
  * Generate a batch of additional filler users so the listing has enough rows
  * to exercise pagination. Names/emails/statuses are varied but deterministic.
@@ -154,6 +161,7 @@ function makeMockUsers(): User[] {
       objectId: `${seq}f${i}b2c4-7d9e-4f2a-b8c3-1d2e3f4a${seq}c`,
       avatarUrl: i % 3 === 0 ? STOCK_AVATARS[i % STOCK_AVATARS.length] : undefined,
       location: USER_LOCATIONS[i % USER_LOCATIONS.length],
+      groupMembershipIds: makeMembershipIds(i + 10),
       details: makeDetails(name, login),
     };
   });
@@ -169,6 +177,7 @@ export const MOCK_USERS: User[] = [
     objectId: 'b4e2c3d5-8f0a-5g3b-c9d4-2e1a3b4c5d6e',
     avatarUrl: STOCK_AVATARS[0],
     location: 'Entra 1',
+    groupMembershipIds: makeMembershipIds(0),
     details: makeDetails('Isabella Clark', 'Isabella.Clark'),
   },
   {
@@ -179,6 +188,7 @@ export const MOCK_USERS: User[] = [
     email: 's.martinez@acme.io',
     objectId: 'c5f3d4e6-9g1b-6h4c-da5e-3f2b4c5d6e7f',
     location: 'Entra 2',
+    groupMembershipIds: makeMembershipIds(1),
     details: makeDetails('Liam Bennett', 'Liam.Bennett'),
   },
   {
@@ -190,6 +200,7 @@ export const MOCK_USERS: User[] = [
     objectId: 'd6g4e5f7-0h2c-7i5d-eb6f-4a5b6c7d8e9f',
     avatarUrl: STOCK_AVATARS[2],
     location: 'AD-1\\Users',
+    groupMembershipIds: makeMembershipIds(2),
     details: makeDetails('Sophia Martinez', 'Sophia.Martinez'),
   },
   {
@@ -200,6 +211,7 @@ export const MOCK_USERS: User[] = [
     email: 'n.kim@acme.io',
     objectId: 'a3f1b2c4-7d9e-4f2a-b8c3-1d2e3f4a5b6c',
     location: 'AD-2\\OU1',
+    groupMembershipIds: makeMembershipIds(3),
     details: makeDetails('Noah Kim', 'Noah.Kim'),
   },
   {
@@ -209,6 +221,7 @@ export const MOCK_USERS: User[] = [
     description: 'Leads platform security architecture and design.',
     email: 'a.thompson@acme.io',
     objectId: 'e7h5f6g8-1i3d-8j6e-fc7g-5b6c7d8e9f0a',
+    groupMembershipIds: makeMembershipIds(4),
     details: makeDetails('Mason Patel', 'Mason.Patel'),
   },
   {
@@ -218,6 +231,7 @@ export const MOCK_USERS: User[] = [
     description: 'Responsible for platform security compliance reporting.',
     email: 'e.brooks@acme.io',
     objectId: 'f8i6g7h9-2j4e-9k7f-gd8h-6c7d8e9f0a1b',
+    groupMembershipIds: makeMembershipIds(5),
     details: makeDetails('Olivia Nguyen', 'Olivia.Nguyen'),
   },
   {
@@ -227,6 +241,7 @@ export const MOCK_USERS: User[] = [
     description: 'Drives platform security enhancements and reviews.',
     email: 'i.clark@acme.io',
     objectId: 'g9j7h8i0-3k5f-0l8g-he9i-7d8e9f0a1b2c',
+    groupMembershipIds: makeMembershipIds(6),
     // The Figma "Ethan Brooks (MKim)" example overrides the derived fields.
     details: {
       ...makeDetails('Markus Kim', 'Markus.Kim3'),
@@ -248,6 +263,7 @@ export const MOCK_USERS: User[] = [
     description: 'Leads cross-functional teams on identity initiatives.',
     email: 'l.bennett@acme.io',
     objectId: 'h0k8i9j1-4l6g-bm9h-if0j-8e9f0a1b2c3d',
+    groupMembershipIds: makeMembershipIds(7),
     details: makeDetails('Ava Thompson', 'Ava.Thompson'),
   },
   {
@@ -257,6 +273,7 @@ export const MOCK_USERS: User[] = [
     description: 'Develops and enforces platform-wide security policy.',
     email: 's.martinez@acme.io',
     objectId: 'i1l9j0k2-5m7h-cn0i-jg1k-9f0a1b2c3d4e',
+    groupMembershipIds: makeMembershipIds(8),
     details: makeDetails('Lucas Rivera', 'Lucas.Rivera'),
   },
   {
@@ -266,6 +283,7 @@ export const MOCK_USERS: User[] = [
     description: 'Oversees platform security operations and metrics.',
     email: 'm.foster@acme.io',
     objectId: 'j2m0k1l3-6n8i-do1j-kh2l-0a1b2c3d4e5f',
+    groupMembershipIds: makeMembershipIds(9),
     details: makeDetails('Mia Foster', 'Mia.Foster'),
   },
   ...makeMockUsers(),
