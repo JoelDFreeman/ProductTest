@@ -14,6 +14,7 @@ import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { InlinePropertiesCard } from './InlinePropertiesCard.js';
 import { InlineUserDetailsCard } from './InlineUserDetailsCard.js';
 import { OverviewSummary } from './OverviewSummary.js';
+import { UserMemberships } from './UserMemberships.js';
 import { ResetPasswordModal } from './ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from './DeleteUserModal/DeleteUserModal.js';
 import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
@@ -184,7 +185,8 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
             <ObjectManagementCard isAdUser={isAdUser} onReset={() => setResetOpen(true)} onMove={() => setMoveOpen(true)} onDelete={() => setDeleteOpen(true)} />
           </div>
         )}
-        {tab !== 'overview' && tab !== 'general' && tab !== 'user-details' && (
+        {tab === 'memberships' && <UserMemberships user={user} onMembershipChange={(groupMembershipIds) => updateUser(user.id, { groupMembershipIds })} />}
+        {tab !== 'overview' && tab !== 'general' && tab !== 'user-details' && tab !== 'memberships' && (
           <Card title={TABS.find((t) => t.value === tab)?.label}>
             <p className={styles.placeholder}>Coming soon.</p>
           </Card>

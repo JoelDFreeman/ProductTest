@@ -17,6 +17,7 @@ import { Menu } from '../../components/Menu/Menu.js';
 import type { Crumb } from '../../components/AppHeader/AppHeader.js';
 import { ResetPasswordModal } from '../UserDetailPage/ResetPasswordModal/ResetPasswordModal.js';
 import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserModal.js';
+import { UserMemberships } from '../UserDetailPage/UserMemberships.js';
 import { tabsForType, PRIMARY_TAB } from './detailTabs.js';
 import styles from './TreeView.module.css';
 
@@ -30,7 +31,7 @@ export interface TreeDetailPageProps {
  * scaffold with a type-driven tab set + an Object Management side panel.
  */
 export function TreeDetailPage({ nodeId, objectId }: TreeDetailPageProps) {
-  const { getObject, getSiblings, getPath, getNodeName } = useDirectory();
+  const { getObject, getSiblings, getPath, getNodeName, updateObjectDetails } = useDirectory();
   const object = getObject(nodeId, objectId);
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
 
@@ -174,6 +175,11 @@ export function TreeDetailPage({ nodeId, objectId }: TreeDetailPageProps) {
             canReset={canReset}
             onReset={() => setResetOpen(true)}
             onDelete={() => setDeleteOpen(true)}
+          />
+        ) : tab === 'memberships' && (object.type === 'user' || object.type === 'contact') ? (
+          <UserMemberships
+            user={{ name: object.name, groupMembershipIds: object.details.groupMembershipIds }}
+            onMembershipChange={(groupMembershipIds) => updateObjectDetails(object.id, { groupMembershipIds })}
           />
         ) : (
           <Card title={tabs.find((t) => t.value === tab)?.label}>

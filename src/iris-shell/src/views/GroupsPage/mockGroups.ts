@@ -1,3 +1,12 @@
+export type GroupNonUserMemberType = 'Computer' | 'Group' | 'Service Account' | 'Contact';
+
+export interface GroupNonUserMember {
+  id: string;
+  name: string;
+  type: GroupNonUserMemberType;
+  location: string;
+}
+
 export interface Group {
   id: string;
   name: string;
@@ -6,6 +15,7 @@ export interface Group {
   members: number;
   location: string;
   scope: 'Domain local' | 'Global' | 'Universal';
+  nonUserMembers?: GroupNonUserMember[];
 }
 
 const locations = ['Entra 1', 'Entra 2', 'AD-1\\Users', 'AD-2\\OU1'];
@@ -19,4 +29,5 @@ export const MOCK_GROUPS: Group[] = Array.from({ length: 48 }, (_, index) => ({
   members: 4 + ((index * 7) % 86),
   location: locations[index % locations.length],
   scope: index % 3 === 0 ? 'Global' : index % 3 === 1 ? 'Domain local' : 'Universal',
+  nonUserMembers: index % 4 === 0 ? [{ id: `group-${index + 1}-reader`, name: 'Security Readers', type: 'Group', location: 'AD-1\\Users' }] : [],
 }));
