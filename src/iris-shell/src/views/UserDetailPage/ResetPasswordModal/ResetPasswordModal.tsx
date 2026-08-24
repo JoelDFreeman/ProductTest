@@ -113,7 +113,6 @@ export function ResetPasswordModal({ open, onClose, user, mode = 'ad' }: ResetPa
           copied={copied}
           onCopyChange={setCopied}
           successMessage={mode === 'ad' ? 'Password has been reset successfully.' : undefined}
-          includeSettings={mode !== 'ad'}
         />
       )}
     </Modal>
@@ -319,13 +318,11 @@ function EntraResetContent({
   copied,
   onCopyChange,
   successMessage,
-  includeSettings = true,
 }: {
   password: string;
   copied: boolean;
   onCopyChange: (copied: boolean) => void;
   successMessage?: string;
-  includeSettings?: boolean;
 }) {
   return (
     <div className={styles.body}>
@@ -343,15 +340,6 @@ function EntraResetContent({
           </FormField>
         </div>
       </div>
-      {includeSettings && (
-        <div className={styles.settings} aria-label="Login settings">
-          <h3 className={styles.settingsTitle}>Login settings</h3>
-          <ul className={styles.settingsList}>
-            <li><Icon name="CheckCircle" size="16px" /> User must change password at next sign-in</li>
-            <li><Icon name="CheckCircle" size="16px" /> Require multifactor authentication on first login</li>
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
