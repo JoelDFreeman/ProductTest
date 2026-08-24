@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from 'react';
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cx } from '../../lib/cx.js';
 import { Icon } from '../Icon/Icon.js';
 import styles from './TextInput.module.css';
@@ -8,7 +8,7 @@ export interface TextInputProps
   /** Icon name to render at the start. */
   iconLead?: string;
   /** Icon name to render at the end. */
-  iconTrail?: string;
+  iconTrail?: string | ReactNode;
   size?: 's' | 'default' | 'l';
   /** Render the error state (red border + `aria-invalid`). */
   invalid?: boolean;
@@ -45,7 +45,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
       />
       {iconTrail && (
         <span className={styles.icon}>
-          <Icon name={iconTrail} size="20px" />
+          {typeof iconTrail === 'string' ? <Icon name={iconTrail} size="20px" /> : iconTrail}
         </span>
       )}
     </div>

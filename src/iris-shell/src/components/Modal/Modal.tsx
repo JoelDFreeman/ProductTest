@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { cx } from '../../lib/cx.js';
 import { Icon } from '../Icon/Icon.js';
 import { IconButton } from '../IconButton/IconButton.js';
+import { Tooltip } from '../Tooltip/Tooltip.js';
 import styles from './Modal.module.css';
 
 export interface ModalProps {
@@ -151,13 +152,15 @@ export function Modal({
             </h2>
             {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
           </div>
-          <IconButton
-            icon="X"
-            ariaLabel="Close"
-            size="s"
-            onClick={onClose}
-            className={styles.closeBtn}
-          />
+          <Tooltip label="Close">
+            <IconButton
+              icon="X"
+              ariaLabel="Close"
+              size="s"
+              onClick={onClose}
+              className={styles.closeBtn}
+            />
+          </Tooltip>
         </header>
 
         <div className={cx(styles.body, bodyClassName)}>{children}</div>

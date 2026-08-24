@@ -1,0 +1,65 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  --spinner-stroke-width: 2;
+  flex-shrink: 0;
+  overflow: visible;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.size_sm {
+  width: var(--oi-size-xs);
+  height: var(--oi-size-xs);
+}
+
+.size_default {
+  width: var(--oi-size-s);
+  height: var(--oi-size-s);
+}
+
+.size_lg {
+  width: var(--oi-size-l);
+  height: var(--oi-size-l);
+  --spinner-stroke-width: 3;
+}
+
+.loop {
+  animation: spinner-rotate var(--oi-motion-duration-1000) linear infinite;
+}
+
+.track,
+.arc {
+  fill: none;
+  stroke-width: var(--spinner-stroke-width);
+}
+
+.track {
+  stroke: var(--oi-border-color-muted);
+}
+
+.arc {
+  stroke: var(--oi-base-color-brand);
+  stroke-dasharray: 18.85 37.7;
+  stroke-linecap: round;
+}
+
+@keyframes spinner-rotate {
+  from {
+    transform: rotate(-90deg);
+  }
+
+  to {
+    transform: rotate(270deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loop {
+    animation: none;
+  }
+}

@@ -196,7 +196,13 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
       <ResetPasswordModal
         open={resetOpen}
         onClose={() => setResetOpen(false)}
-        user={user}
+        user={{
+          name: user.name,
+          username: user.details.login,
+          displayName: user.details.displayName,
+          location: user.location,
+        }}
+        mode={isAdUser ? 'ad' : 'entra'}
       />
 
       <DeleteUserModal
