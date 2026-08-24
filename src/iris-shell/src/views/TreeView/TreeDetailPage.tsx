@@ -96,6 +96,7 @@ export function TreeDetailPage({ nodeId, objectId }: TreeDetailPageProps) {
   const pathTail = getPath(nodeId).slice(-2).map((n) => n.name).join(' / ');
   const tabs = tabsForType(object.type);
   const canReset = object.type === 'user' || object.type === 'contact';
+  const isAdNode = getPath(nodeId).some((crumb) => /active director|o1d|o2d|ad-\d/i.test(crumb.name));
 
   return (
     <AppShell breadcrumb={breadcrumb}>
@@ -189,7 +190,17 @@ export function TreeDetailPage({ nodeId, objectId }: TreeDetailPageProps) {
       </div>
 
       {resetOpen && (
-        <ResetPasswordModal open onClose={() => setResetOpen(false)} user={{ name: object.name }} />
+        <ResetPasswordModal
+          open
+          onClose={() => setResetOpen(false)}
+          user={{
+            name: object.name,
+            username: object.details.userPrincipalName,
+            displayName: object.details.displayName,
+            location: object.details.location,
+          }}
+          mode={isAdNode ? 'ad' : 'entra'}
+        />
       )}
       {deleteOpen && (
         <DeleteUserModal open onClose={() => setDeleteOpen(false)} user={{ name: object.name }} />

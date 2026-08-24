@@ -442,7 +442,17 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
       {createKind === 'group' && <NewGroupModal open directories={[nodeName ?? 'AD Folder']} onClose={() => setCreateKind(null)} onCreate={createGroup} />}
 
       {resetTarget && (
-        <ResetPasswordModal open onClose={() => setResetTarget(null)} user={{ name: resetTarget.name }} />
+        <ResetPasswordModal
+          open
+          onClose={() => setResetTarget(null)}
+          user={{
+            name: resetTarget.name,
+            username: resetTarget.details.userPrincipalName,
+            displayName: resetTarget.details.displayName,
+            location: resetTarget.details.location,
+          }}
+          mode={isAdNode ? 'ad' : 'entra'}
+        />
       )}
       {deleteTarget && (
         <DeleteUserModal open onClose={() => setDeleteTarget(null)} user={{ name: deleteTarget.name }} />

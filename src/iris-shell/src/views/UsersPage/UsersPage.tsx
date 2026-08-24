@@ -27,6 +27,7 @@ import styles from './UsersPage.module.css';
 import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
 import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
 import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
+import { isActiveDirectoryLocation } from '../../lib/directoryData.js';
 
 /** Map a status string to its semantic badge tone. */
 function statusBadge(status: string): { tone: BadgeTone } {
@@ -506,7 +507,17 @@ export function UsersPage() {
       />
 
       {resetUser && (
-        <ResetPasswordModal open onClose={() => setResetUser(null)} user={resetUser} />
+        <ResetPasswordModal
+          open
+          onClose={() => setResetUser(null)}
+          user={{
+            name: resetUser.name,
+            username: resetUser.details.login,
+            displayName: resetUser.details.displayName,
+            location: resetUser.location,
+          }}
+          mode={isActiveDirectoryLocation(resetUser.location) ? 'ad' : 'entra'}
+        />
       )}
       {deleteUser && (
         <DeleteUserModal open onClose={() => setDeleteUser(null)} user={deleteUser} />
