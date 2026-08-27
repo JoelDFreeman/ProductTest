@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
-export type AdvancedSearchTab = 'basic' | 'groups' | 'queries' | 'ask-ai';
+export type AdvancedSearchTab = 'basic' | 'queries' | 'ask-ai';
 
 export interface AdvancedFilter {
   id: string;
@@ -29,6 +29,7 @@ interface AdvancedSearchContextValue {
   appliedFilters: AdvancedFilter[];
   groupConditions: FilterGroupCondition[];
   filterGroups: FilterGroup[];
+  advancedFilterMode: boolean;
   ldapQuery: string;
   ldapQueryManual: boolean;
   openSearch: () => void;
@@ -40,6 +41,7 @@ interface AdvancedSearchContextValue {
   clearFilters: () => void;
   setGroupConditions: (conditions: FilterGroupCondition[]) => void;
   setFilterGroups: (groups: FilterGroup[]) => void;
+  setAdvancedFilterMode: (enabled: boolean) => void;
   createFilterGroup: (parentGroupId?: string) => string;
   setLdapQuery: (query: string) => void;
 }
@@ -54,6 +56,7 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilter[]>([]);
   const [groupConditions, setGroupConditions] = useState<FilterGroupCondition[]>([]);
   const [filterGroups, setFilterGroups] = useState<FilterGroup[]>([]);
+  const [advancedFilterMode, setAdvancedFilterMode] = useState(false);
   const [ldapQuery, setLdapQuery] = useState('');
   const [ldapQueryManual, setLdapQueryManual] = useState(false);
   const updateLdapQuery = (query: string) => {
@@ -72,6 +75,7 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
     appliedFilters,
     groupConditions,
     filterGroups,
+    advancedFilterMode,
     ldapQuery,
     ldapQueryManual,
     setDraftFilters,
@@ -87,20 +91,23 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
       setAppliedFilters([]);
       setGroupConditions([]);
       setFilterGroups([]);
+      setAdvancedFilterMode(false);
       setLdapQuery('');
       setLdapQueryManual(false);
       setAppliedCount(0);
     },
     setGroupConditions,
     setFilterGroups,
+    setAdvancedFilterMode,
     createFilterGroup: (parentGroupId) => {
       const id = `group-${Date.now()}-${Math.random()}`;
       setFilterGroups((groups) => [...groups, { id, parentGroupId }]);
-      setTab('groups');
+      setAdvancedFilterMode(true);
+      setTab('basic');
       return id;
     },
     setLdapQuery: updateLdapQuery,
-  }), [open, tab, appliedCount, draftFilters, appliedFilters, groupConditions, filterGroups, ldapQuery, ldapQueryManual]);
+  }), [open, tab, appliedCount, draftFilters, appliedFilters, groupConditions, filterGroups, advancedFilterMode, ldapQuery, ldapQueryManual]);
   return <AdvancedSearchContext.Provider value={value}>{children}</AdvancedSearchContext.Provider>;
 }
 

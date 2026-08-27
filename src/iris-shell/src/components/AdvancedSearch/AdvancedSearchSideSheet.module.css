@@ -113,6 +113,18 @@
   gap: var(--oi-spacing-s);
 }
 
+.advancedModeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-spacing-s);
+  padding-top: var(--oi-spacing-m);
+}
+
+.advancedModeLabel {
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-body-s-strong-font-size);
+}
+
 .selectedFilters {
   display: flex;
   flex-wrap: wrap;
@@ -390,6 +402,10 @@
 .queryTab p {
   color: var(--oi-content-color-secondary);
   font-size: var(--oi-text-body-s-font-size);
+}
+
+.queryLanguageSelect {
+  width: 160px;
 }
 
 .queryTab textarea {

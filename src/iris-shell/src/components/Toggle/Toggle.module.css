@@ -1,0 +1,42 @@
+.toggle {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 42px;
+  height: 20px;
+  padding: 1px;
+  border: 0;
+  border-radius: var(--oi-border-radius-max);
+  background-color: var(--oi-border-color-default);
+  cursor: pointer;
+  transition: background-color var(--oi-motion-duration-short);
+}
+
+.toggle.on {
+  background-color: var(--oi-base-color-brand);
+}
+
+.toggle.disabled {
+  opacity: var(--oi-opacity-content-disabled);
+  cursor: not-allowed;
+}
+
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--oi-focus-ring);
+}
+
+.knob {
+  display: block;
+  width: 26px;
+  height: 18px;
+  border-radius: var(--oi-border-radius-max);
+  background-color: var(--oi-content-color-constant);
+  box-shadow: var(--oi-shadow-low);
+  transition: transform var(--oi-motion-duration-short);
+}
+
+.toggle.on .knob {
+  transform: translateX(14px);
+}

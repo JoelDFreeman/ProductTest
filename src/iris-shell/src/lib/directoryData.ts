@@ -29,7 +29,6 @@ export interface DirectoryObjectDetails {
   created?: string;
   memberCount?: number;
   location?: string;
-  groupMembershipIds?: string[];
 }
 
 export interface DirectoryObject {
@@ -245,12 +244,6 @@ function hashSeed(s: string): number {
   return h >>> 0;
 }
 
-function membershipIdsFromSeed(seed: number): string[] {
-  const first = `group-${(seed % 12) + 1}`;
-  const second = `group-${((seed + 5) % 12) + 1}`;
-  return first === second ? [first] : [first, second];
-}
-
 /** mulberry32 — tiny deterministic PRNG. */
 function makeRng(seed: number): () => number {
   let a = seed >>> 0;
@@ -340,7 +333,6 @@ function makeLeaf(node: RawNode, index: number, rng: () => number, path: string)
       description,
       location: path,
       created: '2025-01-09',
-      groupMembershipIds: membershipIdsFromSeed(hashSeed(id)),
     },
   };
 }
@@ -396,27 +388,6 @@ export function addDirectoryObject(object: DirectoryObject): void {
 export function moveDirectoryObject(object: DirectoryObject, targetNodeId: string): void {
   movedObjectParents.set(object.id, targetNodeId);
   movedObjects.set(object.id, { ...object, parentId: targetNodeId, details: { ...object.details, location: getNodePath(targetNodeId).map((node) => node.name).join(' / ') } });
-}
-
-export function updateDirectoryObjectDetails(objectId: string, patch: Partial<DirectoryObjectDetails>): void {
-  for (const items of leafCache.values()) {
-    const object = items.find((item) => item.id === objectId);
-    if (object) {
-      object.details = { ...object.details, ...patch };
-      return;
-    }
-  }
-
-  const moved = movedObjects.get(objectId);
-  if (moved) {
-    movedObjects.set(objectId, { ...moved, details: { ...moved.details, ...patch } });
-    return;
-  }
-
-  const created = createdObjects.get(objectId);
-  if (created) {
-    createdObjects.set(objectId, { ...created, details: { ...created.details, ...patch } });
-  }
 }
 
 /** Leaf objects only — the set the detail prev/next pager iterates. */
