@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import { cx } from '../../lib/cx.js';
 import { Checkbox } from '../Checkbox/Checkbox.js';
 import { IconButton } from '../IconButton/IconButton.js';
@@ -54,6 +54,9 @@ export interface DataTableProps<TRow extends DataTableRow> {
   /** Render a custom control (e.g. a menu trigger) in each row's trailing
    *  action cell. Takes precedence over the default `onRowAction` button. */
   rowActions?: (row: TRow, i: number) => ReactNode;
+  /** Extra DOM props (e.g. `onDragOver`/`onDrop`, `className`) merged onto a
+   *  row's outer element — for drop-target behaviour or similar per-row wiring. */
+  rowProps?: (row: TRow, i: number) => HTMLAttributes<HTMLDivElement>;
   /** Optional control rendered in the top-right table header cell. */
   headerAction?: ReactNode;
   /** Visual density for table headers and rows. */
@@ -87,6 +90,7 @@ export function DataTable<TRow extends DataTableRow>({
   onSelectionChange,
   onRowAction,
   rowActions,
+  rowProps,
   headerAction,
   density = 'default',
   appearance = 'default',
@@ -213,12 +217,14 @@ export function DataTable<TRow extends DataTableRow>({
           const key = rowKey(row);
           const isSelected = selectable && selected!.has(key);
           const label = rowLabel ? rowLabel(row, i) : `row ${i + 1}`;
+          const { className: extraRowClassName, ...extraRowProps } = rowProps?.(row, i) ?? {};
           return (
             <div
               key={key}
               role="row"
               aria-selected={isSelected || undefined}
-              className={cx(styles.row, isSelected && styles.rowSelected)}
+              className={cx(styles.row, isSelected && styles.rowSelected, extraRowClassName)}
+              {...extraRowProps}
             >
               {selectable && (
                 <BodyCell width="40px" className={styles.checkboxCell} pin="startInner">

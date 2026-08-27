@@ -2,12 +2,12 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 
 import {
   NODE_TREE,
-  getChildren,
+  getChildren as getChildrenData,
   getLeafObjects,
   getNode,
   getNodeIcon,
   getNodePath,
-  getObject,
+  getObject as getObjectData,
   isContainerNode,
   moveDirectoryObject,
   addDirectoryObject,
@@ -54,17 +54,24 @@ export function DirectoryProvider({ children }: { children: ReactNode }) {
     () => new Set(['entra-1', 'entra-2', 'ad-1', 'ad-2']),
   );
   // The underlying data is static + memoized, so the value never changes.
+  // `getChildren`/`getObject`/`getSiblings` are re-wrapped on every
+  // `dataRevision` bump so their identity changes — consumers that memoize
+  // on them (e.g. a page's `useMemo([..., getChildren, ...])`) correctly
+  // recompute after a move instead of serving stale, pre-move data.
   const value = useMemo<DirectoryContextValue>(
     () => ({
       nodeTree: NODE_TREE,
       isContainer: isContainerNode,
       getPath: (nodeId) => getNodePath(nodeId).map((n) => ({ id: n.id, name: n.name })),
-      getChildren,
-      getObject,
+      getChildren: (nodeId) => getChildrenData(nodeId),
+      getObject: (nodeId, objectId) => getObjectData(nodeId, objectId),
       getNodeName: (nodeId) => getNode(nodeId)?.name,
       getNodeIcon,
-      getSiblings: getLeafObjects,
-      moveObject: moveDirectoryObject,
+      getSiblings: (nodeId) => getLeafObjects(nodeId),
+      moveObject: (object, targetNodeId) => {
+        moveDirectoryObject(object, targetNodeId);
+        setDataRevision((revision) => revision + 1);
+      },
       addObject: (object) => {
         addDirectoryObject(object);
         setDataRevision((revision) => revision + 1);
