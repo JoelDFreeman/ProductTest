@@ -27,6 +27,13 @@
   overflow: hidden;
 }
 
+/* Highlights a folder row while a dragged object hovers over it. */
+.rowDropTarget {
+  outline: 2px solid var(--oi-button-background-primary);
+  outline-offset: -2px;
+  background-color: var(--oi-background-color-secondary);
+}
+
 .pagination {
   display: flex;
   justify-content: center;

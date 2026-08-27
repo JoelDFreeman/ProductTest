@@ -57,6 +57,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
   const [deleteTarget, setDeleteTarget] = useState<DirectoryObject | null>(null);
   const [moveTargets, setMoveTargets] = useState<DirectoryObject[]>([]);
   const [createKind, setCreateKind] = useState<'user' | 'group' | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   // Reset transient view state when the selected node changes.
   useEffect(() => {
@@ -360,6 +361,39 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
           selected={selected}
           onSelectionChange={setSelected}
           rowLabel={(o) => o.name}
+          rowProps={(o) => {
+            if (!isAdNode || !o.isContainer) return {};
+            return {
+              className: dropTargetId === o.id ? styles.rowDropTarget : undefined,
+              onDragOver: (event) => {
+                if (event.dataTransfer.types.includes('application/x-ars-ad-object') || event.dataTransfer.types.includes('text/plain')) {
+                  event.preventDefault();
+                  setDropTargetId(o.id);
+                }
+              },
+              onDragLeave: () => setDropTargetId(null),
+              onDrop: (event) => {
+                const raw = event.dataTransfer.getData('application/x-ars-ad-object') || event.dataTransfer.getData('text/plain');
+                setDropTargetId(null);
+                if (!raw) return;
+                event.preventDefault();
+                const object = JSON.parse(raw) as DirectoryObject;
+                const previousParentId = object.parentId;
+                moveObject(object, o.id);
+                showToast(
+                  `${object.name} moved to ${o.name} successfully.`,
+                  () => {
+                    moveObject(object, previousParentId);
+                    showToast('Move undone.');
+                  },
+                  undefined,
+                  'Undo',
+                  () => navigate(`#/tree/${o.id}/${object.id}`),
+                  'View object',
+                );
+              },
+            };
+          }}
           rowActions={(o) => (
             <Menu
               ariaLabel={`Actions for ${o.name}`}

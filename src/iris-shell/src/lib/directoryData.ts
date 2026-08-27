@@ -376,7 +376,7 @@ export function getChildren(nodeId: string): DirectoryObject[] {
   if (!node) return [];
   const containers = (node.children ?? []).map(nodeAsObject);
   const leaves = getLeaves(node).filter((object) => (movedObjectParents.get(object.id) ?? object.parentId) === nodeId);
-  const movedIn = Array.from(movedObjects.values()).filter((object) => movedObjectParents.get(object.id) === nodeId && object.parentId !== nodeId && !leaves.some((item) => item.id === object.id));
+  const movedIn = Array.from(movedObjects.values()).filter((object) => movedObjectParents.get(object.id) === nodeId && !leaves.some((item) => item.id === object.id));
   const created = Array.from(createdObjects.values()).filter((object) => object.parentId === nodeId);
   return [...containers, ...leaves, ...movedIn, ...created];
 }
