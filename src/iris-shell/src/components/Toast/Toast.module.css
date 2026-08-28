@@ -5,9 +5,9 @@
 
 .toast {
   position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: 60px;
+  left: auto;
+  right: 32px;
+  bottom: 32px;
   z-index: 100;
 
   display: flex;
@@ -24,7 +24,7 @@
      (hidden) state carries the faster close clock; the visible state below
      carries the slower open clock, so arriving feels deliberate and leaving
      feels snappy from a single attribute flip. */
-  transform: translate(-50%, var(--oi-spacing-l)) scale(0.97);
+  transform: translateY(var(--oi-spacing-l)) scale(0.97);
   opacity: 0;
   filter: blur(2px);
   will-change: transform, opacity, filter;
@@ -35,7 +35,7 @@
 }
 
 .toast[data-visible='true'] {
-  transform: translate(-50%, 0) scale(1);
+  transform: translateY(0) scale(1);
   opacity: 1;
   filter: blur(0);
   transition:
@@ -118,8 +118,7 @@
   color: var(--oi-content-color-secondary);
 }
 
-/* Absolutely positionedY(0) scale(1);
-    filter: nonematch the Figma layout (14px from top/right of
+/* Absolutely positioned to match the Figma layout (14px from top/right of
    the card). Applied directly to the IconButton via its `className` prop
    so we avoid a wrapper span. */
 .dismiss {
@@ -131,6 +130,6 @@
 @media (prefers-reduced-motion: reduce) {
   .toast {
     transition: opacity var(--oi-motion-duration-default) var(--oi-motion-ease-default);
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
