@@ -13,6 +13,12 @@
     var(--oi-motion-ease-default);
 }
 
+/* Used when the sheet must open above an already-open Modal (z-index 70),
+   e.g. a folder picker launched from within a create-object dialog. */
+.rootElevated {
+  z-index: 80;
+}
+
 .rootOpen {
   background-color: rgba(2, 6, 24, 0.4);
 }

@@ -30,6 +30,37 @@
   grid-template-columns: minmax(0, 1fr) 180px;
 }
 
+.directorySelect {
+  min-height: 28px;
+  padding: 0 var(--oi-spacing-xs);
+  border: 0.5px solid var(--oi-border-color-strong);
+  border-radius: var(--oi-border-radius-default);
+  background: var(--oi-background-color-secondary);
+  color: var(--oi-content-color-primary);
+  font: inherit;
+}
+
+.folderButton {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-spacing-xs);
+  min-height: 28px;
+  padding: 0 var(--oi-spacing-xs);
+  border: 0.5px solid var(--oi-border-color-strong);
+  border-radius: var(--oi-border-radius-default);
+  background: var(--oi-background-color-secondary);
+  color: var(--oi-content-color-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folderButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .help {
   padding: var(--oi-spacing-l);
   color: var(--oi-content-color-secondary);

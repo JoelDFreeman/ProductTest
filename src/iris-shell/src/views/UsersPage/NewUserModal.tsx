@@ -4,6 +4,9 @@ import { FormField } from '../../components/FormField/FormField.js';
 import { Modal } from '../../components/Modal/Modal.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Stepper } from '../../components/Stepper/Stepper.js';
+import { Icon } from '../../components/Icon/Icon.js';
+import { useDirectory } from '../../lib/directoryStore.js';
+import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
 import styles from './NewUserModal.module.css';
 
 export interface NewUserModalProps {
@@ -19,6 +22,7 @@ export interface NewUserModalProps {
     displayName: string;
     userLogonName: string;
     directory: string;
+    location: string;
     inactive: boolean;
   }) => void;
 }
@@ -31,6 +35,7 @@ interface Draft {
   displayName: string;
   userLogonName: string;
   directory: string;
+  location: string;
   suffix: string;
   preWindowsLogonName: string;
   password: string;
@@ -45,6 +50,7 @@ const EMPTY_DRAFT: Draft = {
   displayName: '',
   userLogonName: '',
   directory: 'Entra 1',
+  location: '',
   suffix: '@Entra1',
   preWindowsLogonName: '',
   password: '',
@@ -52,9 +58,11 @@ const EMPTY_DRAFT: Draft = {
 };
 
 export function NewUserModal({ open, onClose, objectKind, directories, onCreate }: NewUserModalProps) {
+  const { getPath } = useDirectory();
   const [draft, setDraft] = useState<Draft>(() => ({ ...EMPTY_DRAFT, directory: directories[0] ?? 'Entra 1' }));
   const [step, setStep] = useState<1 | 2>(1);
   const [furthestStep, setFurthestStep] = useState<1 | 2>(1);
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [accountOptions, setAccountOptions] = useState({
     changePassword: true,
     preventPasswordChange: false,
@@ -67,17 +75,17 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
     setDraft((current) => ({ ...current, [field]: event.target.value }));
   };
 
-  const canContinue = useMemo(
-    () => Boolean(
+  const canContinue = useMemo(() => {
+    const baseValid = Boolean(
       draft.firstName.trim() &&
       draft.lastName.trim() &&
       draft.name.trim() &&
       draft.displayName.trim() &&
-      draft.userLogonName.trim() &&
-      objectKind === 'ad' ? draft.preWindowsLogonName.trim() : true,
-    ),
-    [draft],
-  );
+      draft.userLogonName.trim(),
+    );
+    if (objectKind !== 'ad') return baseValid;
+    return baseValid && Boolean(draft.preWindowsLogonName.trim()) && Boolean(draft.location.trim());
+  }, [draft, objectKind]);
   const canCreate = Boolean(draft.password && draft.password === draft.confirmPassword);
 
   const close = () => {
@@ -117,6 +125,7 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
                 displayName: draft.displayName.trim(),
                 userLogonName: draft.userLogonName.trim(),
                 directory: draft.directory,
+                location: draft.location,
                 inactive: accountOptions.disabled,
               });
               close();
@@ -169,6 +178,14 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
             </FormField>
           </div>
           {objectKind === 'ad' && (
+            <FormField label="Location" required helperText="The organizational unit this user will be created in.">
+              <button type="button" className={styles.folderButton} onClick={() => setFolderPickerOpen(true)}>
+                <Icon name="FolderOpen" size="16px" />
+                <span>{draft.location || 'Select destination folder'}</span>
+              </button>
+            </FormField>
+          )}
+          {objectKind === 'ad' && (
             <FormField label="User logon name (pre-Windows 2000)" required helperText="The legacy sign-in name.">
               <TextInput value={draft.preWindowsLogonName} onChange={setField('preWindowsLogonName')} />
             </FormField>
@@ -197,6 +214,22 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
           <p>To manage identity and display names, complete the required fields.</p>
         </aside>
       </div>
+      {objectKind === 'ad' && (
+        <MoveGroupsModal
+          open={folderPickerOpen}
+          count={1}
+          objectLabel="User"
+          title="Select destination folder"
+          confirmLabel="Select"
+          elevated
+          onClose={() => setFolderPickerOpen(false)}
+          onMove={(nodeId) => {
+            const path = getPath(nodeId).map((crumb) => crumb.name).join(' / ');
+            setDraft((current) => ({ ...current, location: path }));
+            setFolderPickerOpen(false);
+          }}
+        />
+      )}
     </Modal>
   );
 }

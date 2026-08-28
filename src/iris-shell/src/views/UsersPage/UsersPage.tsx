@@ -527,7 +527,7 @@ export function UsersPage() {
             description: `Newly created ${newUserKind === 'ad' ? 'AD' : 'Entra'} user.`,
             email: `${draft.userLogonName.toLowerCase()}@example.com`,
             objectId: `new-${Date.now()}`,
-            location: draft.directory,
+            location: draft.location || draft.directory,
             tags: ['New'],
             details: {
               firstName: draft.firstName,

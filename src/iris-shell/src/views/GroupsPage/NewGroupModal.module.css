@@ -67,6 +67,28 @@
   font: inherit;
 }
 
+.folderButton {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-spacing-xs);
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--oi-spacing-s);
+  border: 1px solid var(--oi-border-color-muted);
+  border-radius: var(--oi-border-radius-default);
+  background: var(--oi-background-color-primary);
+  color: var(--oi-content-color-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folderButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .scopeField {
   display: grid;
   gap: var(--oi-spacing-xs);
