@@ -5,6 +5,9 @@ import { Modal } from '../../components/Modal/Modal.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Textarea } from '../../components/Textarea/Textarea.js';
 import { Stepper } from '../../components/Stepper/Stepper.js';
+import { Icon } from '../../components/Icon/Icon.js';
+import { useDirectory } from '../../lib/directoryStore.js';
+import { MoveGroupsModal } from './MoveGroupsModal.js';
 import styles from './NewGroupModal.module.css';
 
 export interface NewGroupDraft {
@@ -13,6 +16,7 @@ export interface NewGroupDraft {
   description: string;
   scope: 'Domain local' | 'Global' | 'Universal';
   directory: string;
+  location: string;
 }
 
 interface NewGroupModalProps {
@@ -28,21 +32,28 @@ const EMPTY_DRAFT: NewGroupDraft = {
   description: '',
   scope: 'Global',
   directory: 'Entra 1',
+  location: '',
 };
 
 export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroupModalProps) {
+  const { getPath } = useDirectory();
   const [draft, setDraft] = useState<NewGroupDraft>(() => ({
     ...EMPTY_DRAFT,
     directory: directories[0] ?? EMPTY_DRAFT.directory,
   }));
   const [step, setStep] = useState<1 | 2>(1);
   const [furthestStep, setFurthestStep] = useState<1 | 2>(1);
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
+  const isAdDirectory = /^AD-/i.test(draft.directory);
 
   const setTextField = (field: 'name' | 'displayName' | 'description') => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setDraft((current) => ({ ...current, [field]: event.target.value }));
   };
 
-  const canContinue = useMemo(() => Boolean(draft.name.trim() && draft.displayName.trim()), [draft.name, draft.displayName]);
+  const canContinue = useMemo(
+    () => Boolean(draft.name.trim() && draft.displayName.trim() && (!isAdDirectory || draft.location.trim())),
+    [draft.name, draft.displayName, draft.location, isAdDirectory],
+  );
 
   const close = () => {
     setDraft({ ...EMPTY_DRAFT, directory: directories[0] ?? EMPTY_DRAFT.directory });
@@ -109,10 +120,18 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
               <Textarea rows={4} value={draft.description} onChange={setTextField('description')} />
             </FormField>
             <FormField label="Directory" required>
-              <select className={styles.select} value={draft.directory} onChange={(event) => setDraft((current) => ({ ...current, directory: event.target.value }))} aria-label="Directory">
+              <select className={styles.select} value={draft.directory} onChange={(event) => setDraft((current) => ({ ...current, directory: event.target.value, location: '' }))} aria-label="Directory">
                 {directories.map((directory) => <option key={directory} value={directory}>{directory}</option>)}
               </select>
             </FormField>
+            {isAdDirectory && (
+              <FormField label="Location" required helperText="The organizational unit this group will be created in.">
+                <button type="button" className={styles.folderButton} onClick={() => setFolderPickerOpen(true)}>
+                  <Icon name="FolderOpen" size="16px" />
+                  <span>{draft.location || 'Select destination folder'}</span>
+                </button>
+              </FormField>
+            )}
           </> : <>
             <h3 className={styles.sectionTitle}>Group options</h3>
             <p className={styles.sectionHelp}>Choose the scope for this group.</p>
@@ -129,6 +148,22 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
           <p>To manage group identity and directory settings, complete the required fields.</p>
         </aside>
       </div>
+      {isAdDirectory && (
+        <MoveGroupsModal
+          open={folderPickerOpen}
+          count={1}
+          objectLabel="Group"
+          title="Select destination folder"
+          confirmLabel="Select"
+          elevated
+          onClose={() => setFolderPickerOpen(false)}
+          onMove={(nodeId) => {
+            const path = getPath(nodeId).map((crumb) => crumb.name).join(' / ');
+            setDraft((current) => ({ ...current, location: path }));
+            setFolderPickerOpen(false);
+          }}
+        />
+      )}
     </Modal>
   );
 }

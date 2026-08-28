@@ -137,7 +137,7 @@ export function GroupsPage() {
             status: 'Active',
             description: draft.description,
             members: 0,
-            location: draft.directory,
+            location: draft.location || draft.directory,
             scope: draft.scope,
           };
           addGroup(createdGroup);

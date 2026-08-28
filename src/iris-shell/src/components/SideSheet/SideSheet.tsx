@@ -16,6 +16,8 @@ export interface SideSheetProps {
   /** Override aria-labelledby with a literal label. */
   ariaLabel?: string;
   className?: string;
+  /** Render above an already-open Modal (z-index 70) — for a picker launched from within a dialog. */
+  elevated?: boolean;
 }
 
 /**
@@ -39,6 +41,7 @@ export function SideSheet({
   bodyClassName,
   ariaLabel,
   className,
+  elevated,
 }: SideSheetProps) {
   const [mounted, setMounted] = useState(open);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -127,7 +130,7 @@ export function SideSheet({
 
   return createPortal(
     <div
-      className={cx(styles.root, open && styles.rootOpen)}
+      className={cx(styles.root, open && styles.rootOpen, elevated && styles.rootElevated)}
       // Scrim click closes; clicks inside panel stopPropagation below.
       onClick={onClose}
     >

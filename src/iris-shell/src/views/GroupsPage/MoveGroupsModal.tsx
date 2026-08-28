@@ -9,11 +9,17 @@ interface MoveGroupsModalProps {
   open: boolean;
   count: number;
   objectLabel?: string;
+  /** Overrides the default "Move {label}" heading — e.g. for a "select destination" flow at creation time. */
+  title?: string;
+  /** Overrides the default "Move" confirm button label. */
+  confirmLabel?: string;
+  /** Render above an already-open Modal — for a picker launched from within a create-object dialog. */
+  elevated?: boolean;
   onClose: () => void;
   onMove: (directory: string) => void;
 }
 
-export function MoveGroupsModal({ open, count, objectLabel = 'Group', onClose, onMove }: MoveGroupsModalProps) {
+export function MoveGroupsModal({ open, count, objectLabel = 'Group', title, confirmLabel = 'Move', elevated, onClose, onMove }: MoveGroupsModalProps) {
   const adRoots = useMemo(() => NODE_TREE.filter((node) => node.id === 'managed-directories').map((node) => ({
     ...node,
     children: node.children.filter((child) => child.id === 'active-directories'),
@@ -44,11 +50,12 @@ export function MoveGroupsModal({ open, count, objectLabel = 'Group', onClose, o
     <SideSheet
       open={open}
       onClose={onClose}
-      title={`Move ${count === 1 ? objectLabel : `${objectLabel}s`}`}
+      elevated={elevated}
+      title={title ?? `Move ${count === 1 ? objectLabel : `${objectLabel}s`}`}
       subtitle={`Browse and select a destination folder for ${count === 1 ? `the selected ${objectLabel.toLowerCase()}` : `${count} selected ${objectLabel.toLowerCase()}s`}.`}
       className={styles.modal}
       bodyClassName={styles.body}
-      footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!selectedNodeId} onClick={() => { onMove(selectedNodeId ?? ''); onClose(); }}>Move</Button></>}
+      footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!selectedNodeId} onClick={() => { onMove(selectedNodeId ?? ''); onClose(); }}>{confirmLabel}</Button></>}
     >
       <div className={styles.browseLayout}>
         <div className={styles.treePanel} aria-label="AD directories">
