@@ -21,6 +21,22 @@ const TABS: TabItem[] = [
 
 const MENU_ITEMS = ['Common', 'Account', 'User', 'Contact', 'Device', 'Dates', 'Phonetic properties'];
 
+function FilterGroupConnector({ group, groups, onGroupsChange }: { group: FilterGroup; groups: FilterGroup[]; onGroupsChange: (groups: FilterGroup[]) => void }) {
+  return (
+    <Menu
+      ariaLabel="Filter group connector"
+      align="start"
+      items={(['AND', 'OR'] as const).map((connector): MenuEntry => ({
+        kind: 'item',
+        label: connector,
+        selected: (group.connector ?? 'AND') === connector,
+        onSelect: () => onGroupsChange(groups.map((item) => item.id === group.id ? { ...item, connector } : item)),
+      }))}
+      trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.connectorChip} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>{group.connector ?? 'AND'}<Icon name="CaretDown" size="12px" /></button>}
+    />
+  );
+}
+
 export function AdvancedSearchSideSheet() {
   const { open, tab, setTab, closeSearch, draftFilters, setDraftFilters, applyFilters, clearFilters, groupConditions, setGroupConditions, filterGroups, setFilterGroups, advancedFilterMode, setAdvancedFilterMode, createFilterGroup, ldapQuery, ldapQueryManual, setLdapQuery } = useAdvancedSearch();
   const { setAiContext } = useAppShell();
@@ -73,7 +89,8 @@ export function AdvancedSearchSideSheet() {
         <>
           {advancedFilterMode
             ? <div className={styles.advancedGroupsStack}>
-              <FilterGroupsTab groups={filterGroups} conditions={groupConditions} onChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} onAddFilter={(fieldId) => setDraftFilters([...draftFilters, { id: `${fieldId}-${Date.now()}-${Math.random()}`, fieldId }])} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />
+              <FilterGroupsTab groups={filterGroups} conditions={groupConditions} onChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />
+              {draftFilters.length > 0 && filterGroups.some((group) => !group.parentGroupId) && <FilterGroupConnector group={filterGroups.find((group) => !group.parentGroupId)!} groups={filterGroups} onGroupsChange={setFilterGroups} />}
               {draftFilters.length > 0 && <BasicFilterGroup filters={draftFilters} onChange={setDraftFilters} groups={filterGroups} conditions={groupConditions} onConditionsChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} />}
             </div>
             : <BasicFilterTab filters={draftFilters} onChange={setDraftFilters} onClear={clearFilters} onCreateGroup={createFilterGroup} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />}
@@ -179,7 +196,8 @@ function BasicFilterGroup({ filters, onChange, groups, conditions, onConditionsC
   };
   return (
     <section className={styles.groupContainer} aria-label="Basic filter group">
-      <h3 className={styles.groupHeaderTitle}>Basic filters</h3>
+      <button type="button" className={styles.dragHandle} draggable aria-label="Reorder basic filter group"><Icon name="DotsSixVertical" size="16px" /></button>
+      <button type="button" className={styles.removeGroup} aria-label="Remove basic filter group" onClick={() => onChange([])}><Icon name="X" size="16px" /></button>
       <div className={styles.selectedFilters} aria-label="Basic filters">
         {filters.map((filter) => <FilterChip key={filter.id} filter={filter} onChange={(patch) => onChange(filters.map((item) => item.id === filter.id ? { ...item, ...patch } : item))} onRemove={() => onChange(filters.filter((item) => item.id !== filter.id))} />)}
       </div>
@@ -199,7 +217,7 @@ function buildLdapQuery(filters: AdvancedFilter[], conditions: FilterGroupCondit
   return `(&${filterPart}${groupPart})`;
 }
 
-function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreateGroup, onAddFilter, advancedFilterMode, onAdvancedFilterModeChange }: { groups: FilterGroup[]; conditions: FilterGroupCondition[]; onChange: (conditions: FilterGroupCondition[]) => void; onGroupsChange: (groups: FilterGroup[]) => void; onCreateGroup: (parentGroupId?: string) => string; onAddFilter: (fieldId: string) => void; advancedFilterMode: boolean; onAdvancedFilterModeChange: (enabled: boolean) => void }) {
+function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreateGroup, advancedFilterMode, onAdvancedFilterModeChange }: { groups: FilterGroup[]; conditions: FilterGroupCondition[]; onChange: (conditions: FilterGroupCondition[]) => void; onGroupsChange: (groups: FilterGroup[]) => void; onCreateGroup: (parentGroupId?: string) => string; advancedFilterMode: boolean; onAdvancedFilterModeChange: (enabled: boolean) => void }) {
   const [dragGroupId, setDragGroupId] = useState<string | null>(null);
   const addCondition = (groupId: string, fieldId = 'displayName') => onChange([...conditions, { id: `condition-${fieldId}-${Date.now()}`, groupId, fieldId, connector: 'AND', operator: 'is' }]);
   const update = (id: string, patch: Partial<FilterGroupCondition>) => onChange(conditions.map((condition) => condition.id === id ? { ...condition, ...patch } : condition));
@@ -270,7 +288,6 @@ function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreat
           <h3>Add filters and create filter groups</h3>
         </div>
         <div className={styles.groupHeaderActions}>
-          <FilterAddMenu onAdd={onAddFilter} />
           <button type="button" className={styles.addFiltersButton} onClick={() => onCreateGroup()}><Icon name="Plus" size="16px" />Create filter group</button>
         </div>
       </div>
