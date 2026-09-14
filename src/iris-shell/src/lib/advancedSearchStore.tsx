@@ -19,6 +19,7 @@ export interface FilterGroupCondition extends AdvancedFilter {
 export interface FilterGroup {
   id: string;
   parentGroupId?: string;
+  connector?: 'AND' | 'OR';
 }
 
 interface AdvancedSearchContextValue {
@@ -101,7 +102,7 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
     setAdvancedFilterMode,
     createFilterGroup: (parentGroupId) => {
       const id = `group-${Date.now()}-${Math.random()}`;
-      setFilterGroups((groups) => [...groups, { id, parentGroupId }]);
+      setFilterGroups((groups) => [...groups, { id, parentGroupId, connector: 'AND' }]);
       setAdvancedFilterMode(true);
       setTab('basic');
       return id;

@@ -35,8 +35,8 @@
   bottom: -1px;
   left: 0;
   width: 0;
-  height: 2px;
-  border-radius: 1px;
+  height: 1px;
+  box-shadow: 0 1px 0 var(--oi-border-color-focus);
   background-color: var(--oi-border-color-focus);
   transform: translateX(0);
   transition:
@@ -89,17 +89,16 @@
   gap: var(--oi-spacing-xs);
   height: 28px;
   padding: var(--oi-spacing-xs) var(--oi-spacing-s);
-  border-radius: var(--oi-border-radius-l);
+  border-radius: var(--oi-border-radius-default);
   color: inherit;
-  border: var(--oi-border-width-default) var(--oi-border-style-solid) transparent;
+  border: 0;
   transition: background-color var(--oi-motion-duration-short)
     var(--oi-motion-ease-default),
     border-color var(--oi-motion-duration-short) var(--oi-motion-ease-default);
 }
 
 .tabContentSelected {
-  background-color: var(--oi-background-color-primary);
-  border-color: var(--oi-border-color-muted);
+  background-color: var(--oi-background-color-tertiary);
 }
 
 .label {
@@ -110,9 +109,7 @@
   white-space: nowrap;
 }
 
-/* Reserve the bold (selected) width at all times so activating a tab doesn't
-   widen its label and shift sibling tabs. The pseudo renders the same text at
-   the strong weight but collapsed to zero height, so it only contributes width. */
+/* Reserve the selected label width so activating a tab does not shift siblings. */
 .label::after {
   content: attr(data-label);
   display: block;
@@ -121,14 +118,30 @@
   visibility: hidden;
   pointer-events: none;
   user-select: none;
-  font-weight: var(--oi-text-body-s-strong-font-weight);
+  font-weight: var(--oi-text-body-s-font-weight);
 }
 
 .labelSelected {
-  font-size: var(--oi-text-body-s-strong-font-size);
-  line-height: var(--oi-text-body-s-strong-line-height);
-  font-weight: var(--oi-text-body-s-strong-font-weight);
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
+  font-weight: var(--oi-text-body-s-font-weight);
   color: var(--oi-content-color-primary);
+}
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 23px;
+  height: 20px;
+  padding-inline: var(--oi-spacing-xs);
+  border-radius: var(--oi-border-radius-s);
+  background-color: var(--oi-base-color-info);
+  color: var(--oi-content-color-constant);
+  font-family: var(--oi-font-family-code);
+  font-size: var(--oi-text-caption-font-size);
+  line-height: var(--oi-text-caption-line-height);
+  font-weight: var(--oi-text-caption-strong-font-weight);
 }
 
 .stroke {

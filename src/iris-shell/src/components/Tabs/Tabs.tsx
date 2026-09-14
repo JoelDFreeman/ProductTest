@@ -15,6 +15,7 @@ export interface TabItem {
   value: string;
   label: string;
   icon?: string;
+  counter?: number;
 }
 
 export interface TabsProps {
@@ -203,6 +204,9 @@ export function Tabs({ items, value, onChange, ariaLabel, className }: TabsProps
                 >
                   {item.label}
                 </span>
+                {item.counter !== undefined && item.counter > 0 && (
+                  <span className={styles.counter}>{item.counter}</span>
+                )}
               </span>
               <span
                 aria-hidden="true"
@@ -248,6 +252,9 @@ export function Tabs({ items, value, onChange, ariaLabel, className }: TabsProps
               <span className={styles.label} data-label={item.label}>
                 {item.label}
               </span>
+              {item.counter !== undefined && item.counter > 0 && (
+                <span className={styles.counter}>{item.counter}</span>
+              )}
             </span>
           </span>
         ))}
