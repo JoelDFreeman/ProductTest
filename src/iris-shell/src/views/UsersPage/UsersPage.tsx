@@ -156,7 +156,6 @@ const COLUMNS: DataTableColumn<User>[] = [
     header: 'Description',
     icon: 'ArticleNyTimes',
     minWidth: '224px',
-    maxWidth: '480px',
     grow: 2,
     cell: (u) => <span title={u.description}>{u.description}</span>,
   },
@@ -165,7 +164,6 @@ const COLUMNS: DataTableColumn<User>[] = [
     header: 'Tags',
     icon: 'Tag',
     minWidth: '190px',
-    maxWidth: '320px',
     grow: 1,
     cell: (u) => (
       <span className={styles.tagsCell}>
