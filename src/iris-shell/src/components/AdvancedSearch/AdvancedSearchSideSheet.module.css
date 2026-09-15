@@ -160,7 +160,7 @@
 
 .filterChip {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   max-width: 100%;
   color: var(--oi-content-color-primary);
   font-size: var(--oi-text-caption-font-size);
@@ -182,8 +182,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: stretch;
   width: var(--oi-size-s);
-  height: var(--oi-size-s);
+  min-height: var(--oi-size-s);
+  height: auto;
   padding: var(--oi-spacing-xs);
   border: 1px solid var(--oi-border-color-default);
   border-radius: 0 var(--oi-border-radius-default) var(--oi-border-radius-default) 0;

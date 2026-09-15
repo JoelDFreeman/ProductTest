@@ -11,6 +11,7 @@ import { Toggle } from '../Toggle/Toggle.js';
 import { Select } from '../Select/Select.js';
 import { useAdvancedSearch, type AdvancedSearchTab, type AdvancedFilter, type FilterGroup, type FilterGroupCondition } from '../../lib/advancedSearchStore.js';
 import { useAppShell } from '../../lib/appShellContext.js';
+import { useGroups } from '../../lib/groupsStore.js';
 import styles from './AdvancedSearchSideSheet.module.css';
 
 const TABS: TabItem[] = [
@@ -19,7 +20,7 @@ const TABS: TabItem[] = [
   { value: 'ask-ai', label: 'Ask AI', icon: 'Sparkle' },
 ];
 
-const MENU_ITEMS = ['Common', 'Account', 'User', 'Contact', 'Device', 'Dates', 'Phonetic properties'];
+const MENU_ITEMS = ['Common', 'User', 'Computer', 'Groups', 'Other properties'];
 
 function FilterGroupConnector({ group, groups, onGroupsChange }: { group: FilterGroup; groups: FilterGroup[]; onGroupsChange: (groups: FilterGroup[]) => void }) {
   return (
@@ -40,6 +41,8 @@ function FilterGroupConnector({ group, groups, onGroupsChange }: { group: Filter
 export function AdvancedSearchSideSheet() {
   const { open, tab, setTab, closeSearch, draftFilters, setDraftFilters, applyFilters, clearFilters, groupConditions, setGroupConditions, filterGroups, setFilterGroups, advancedFilterMode, setAdvancedFilterMode, createFilterGroup, ldapQuery, ldapQueryManual, setLdapQuery } = useAdvancedSearch();
   const { setAiContext } = useAppShell();
+  const { groups } = useGroups();
+  const groupOptions = groups.map((group) => group.name);
   const [discardAdvancedOpen, setDiscardAdvancedOpen] = useState(false);
   const generatedQuery = buildLdapQuery(draftFilters, groupConditions);
   const tabs = TABS.map((item) => item.value === 'basic'
@@ -89,11 +92,11 @@ export function AdvancedSearchSideSheet() {
         <>
           {advancedFilterMode
             ? <div className={styles.advancedGroupsStack}>
-              <FilterGroupsTab groups={filterGroups} conditions={groupConditions} onChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />
+              <FilterGroupsTab groups={filterGroups} conditions={groupConditions} onChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} groupOptions={groupOptions} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />
               {draftFilters.length > 0 && filterGroups.some((group) => !group.parentGroupId) && <FilterGroupConnector group={filterGroups.find((group) => !group.parentGroupId)!} groups={filterGroups} onGroupsChange={setFilterGroups} />}
-              {draftFilters.length > 0 && <BasicFilterGroup filters={draftFilters} onChange={setDraftFilters} groups={filterGroups} conditions={groupConditions} onConditionsChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} />}
+              {draftFilters.length > 0 && <BasicFilterGroup filters={draftFilters} onChange={setDraftFilters} groups={filterGroups} conditions={groupConditions} onConditionsChange={setGroupConditions} onGroupsChange={setFilterGroups} onCreateGroup={createFilterGroup} groupOptions={groupOptions} />}
             </div>
-            : <BasicFilterTab filters={draftFilters} onChange={setDraftFilters} onClear={clearFilters} onCreateGroup={createFilterGroup} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />}
+            : <BasicFilterTab filters={draftFilters} onChange={setDraftFilters} onClear={clearFilters} onCreateGroup={createFilterGroup} groupOptions={groupOptions} advancedFilterMode={advancedFilterMode} onAdvancedFilterModeChange={handleAdvancedModeChange} />}
         </>
       )}
       {tab === 'queries' && <QueriesTab filters={draftFilters} conditions={groupConditions} query={ldapQuery} manual={ldapQueryManual} onChange={setLdapQuery} />}
@@ -127,33 +130,40 @@ const BASIC_FIELDS: { id: string; label: string; options?: string[] }[] = [
 
 const TEXT_OPERATORS = ['is', 'starts with', 'ends with', 'contains', 'equals', 'does not equal', 'is empty', 'is not empty'];
 const DATE_OPERATORS = ['is', 'is before', 'is after', 'is between', 'is in the last...', 'is in the next...'];
-function FilterAddMenu({ onAdd, onCreateGroup }: { onAdd: (fieldId: string) => void; onCreateGroup?: () => void }) {
+const USER_FIELDS = [{ id: 'memberOf', label: 'Member of' }, { id: 'ownerOf', label: 'Owner of' }, { id: 'userType', label: 'User type', options: ['User', 'Admin', 'Service account'] }];
+const COMPUTER_FIELDS = [{ id: 'computerType', label: 'Computer type', options: ['Computer', 'Device', 'Operator computer', 'Workstation'] }];
+const GROUP_FIELDS = [{ id: 'membershipType', label: 'Membership type', options: ['Security Group', 'Distribution Group'] }];
+function FilterAddMenu({ onAdd, onCreateGroup, groupOptions = [] }: { onAdd: (fieldId: string, value?: string) => void; onCreateGroup?: () => void; groupOptions?: string[] }) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
   const propertyItems: MenuEntry[] = BASIC_FIELDS.map((field) => ({ kind: 'item', label: field.label, onSelect: () => { onAdd(field.id); setCategory(null); } }));
   const placeholderItems: MenuEntry[] = [{ kind: 'item', label: 'No properties available', disabled: true }];
+  const userItems: MenuEntry[] = USER_FIELDS.map((field): MenuEntry => ({ kind: 'item', label: field.label, onSelect: () => { onAdd(field.id); setCategory(null); } }));
+  const computerItems: MenuEntry[] = COMPUTER_FIELDS.map((field): MenuEntry => ({ kind: 'item', label: field.label, onSelect: () => { onAdd(field.id); setCategory(null); } }));
+  const groupItems: MenuEntry[] = GROUP_FIELDS.map((field): MenuEntry => ({ kind: 'submenu', label: field.label, selected: category === field.id, onOpen: () => setCategory(field.id), items: field.options.map((option): MenuEntry => ({ kind: 'item', label: option, onSelect: () => { onAdd(field.id, option); setCategory(null); } })) }));
   const categoryItems: MenuEntry[] = [
-    ...[...MENU_ITEMS, 'Other properties'].map((item): MenuEntry => ({ kind: 'submenu', label: item, selected: category === item, onOpen: () => setCategory(item), items: item === 'Common' ? propertyItems : placeholderItems })),
+    ...MENU_ITEMS.map((item): MenuEntry => ({ kind: 'submenu', label: item, selected: category === item, onOpen: () => setCategory(item), items: item === 'Common' ? propertyItems : item === 'User' ? userItems : item === 'Computer' ? computerItems : item === 'Groups' ? groupItems : placeholderItems })),
     ...(onCreateGroup ? [{ kind: 'divider' as const }, { kind: 'item' as const, label: 'Create filter group', icon: 'TreeView', onSelect: onCreateGroup }] : []),
   ];
   return <Menu ariaLabel="Filter categories" align="start" open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setCategory(null); }} items={categoryItems} trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.addFiltersButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}><Icon name="Plus" size="16px" />Add filter</button>} />;
 }
 
-function FilterChip({ filter, onChange, onRemove }: { filter: AdvancedFilter; onChange: (patch: Partial<AdvancedFilter>) => void; onRemove: () => void }) {
-  const field = BASIC_FIELDS.find((item) => item.id === filter.fieldId);
+function FilterChip({ filter, onChange, onRemove, groupOptions = [] }: { filter: AdvancedFilter; onChange: (patch: Partial<AdvancedFilter>) => void; onRemove: () => void; groupOptions?: string[] }) {
+  const field = [...BASIC_FIELDS, ...USER_FIELDS, ...COMPUTER_FIELDS, ...GROUP_FIELDS].find((item) => item.id === filter.fieldId);
   const operators = filter.fieldId.startsWith('date') ? DATE_OPERATORS : TEXT_OPERATORS;
+  const options = filter.fieldId === 'memberOf' || filter.fieldId === 'ownerOf' ? groupOptions : field?.options;
   return <div className={styles.filterChip}>
     <div className={styles.filterMain}>
       <span className={styles.filterField}>{field?.label ?? filter.fieldId}</span>
       <Menu ariaLabel={`${filter.fieldId} operator`} align="start" items={operators.map((operator): MenuEntry => ({ kind: 'item', label: operator, selected: (filter.operator ?? 'is') === operator, onSelect: () => onChange({ operator, value: operator.includes('empty') ? '' : filter.value }) }))} trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.filterRule} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>{filter.operator ?? 'is'}</button>} />
-      {field?.options ? <Menu ariaLabel={`${filter.fieldId} value`} align="start" items={field.options.map((option): MenuEntry => ({ kind: 'item', label: option, selected: filter.value === option, onSelect: () => onChange({ value: option }) }))} trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.filterValueButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>{filter.value || 'Select value'}<Icon name="CaretDown" size="12px" /></button>} /> : <input className={styles.filterValue} value={filter.value ?? ''} placeholder="Select value" aria-label={`${filter.fieldId} value`} onChange={(event) => onChange({ value: event.target.value })} />}
+      {options ? <Menu ariaLabel={`${filter.fieldId} value`} align="start" items={options.map((option): MenuEntry => ({ kind: 'item', label: option, selected: filter.value === option, onSelect: () => onChange({ value: option }) }))} trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.filterValueButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>{filter.value || 'Select value'}<Icon name="CaretDown" size="12px" /></button>} /> : <input className={styles.filterValue} value={filter.value ?? ''} placeholder="Select value" aria-label={`${filter.fieldId} value`} onChange={(event) => onChange({ value: event.target.value })} />}
     </div>
     <button type="button" className={styles.filterRemove} aria-label={`Remove ${filter.fieldId} filter`} onClick={onRemove}><Icon name="X" size="16px" /></button>
   </div>;
 }
 
-function BasicFilterTab({ filters, onChange, onCreateGroup, advancedFilterMode, onAdvancedFilterModeChange, showAddCard = true }: { filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; onClear: () => void; onCreateGroup: () => void; advancedFilterMode: boolean; onAdvancedFilterModeChange: (enabled: boolean) => void; showAddCard?: boolean }) {
-  const addFilter = (fieldId: string) => onChange([...filters, { id: `${fieldId}-${Date.now()}-${Math.random()}`, fieldId }]);
+function BasicFilterTab({ filters, onChange, onCreateGroup, groupOptions, advancedFilterMode, onAdvancedFilterModeChange, showAddCard = true }: { filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; onClear: () => void; onCreateGroup: () => void; groupOptions: string[]; advancedFilterMode: boolean; onAdvancedFilterModeChange: (enabled: boolean) => void; showAddCard?: boolean }) {
+  const addFilter = (fieldId: string, value?: string) => onChange([...filters, { id: `${fieldId}-${Date.now()}-${Math.random()}`, fieldId, value }]);
   return (
     <div className={styles.basic}>
       {showAddCard && <section className={styles.addCard}>
@@ -167,13 +177,13 @@ function BasicFilterTab({ filters, onChange, onCreateGroup, advancedFilterMode, 
         <div className={styles.menuTriggerRow}><FilterAddMenu onAdd={addFilter} onCreateGroup={onCreateGroup} /></div>
       </section>}
       <div className={styles.selectedFilters} aria-label="Added filters">
-        {filters.map((filter) => <FilterChip key={filter.id} filter={filter} onChange={(patch) => onChange(filters.map((item) => item.id === filter.id ? { ...item, ...patch } : item))} onRemove={() => onChange(filters.filter((item) => item.id !== filter.id))} />)}
+        {filters.map((filter) => <FilterChip key={filter.id} filter={filter} groupOptions={groupOptions} onChange={(patch) => onChange(filters.map((item) => item.id === filter.id ? { ...item, ...patch } : item))} onRemove={() => onChange(filters.filter((item) => item.id !== filter.id))} />)}
       </div>
     </div>
   );
 }
 
-function BasicFilterGroup({ filters, onChange, groups, conditions, onConditionsChange, onGroupsChange, onCreateGroup }: { filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; groups: FilterGroup[]; conditions: FilterGroupCondition[]; onConditionsChange: (conditions: FilterGroupCondition[]) => void; onGroupsChange: (groups: FilterGroup[]) => void; onCreateGroup: (parentGroupId?: string) => string }) {
+function BasicFilterGroup({ filters, onChange, groups, conditions, onConditionsChange, onGroupsChange, onCreateGroup, groupOptions }: { filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; groups: FilterGroup[]; conditions: FilterGroupCondition[]; onConditionsChange: (conditions: FilterGroupCondition[]) => void; onGroupsChange: (groups: FilterGroup[]) => void; onCreateGroup: (parentGroupId?: string) => string; groupOptions: string[] }) {
   const addFilter = (fieldId: string) => onChange([...filters, { id: `${fieldId}-${Date.now()}-${Math.random()}`, fieldId }]);
   const childGroups = (parentGroupId: string) => groups.filter((group) => group.parentGroupId === parentGroupId);
   const removeGroup = (groupId: string) => {
@@ -185,7 +195,7 @@ function BasicFilterGroup({ filters, onChange, groups, conditions, onConditionsC
     return <div className={styles.nestedGroup} key={group.id}>
       <button type="button" className={styles.removeGroup} aria-label="Remove sub-group" onClick={() => removeGroup(group.id)}><Icon name="X" size="16px" /></button>
       <div className={styles.selectedFilters} aria-label="Sub-group filters">
-        {groupConditions.map((condition) => <FilterChip key={condition.id} filter={condition} onChange={(patch) => onConditionsChange(conditions.map((item) => item.id === condition.id ? { ...item, ...patch } : item))} onRemove={() => onConditionsChange(conditions.filter((item) => item.id !== condition.id))} />)}
+        {groupConditions.map((condition) => <FilterChip key={condition.id} filter={condition} groupOptions={groupOptions} onChange={(patch) => onConditionsChange(conditions.map((item) => item.id === condition.id ? { ...item, ...patch } : item))} onRemove={() => onConditionsChange(conditions.filter((item) => item.id !== condition.id))} />)}
       </div>
       <div className={styles.groupActions}>
         <FilterAddMenu onAdd={(fieldId) => onConditionsChange([...conditions, { id: `condition-${fieldId}-${Date.now()}`, groupId: group.id, fieldId, connector: 'AND', operator: 'is' }])} />
@@ -199,7 +209,7 @@ function BasicFilterGroup({ filters, onChange, groups, conditions, onConditionsC
       <button type="button" className={styles.dragHandle} draggable aria-label="Reorder basic filter group"><Icon name="DotsSixVertical" size="16px" /></button>
       <button type="button" className={styles.removeGroup} aria-label="Remove basic filter group" onClick={() => onChange([])}><Icon name="X" size="16px" /></button>
       <div className={styles.selectedFilters} aria-label="Basic filters">
-        {filters.map((filter) => <FilterChip key={filter.id} filter={filter} onChange={(patch) => onChange(filters.map((item) => item.id === filter.id ? { ...item, ...patch } : item))} onRemove={() => onChange(filters.filter((item) => item.id !== filter.id))} />)}
+        {filters.map((filter) => <FilterChip key={filter.id} filter={filter} groupOptions={groupOptions} onChange={(patch) => onChange(filters.map((item) => item.id === filter.id ? { ...item, ...patch } : item))} onRemove={() => onChange(filters.filter((item) => item.id !== filter.id))} />)}
       </div>
       <div className={styles.groupActions}>
         <FilterAddMenu onAdd={addFilter} />
@@ -217,7 +227,7 @@ function buildLdapQuery(filters: AdvancedFilter[], conditions: FilterGroupCondit
   return `(&${filterPart}${groupPart})`;
 }
 
-function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreateGroup, advancedFilterMode, onAdvancedFilterModeChange }: { groups: FilterGroup[]; conditions: FilterGroupCondition[]; onChange: (conditions: FilterGroupCondition[]) => void; onGroupsChange: (groups: FilterGroup[]) => void; onCreateGroup: (parentGroupId?: string) => string; advancedFilterMode: boolean; onAdvancedFilterModeChange: (enabled: boolean) => void }) {
+function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreateGroup, groupOptions, advancedFilterMode, onAdvancedFilterModeChange }: { groups: FilterGroup[]; conditions: FilterGroupCondition[]; onChange: (conditions: FilterGroupCondition[]) => void; onGroupsChange: (groups: FilterGroup[]) => void; onCreateGroup: (parentGroupId?: string) => string; groupOptions: string[]; advancedFilterMode: boolean; onAdvancedFilterModeChange: (enabled: boolean) => void }) {
   const [dragGroupId, setDragGroupId] = useState<string | null>(null);
   const addCondition = (groupId: string, fieldId = 'displayName') => onChange([...conditions, { id: `condition-${fieldId}-${Date.now()}`, groupId, fieldId, connector: 'AND', operator: 'is' }]);
   const update = (id: string, patch: Partial<FilterGroupCondition>) => onChange(conditions.map((condition) => condition.id === id ? { ...condition, ...patch } : condition));
@@ -272,7 +282,7 @@ function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreat
     return <div className={`${styles.groupContainer} ${depth > 0 ? styles.nestedGroup : ''}`} key={groupId} onDragOver={(event) => { if (dragGroupId && dragGroupId !== groupId) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (dragGroupId) reorderGroup(dragGroupId, groupId); setDragGroupId(null); }}>
       <button type="button" className={styles.dragHandle} draggable aria-label="Reorder filter group" onDragStart={() => setDragGroupId(groupId)} onDragEnd={() => setDragGroupId(null)}><Icon name="DotsSixVertical" size="16px" /></button>
       <button type="button" className={styles.removeGroup} aria-label="Remove filter group" onClick={() => removeGroup(groupId)}><Icon name="X" size="16px" /></button>
-      {groupConditions.map((condition, groupIndex) => <FilterChip key={condition.id} filter={condition} onChange={(patch) => update(condition.id, patch)} onRemove={() => onChange(conditions.filter((item) => item.id !== condition.id))} />)}
+      {groupConditions.map((condition, groupIndex) => <FilterChip key={condition.id} filter={condition} groupOptions={groupOptions} onChange={(patch) => update(condition.id, patch)} onRemove={() => onChange(conditions.filter((item) => item.id !== condition.id))} />)}
       <div className={styles.groupActions}><FilterAddMenu onAdd={(fieldId) => addCondition(groupId, fieldId)} /><button type="button" className={styles.groupAction} onClick={() => onCreateGroup(groupId)}><Icon name="Plus" size="16px" />Add sub-group</button></div>
       {childGroups(groupId).map((childGroupId) => <Fragment key={childGroupId}>{connectorMenu(groups.find((item) => item.id === childGroupId) ?? group)}{renderGroup(childGroupId, depth + 1)}</Fragment>)}
     </div>;
