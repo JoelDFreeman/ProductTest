@@ -280,7 +280,7 @@ function FilterGroupsTab({ groups, conditions, onChange, onGroupsChange, onCreat
     if (!group) return null;
     const groupConditions = conditions.filter((condition) => (condition.groupId ?? 'default') === groupId);
     return <div className={`${styles.groupContainer} ${depth > 0 ? styles.nestedGroup : ''}`} key={groupId} onDragOver={(event) => { if (dragGroupId && dragGroupId !== groupId) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (dragGroupId) reorderGroup(dragGroupId, groupId); setDragGroupId(null); }}>
-      <button type="button" className={styles.dragHandle} draggable aria-label="Reorder filter group" onDragStart={() => setDragGroupId(groupId)} onDragEnd={() => setDragGroupId(null)}><Icon name="DotsSixVertical" size="16px" /></button>
+      {depth === 0 && <button type="button" className={styles.dragHandle} draggable aria-label="Reorder filter group" onDragStart={() => setDragGroupId(groupId)} onDragEnd={() => setDragGroupId(null)}><Icon name="DotsSixVertical" size="16px" /></button>}
       <button type="button" className={styles.removeGroup} aria-label="Remove filter group" onClick={() => removeGroup(groupId)}><Icon name="X" size="16px" /></button>
       {groupConditions.map((condition, groupIndex) => <FilterChip key={condition.id} filter={condition} groupOptions={groupOptions} onChange={(patch) => update(condition.id, patch)} onRemove={() => onChange(conditions.filter((item) => item.id !== condition.id))} />)}
       <div className={styles.groupActions}><FilterAddMenu onAdd={(fieldId) => addCondition(groupId, fieldId)} /><button type="button" className={styles.groupAction} onClick={() => onCreateGroup(groupId)}><Icon name="Plus" size="16px" />Add sub-group</button></div>
