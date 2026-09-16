@@ -20,6 +20,8 @@ export interface DataTableColumn<TRow> {
   header: string;
   /** Icon to render before header. */
   icon?: string;
+  /** Optional filter control rendered beside the header label. */
+  headerFilter?: ReactNode;
   /** Fixed CSS length (e.g. "180px" or 180). */
   width?: string | number;
   /** Floor when grow is used. */
@@ -184,6 +186,7 @@ export function DataTable<TRow extends DataTableRow>({
               </span>
             )}
             <span className={styles.headLabel}>{col.header}</span>
+            {col.headerFilter}
           </HeadCell>
         ))}
         <HeadCell width="44px" className={styles.actionCell} pin="end" aria-label="Table settings">

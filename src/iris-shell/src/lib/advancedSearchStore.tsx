@@ -38,6 +38,7 @@ interface AdvancedSearchContextValue {
   setTab: (tab: AdvancedSearchTab) => void;
   setAppliedCount: (count: number) => void;
   setDraftFilters: (filters: AdvancedFilter[]) => void;
+  syncFilters: (filters: AdvancedFilter[]) => void;
   applyFilters: () => void;
   clearFilters: () => void;
   setGroupConditions: (conditions: FilterGroupCondition[]) => void;
@@ -80,6 +81,11 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
     ldapQuery,
     ldapQueryManual,
     setDraftFilters,
+    syncFilters: (filters) => {
+      setDraftFilters(filters);
+      setAppliedFilters(filters);
+      setAppliedCount(filters.filter((filter) => filter.value).length);
+    },
     applyFilters: () => {
       setAppliedFilters(draftFilters);
       setAppliedCount(
