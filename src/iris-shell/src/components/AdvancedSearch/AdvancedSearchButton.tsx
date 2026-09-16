@@ -9,7 +9,7 @@ interface AdvancedSearchButtonProps {
 }
 
 export function AdvancedSearchButton({ shortcut }: AdvancedSearchButtonProps) {
-  const { openSearch, appliedCount } = useAdvancedSearch();
+  const { open, openSearch, closeSearch, appliedCount } = useAdvancedSearch();
   const count = appliedCount;
   const previousCount = useRef(count);
   const [emphasised, setEmphasised] = useState(false);
@@ -26,7 +26,7 @@ export function AdvancedSearchButton({ shortcut }: AdvancedSearchButtonProps) {
   return (
     <span className={styles.wrap}>
       <Tooltip label="Advanced Search" shortcut={shortcut}>
-        <IconButton icon="FunnelSimple" ariaLabel="Advanced Search" onClick={openSearch} />
+        <IconButton icon="FunnelSimple" ariaLabel={open ? 'Close Advanced Search' : 'Advanced Search'} onClick={open ? closeSearch : openSearch} />
       </Tooltip>
       {count > 0 && <span className={`${styles.count} ${emphasised ? styles.countEmphasised : ''}`} aria-label={`${count} applied filter${count === 1 ? '' : 's'}`}>{count}</span>}
     </span>

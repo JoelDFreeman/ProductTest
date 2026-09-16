@@ -44,6 +44,7 @@ export function AdvancedSearchSideSheet() {
   const { groups } = useGroups();
   const groupOptions = groups.map((group) => group.name);
   const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(false);
   const [discardAdvancedOpen, setDiscardAdvancedOpen] = useState(false);
   const generatedQuery = buildLdapQuery(draftFilters, groupConditions);
   const tabs = TABS.map((item) => item.value === 'basic'
@@ -65,9 +66,14 @@ export function AdvancedSearchSideSheet() {
   useEffect(() => {
     if (open) {
       setMounted(true);
-      return undefined;
+      setVisible(false);
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
     }
-    const timer = setTimeout(() => setMounted(false), 120);
+    setVisible(false);
+    const timer = setTimeout(() => setMounted(false), 280);
     return () => clearTimeout(timer);
   }, [open]);
   useEffect(() => {
@@ -86,7 +92,7 @@ export function AdvancedSearchSideSheet() {
   if (!mounted) return null;
   return (
     <aside className={styles.panel} role="complementary" aria-label="Advanced Search">
-      <div className={`${styles.surface} ${open ? styles.surfaceOpen : ''}`}>
+      <div className={`${styles.surface} ${visible ? styles.surfaceOpen : ''}`}>
         <header className={styles.header}>
           <div className={styles.headerText}>
             <h2 className={styles.title}>Filter Options</h2>
