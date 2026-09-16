@@ -15,6 +15,7 @@ interface MembershipRow {
   name: string;
   type: 'Group';
   location: string;
+  createdAt: string;
 }
 
 interface UserMembershipsProps {
@@ -41,6 +42,7 @@ export function UserMemberships({ user, onMembershipChange }: UserMembershipsPro
         name: group.name,
         type: 'Group',
         location: group.location,
+        createdAt: group.createdAt,
       }));
   }, [groupIds, groups]);
 
@@ -53,6 +55,9 @@ export function UserMemberships({ user, onMembershipChange }: UserMembershipsPro
     { key: 'name', header: 'Name', icon: 'UsersThree', minWidth: '180px', grow: 1, cell: (item) => item.name },
     { key: 'type', header: 'Object type', icon: 'Tag', width: '120px', cell: (item) => item.type },
     { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '150px', cell: (item) => item.location },
+  ];
+  const columnOptions: DataTableColumn<MembershipRow>[] = [
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (group) => group.createdAt },
   ];
 
   const removeMembership = (group: MembershipRow) => {
@@ -75,10 +80,10 @@ export function UserMemberships({ user, onMembershipChange }: UserMembershipsPro
       <DataTable
         rows={filteredRows}
         columns={columns}
+        columnOptions={columnOptions}
         rowLabel={(group) => group.name}
         density="compact"
         appearance="light"
-        headerAction={<IconButton icon="SlidersHorizontal" ariaLabel="Table settings" size="s" />}
         rowActions={(group) => (
           <Tooltip label="Remove group membership">
             <IconButton

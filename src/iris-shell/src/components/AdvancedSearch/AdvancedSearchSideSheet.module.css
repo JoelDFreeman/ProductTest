@@ -5,6 +5,37 @@
   min-height: 0;
   overflow: visible;
   padding-left: var(--oi-spacing-xs);
+  transition: flex-basis var(--oi-motion-duration-default) var(--oi-motion-ease-default);
+}
+
+.resizeHandle {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--oi-spacing-xs) / -2);
+  width: var(--oi-spacing-s);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+}
+
+.resizeGrip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 32px;
+  border-radius: var(--oi-border-radius-pill);
+  background: transparent;
+  transform: translate(-50%, -50%);
+  transition: background var(--oi-motion-duration-short) var(--oi-motion-ease-default);
+}
+
+.resizeHandle:hover .resizeGrip,
+.resizeHandle:focus-visible .resizeGrip {
+  background: var(--oi-border-color-strong);
 }
 
 .surface {
@@ -37,8 +68,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .panel,
   .surface,
-  .surfaceOpen {
+  .surfaceOpen,
+  .resizeGrip {
     transform: none;
     opacity: 1;
     transition: none;
@@ -49,8 +82,42 @@
   display: flex;
   align-items: flex-start;
   gap: var(--oi-spacing-m);
-  padding: var(--oi-spacing-l);
+  min-height: 44px;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 var(--oi-spacing-l);
   border-bottom: var(--oi-border-width-default) var(--oi-border-style-solid) var(--oi-border-color-muted);
+}
+
+.modeTabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--oi-spacing-xs);
+  align-items: center;
+}
+
+.modeTab {
+  display: inline-flex;
+  width: 36px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: var(--oi-border-radius-default);
+  color: var(--oi-content-color-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.modeTabSelected {
+  color: var(--oi-content-color-primary);
+  background: var(--oi-background-color-tertiary);
+}
+
+.modeTab:focus-visible {
+  outline: var(--oi-focus-ring);
+  outline-offset: 1px;
 }
 
 .headerText {
@@ -59,6 +126,7 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--oi-spacing-xs);
+  justify-content: center;
 }
 
 .title,
@@ -68,9 +136,9 @@
 
 .title {
   color: var(--oi-content-color-primary);
-  font-size: var(--oi-text-heading-05-font-size);
-  line-height: var(--oi-text-heading-05-line-height);
-  font-weight: var(--oi-text-heading-05-font-weight);
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
+  font-weight: var(--oi-font-weight-600);
 }
 
 .subtitle {
@@ -85,7 +153,7 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--oi-spacing-l) var(--oi-spacing-l) var(--oi-spacing-l);
+  padding: var(--oi-spacing-m) var(--oi-spacing-l) 0;
 }
 
 .tabContent {
@@ -93,28 +161,54 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
-  padding-top: var(--oi-spacing-l);
+  padding-top: 0;
 }
 
 .footer {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--oi-spacing-s);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oi-spacing-m);
   padding: var(--oi-spacing-m);
   border-top: var(--oi-border-width-default) var(--oi-border-style-solid) var(--oi-border-color-muted);
 }
 
+.footerActions {
+  display: flex;
+  gap: var(--oi-spacing-s);
+  align-items: center;
+}
+
+.clearAllButton {
+  min-height: var(--oi-size-s);
+  padding: 0 var(--oi-spacing-s);
+  border: 0;
+  border-radius: var(--oi-border-radius-default);
+  background: transparent;
+  color: var(--oi-content-color-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.clearAllButton:focus-visible {
+  outline: none;
+  box-shadow: var(--oi-focus-ring);
+}
+
 .basic {
-  display: grid;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
   gap: var(--oi-spacing-m);
 }
 
 .addCard {
-  display: grid;
-  gap: var(--oi-spacing-l);
-  padding: var(--oi-spacing-m);
-  border: 1px solid var(--oi-border-color-muted);
-  border-radius: var(--oi-border-radius-default);
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--oi-spacing-m);
 }
 
 .addCard h3,
@@ -164,6 +258,13 @@
   gap: var(--oi-spacing-s);
 }
 
+.emptyFilterState {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+}
+
 .advancedModeRow {
   display: flex;
   align-items: center;
@@ -181,95 +282,61 @@
   gap: var(--oi-spacing-xs);
 }
 
-.filterChip {
-  display: inline-flex;
-  align-items: stretch;
-  max-width: 100%;
-  color: var(--oi-content-color-primary);
-  font-size: var(--oi-text-caption-font-size);
-}
-
-.filterMain {
-  display: inline-flex;
+.filterRuleRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 24px;
+  gap: var(--oi-spacing-s);
+  width: 100%;
   align-items: center;
-  min-height: var(--oi-size-s);
-  max-width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--oi-border-color-default);
-  border-right: 0;
-  border-radius: var(--oi-border-radius-default) 0 0 var(--oi-border-radius-default);
-  background: var(--oi-background-color-primary);
 }
 
-.filterRemove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  width: var(--oi-size-s);
-  min-height: var(--oi-size-s);
-  height: auto;
-  padding: var(--oi-spacing-xs);
-  border: 1px solid var(--oi-border-color-default);
-  border-radius: 0 var(--oi-border-radius-default) var(--oi-border-radius-default) 0;
-  background: var(--oi-background-color-primary);
-  color: var(--oi-content-color-secondary);
-  cursor: pointer;
-}
-
-.filterField,
-.filterRule {
-  padding: 0 var(--oi-spacing-xs);
-  white-space: nowrap;
-}
-
-.filterRule {
-  padding: 0 var(--oi-spacing-xs);
-  border: 0;
-  border-left: 1px solid var(--oi-border-color-default);
-  background: transparent;
-  color: var(--oi-content-color-secondary);
-  font: inherit;
-  cursor: pointer;
-}
-
-.filterValue {
-  width: 96px;
-  min-height: var(--oi-size-s);
-  padding: 0 var(--oi-spacing-xs);
-  border: 0;
-  border-left: 1px solid var(--oi-border-color-default);
-  background: transparent;
-  color: var(--oi-content-color-primary);
-  font: inherit;
-}
-
-.filterValueButton {
-  display: inline-flex;
+.ruleControl,
+.ruleValue {
+  display: flex;
+  min-width: 0;
+  height: 28px;
   align-items: center;
   justify-content: space-between;
   gap: var(--oi-spacing-xs);
-  width: 112px;
-  min-height: var(--oi-size-s);
   padding: 0 var(--oi-spacing-xs);
-  border: 0;
-  border-left: 1px solid var(--oi-border-color-default);
-  background: transparent;
-  color: var(--oi-content-color-primary);
+  border: 1px solid var(--oi-border-color-strong);
+  border-radius: var(--oi-border-radius-default);
+  background: var(--oi-background-color-primary);
+  color: var(--oi-content-color-secondary);
   font: inherit;
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ruleControl {
   cursor: pointer;
 }
 
-.dateValue {
-  width: 112px;
-  min-height: var(--oi-size-s);
-  padding: 0 var(--oi-spacing-xs);
-  border: 0;
-  border-left: 1px solid var(--oi-border-color-muted);
-  background: transparent;
-  color: var(--oi-content-color-primary);
-  font: inherit;
+.ruleControl:disabled {
+  color: var(--oi-content-color-tertiary);
+  cursor: default;
+}
+
+.ruleControlFocused,
+.ruleControl:focus-visible,
+.ruleValue:focus-visible {
+  z-index: 1;
+  outline: none;
+  border-color: var(--oi-border-color-focus);
+  box-shadow: 0 0 0 1px var(--oi-border-color-focus);
+}
+
+.ruleValue {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filterRemove {
+  color: var(--oi-content-color-secondary);
 }
 
 .andLabel {
@@ -306,7 +373,10 @@
 }
 
 .groupBuilder {
-  display: grid;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
   gap: var(--oi-spacing-l);
   overflow-anchor: none;
   padding: 0;
@@ -318,12 +388,10 @@
 }
 
 .groupHeader {
-  position: relative;
-  display: grid;
-  gap: var(--oi-spacing-l);
-  padding: var(--oi-spacing-m);
-  border: 1px solid var(--oi-border-color-muted);
-  border-radius: var(--oi-border-radius-default);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--oi-spacing-s);
 }
 
 .groupHeaderActions {
@@ -338,15 +406,164 @@
   display: grid;
   gap: var(--oi-spacing-s);
   overflow-anchor: none;
-  padding: var(--oi-spacing-l) var(--oi-spacing-m) var(--oi-spacing-m) calc(var(--oi-spacing-m) + var(--oi-size-s) + var(--oi-spacing-xs));
+  padding: var(--oi-spacing-l);
   border-radius: var(--oi-border-radius-default);
+  background: var(--oi-background-color-brand);
+}
+
+.groupContainerFilled {
   background: var(--oi-background-color-secondary);
+  animation: filter-group-filled var(--oi-motion-duration-default) var(--oi-motion-ease-enter) both;
+}
+
+@keyframes filter-group-filled {
+  from {
+    opacity: 0.72;
+    background: var(--oi-background-color-brand);
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    background: var(--oi-background-color-secondary);
+    transform: translateY(0);
+  }
+}
+
+.groupContainerFilled .filterRuleRow {
+  animation: filter-rule-in var(--oi-motion-duration-default) var(--oi-motion-ease-enter) both;
+}
+
+@keyframes filter-rule-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .groupContainerFilled {
+    animation: none;
+  }
+
+  .groupContainerFilled .filterRuleRow {
+    animation: none;
+  }
+
+  .conditionConnector,
+  .conditionConnectorLabel {
+    transition: none;
+    animation: none;
+  }
+}
+
+.groupBlock {
+  display: grid;
+  gap: var(--oi-spacing-s);
+}
+
+.groupConditionLabel {
+  margin: 0;
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
+}
+
+.conditionSeparator {
+  position: relative;
+  display: flex;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.conditionSeparatorLine {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--oi-border-color-muted);
+}
+
+.conditionConnector {
+  position: relative;
+  z-index: 1;
+  min-width: 38px;
+  min-height: 24px;
+  padding: 2px var(--oi-spacing-s);
+  border: 1px solid var(--oi-border-color-default);
+  border-radius: var(--oi-border-radius-max);
+  background: var(--oi-background-color-primary);
+  color: var(--oi-content-color-primary);
+  font-family: var(--oi-font-family-code);
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    border-color var(--oi-motion-duration-short) var(--oi-motion-ease-default),
+    background-color var(--oi-motion-duration-short) var(--oi-motion-ease-default),
+    box-shadow var(--oi-motion-duration-short) var(--oi-motion-ease-default);
+}
+
+.conditionConnector:hover,
+.conditionConnector[aria-expanded='true'] {
+  border-color: var(--oi-border-color-strong);
+  background: var(--oi-background-color-tertiary);
+}
+
+.conditionConnector:focus-visible {
+  outline: none;
+  box-shadow: var(--oi-focus-ring);
+}
+
+.conditionConnectorLabel {
+  display: block;
+  animation: condition-connector-change var(--oi-motion-duration-short) var(--oi-motion-ease-enter);
+}
+
+@keyframes condition-connector-change {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.addAndButton {
+  justify-self: center;
+  width: fit-content;
+  padding: 2px var(--oi-spacing-xs);
+  border: 0;
+  border-radius: var(--oi-border-radius-default);
+  background: var(--oi-border-color-muted);
+  color: var(--oi-content-color-primary);
+  font: inherit;
+  font-size: var(--oi-text-caption-font-size);
+  cursor: pointer;
+}
+
+.addAndButton:focus-visible {
+  outline: none;
+  box-shadow: var(--oi-focus-ring);
+}
+
+.groupCardHeader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--oi-size-s);
+  margin: calc(-1 * var(--oi-spacing-s));
+  margin-bottom: var(--oi-spacing-xs);
+  padding: var(--oi-spacing-s);
 }
 
 .dragHandle {
-  position: absolute;
-  top: var(--oi-spacing-l);
-  left: var(--oi-spacing-s);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -373,6 +590,7 @@
 .connectorChip {
   justify-self: center;
   display: inline-flex;
+  width: fit-content;
   align-items: center;
   gap: var(--oi-spacing-xs);
   min-height: var(--oi-size-s);
@@ -406,9 +624,12 @@
 }
 
 .removeGroup {
-  position: absolute;
-  top: var(--oi-spacing-l);
-  right: var(--oi-spacing-s);
+  display: inline-flex;
+  width: var(--oi-size-s);
+  height: var(--oi-size-s);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--oi-content-color-secondary);
@@ -422,9 +643,9 @@
   gap: var(--oi-spacing-xs);
   border: 0;
   background: transparent;
-  color: var(--oi-content-color-primary);
+  color: var(--oi-content-color-link);
   font: inherit;
-  font-weight: var(--oi-text-body-s-strong-font-weight);
+  font-weight: var(--oi-font-weight-400);
   cursor: pointer;
 }
 
@@ -504,4 +725,56 @@
   color: var(--oi-content-color-secondary);
   font-size: var(--oi-text-body-s-font-size);
   line-height: var(--oi-text-body-s-line-height);
+}
+
+@media (max-width: 390px) {
+  .filterRuleRow {
+    grid-template-columns: minmax(0, 1fr) 24px;
+    gap: var(--oi-spacing-m) var(--oi-spacing-s);
+  }
+
+  .filterRuleRow > :nth-child(1) {
+    grid-column: 1 / -1;
+  }
+
+  .filterRuleRow > :nth-child(2),
+  .filterRuleRow > :nth-child(3) {
+    grid-column: 1;
+    margin-left: var(--oi-spacing-l);
+  }
+
+  .filterRuleRow > :nth-child(2) {
+    position: relative;
+  }
+
+  .filterRuleRow > :nth-child(2)::before {
+    position: absolute;
+    top: calc(-1 * var(--oi-spacing-m));
+    left: calc(-1 * var(--oi-spacing-s));
+    width: var(--oi-spacing-s);
+    height: calc(100% + var(--oi-spacing-m));
+    border-bottom: 1px solid var(--oi-border-color-default);
+    border-left: 1px solid var(--oi-border-color-default);
+    border-radius: 0 0 0 var(--oi-border-radius-default);
+    content: '';
+  }
+
+  .filterRuleRow > :nth-child(3) {
+    position: relative;
+  }
+
+  .filterRuleRow > :nth-child(3)::before {
+    position: absolute;
+    top: calc(-1 * var(--oi-spacing-m));
+    left: calc(-1 * var(--oi-spacing-s));
+    width: var(--oi-spacing-s);
+    height: calc(100% + var(--oi-spacing-m));
+    border-left: 1px solid var(--oi-border-color-default);
+    content: '';
+  }
+
+  .filterRemove {
+    grid-column: 2;
+    grid-row: 3;
+  }
 }

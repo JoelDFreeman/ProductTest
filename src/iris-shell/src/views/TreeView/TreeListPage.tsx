@@ -14,6 +14,7 @@ import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { ContentHeader } from '../../components/ContentHeader/ContentHeader.js';
 import { Menu, type MenuEntry } from '../../components/Menu/Menu.js';
 import { DataTable, type DataTableColumn, type RowKey } from '../../components/DataTable/DataTable.js';
+import { Checkbox } from '../../components/Checkbox/Checkbox.js';
 import { Pagination } from '../../components/Pagination/Pagination.js';
 import { ActionBar } from '../../components/ActionBar/ActionBar.js';
 import type { Crumb } from '../../components/AppHeader/AppHeader.js';
@@ -24,11 +25,26 @@ import { NewUserModal, type NewUserModalProps } from '../UsersPage/NewUserModal.
 import { NewGroupModal, type NewGroupDraft } from '../GroupsPage/NewGroupModal.js';
 import { showToast } from '../../lib/toastStore.js';
 import styles from './TreeView.module.css';
-import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
+import { useAdvancedSearch, type AdvancedFilter } from '../../lib/advancedSearchStore.js';
 import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
 import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
 
 const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
+type SortDirection = 'asc' | 'desc';
+
+function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fieldId: string; options?: string[]; filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; onSort: (direction: SortDirection) => void }) {
+  const selected = new Set(filters.filter((filter) => filter.fieldId === fieldId && filter.value).map((filter) => filter.value!));
+  const items: MenuEntry[] = [
+    { kind: 'item', label: 'Sort ascending', icon: 'CaretUp', onSelect: () => onSort('asc') },
+    { kind: 'item', label: 'Sort descending', icon: 'CaretDown', onSelect: () => onSort('desc') },
+    ...(options ? [{ kind: 'divider' as const }, ...options.map((option): MenuEntry => ({ kind: 'item', label: option, visual: <Checkbox checked={selected.has(option)} tabIndex={-1} ariaLabel={`${option} filter`} />, onSelect: () => {
+      const next = new Set(selected);
+      next.has(option) ? next.delete(option) : next.add(option);
+      onChange([...filters.filter((filter) => filter.fieldId !== fieldId), ...Array.from(next, (value) => ({ id: `${fieldId}-${value}-${Date.now()}-${Math.random()}`, fieldId, value, operator: 'is' }))]);
+    } }))] : []),
+  ];
+  return <Menu ariaLabel={`${fieldId} filters`} align="start" closeOnSelect={false} items={items} trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.columnFilterButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded} aria-label={`Filter ${fieldId}`}><Icon name="CaretUpDown" size="16px" /></button>} />;
+}
 
 /** Href for a row: containers drill in; leaves open detail. */
 function hrefFor(obj: DirectoryObject, nodeId: string): string {
@@ -44,7 +60,7 @@ export interface TreeListPageProps {
  * toolbar + ActionBar design as the Users listing (different columns + data).
  */
 export function TreeListPage({ nodeId }: TreeListPageProps) {
-  const { appliedFilters } = useAdvancedSearch();
+  const { appliedFilters, draftFilters, syncFilters } = useAdvancedSearch();
   const { isContainer, getChildren, getPath, getNodeName, getNodeIcon, moveObject, addObject } = useDirectory();
   const { aiOpen } = useAppShell();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
@@ -58,6 +74,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
   const [moveTargets, setMoveTargets] = useState<DirectoryObject[]>([]);
   const [createKind, setCreateKind] = useState<'user' | 'group' | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ fieldId: string; direction: SortDirection } | null>(null);
 
   // Reset transient view state when the selected node changes.
   useEffect(() => {
@@ -147,14 +164,24 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         v.toLowerCase().includes(q),
       ),
     );
-    return searchedRows.filter((object) => appliedFilters.every((filter) => {
-      if (!filter.value) return true;
-      if (filter.fieldId === 'objectType') return OBJECT_TYPE_META[object.type].label.toLowerCase().includes(filter.value.toLowerCase());
-      if (filter.fieldId === 'location') return (object.details.location ?? '').toLowerCase().includes(filter.value.toLowerCase());
-      if (filter.fieldId === 'displayName') return object.name.toLowerCase().includes(filter.value.toLowerCase());
+    const filtersByField = new Map<string, AdvancedFilter[]>();
+    appliedFilters.filter((filter) => filter.value).forEach((filter) => filtersByField.set(filter.fieldId, [...(filtersByField.get(filter.fieldId) ?? []), filter]));
+    const filteredRows = searchedRows.filter((object) => Array.from(filtersByField.values()).every((filtersForField) => filtersForField.some((filter) => {
+      if (filter.fieldId === 'objectType') return OBJECT_TYPE_META[object.type].label.toLowerCase().includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'location') return (object.details.location ?? '').toLowerCase().includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'displayName') return object.name.toLowerCase().includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'computerType') return object.details.computerType === filter.value;
+      if (filter.fieldId === 'membershipType') return object.details.membershipType === filter.value;
       return true;
-    }));
-  }, [allRows, query, appliedFilters]);
+    })));
+    if (!sort) return filteredRows;
+    return [...filteredRows].sort((left, right) => {
+      const leftValue = sort.fieldId === 'name' ? left.name : sort.fieldId === 'type' ? OBJECT_TYPE_META[left.type].label : left.description;
+      const rightValue = sort.fieldId === 'name' ? right.name : sort.fieldId === 'type' ? OBJECT_TYPE_META[right.type].label : right.description;
+      const comparison = leftValue.localeCompare(rightValue, undefined, { sensitivity: 'base' });
+      return sort.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [allRows, query, appliedFilters, sort]);
 
   const columns = useMemo<DataTableColumn<DirectoryObject>[]>(
     () => [
@@ -162,8 +189,8 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         key: 'name',
         header: 'Name',
         icon: 'IdentificationCard',
-        minWidth: '200px',
-        grow: 1,
+        headerFilter: <ColumnFilterMenu fieldId="name" filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'name', direction })} />,
+        width: '180px',
         cell: (o) => (
           <Link
             href={hrefFor(o, nodeId)}
@@ -191,6 +218,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         key: 'type',
         header: 'Object type',
         icon: 'Tag',
+        headerFilter: <ColumnFilterMenu fieldId="objectType" options={Array.from(new Set(allRows.map((row) => OBJECT_TYPE_META[row.type].label)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'type', direction })} />,
         width: '180px',
         cell: (o) => OBJECT_TYPE_META[o.type].label,
       },
@@ -198,13 +226,21 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         key: 'description',
         header: 'Description',
         icon: 'ArticleNyTimes',
+        headerFilter: <ColumnFilterMenu fieldId="description" filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'description', direction })} />,
         minWidth: '240px',
         grow: 2,
         cell: (o) => <span title={o.description}>{o.description}</span>,
       },
     ],
-    [isAdNode, nodeId],
+    [allRows, draftFilters, isAdNode, nodeId, syncFilters],
   );
+  const columnOptions = useMemo<DataTableColumn<DirectoryObject>[]>(() => [
+    { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '180px', cell: (object) => object.details.location ?? '-' },
+    { key: 'created', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (object) => object.details.created ?? '-' },
+    { key: 'memberCount', header: 'Members', icon: 'Users', width: '120px', cell: (object) => object.details.memberCount == null ? '-' : String(object.details.memberCount) },
+    { key: 'computerType', header: 'Computer type', icon: 'Devices', headerFilter: <ColumnFilterMenu fieldId="computerType" options={['Computer', 'Device', 'Operator computer', 'Workstation']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'computerType', direction })} />, minWidth: '170px', cell: (object) => object.details.computerType ?? '-' },
+    { key: 'membershipType', header: 'Membership type', icon: 'UsersThree', headerFilter: <ColumnFilterMenu fieldId="membershipType" options={['Security Group', 'Distribution Group']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'membershipType', direction })} />, minWidth: '170px', cell: (object) => object.details.membershipType ?? '-' },
+  ], [draftFilters, syncFilters]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -357,6 +393,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
         <DataTable
           rows={pageRows}
           columns={columns}
+          columnOptions={columnOptions}
           ariaLabel={`${nodeName} contents`}
           selected={selected}
           onSelectionChange={setSelected}

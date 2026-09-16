@@ -1,11 +1,38 @@
 .scroller {
   /* Owns both scroll axes so the sticky header (top) and the pinned columns
      (inline-start/end) work; also the container for the responsive layout. */
-  overflow: auto;
+  overflow-x: scroll;
+  overflow-y: auto;
   overscroll-behavior: contain;
   height: 100%;
   container-type: inline-size;
   container-name: datatable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scroller:hover,
+.scroller:focus-within {
+  scrollbar-color: var(--oi-border-color-strong) transparent;
+}
+
+.scroller::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroller::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: var(--oi-border-radius-max);
+}
+
+.scroller:hover::-webkit-scrollbar-thumb,
+.scroller:focus-within::-webkit-scrollbar-thumb {
+  background-color: var(--oi-border-color-strong);
+}
+
+.scroller::-webkit-scrollbar-thumb:hover {
+  background-color: var(--oi-content-color-secondary);
 }
 
 .scroller:focus-visible {
@@ -20,7 +47,12 @@
   background-color: var(--oi-background-color-primary);
   border-top: var(--oi-border-width-default) var(--oi-border-style-solid)
     var(--oi-border-color-muted);
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
+}
+
+.table[data-has-option-columns] {
+  min-width: calc(100% + var(--option-columns-width));
 }
 
 .head {

@@ -83,6 +83,12 @@ const RECENT_COLUMNS: DataTableColumn<RecentRow>[] = [
   },
 ];
 
+const RECENT_COLUMN_OPTIONS: DataTableColumn<RecentRow>[] = [
+  { key: 'status', header: 'Status', icon: 'UserCircleCheck', width: '120px', cell: (user) => <Badge tone={user.status === 'Active' ? 'success' : 'neutral'}>{user.status}</Badge> },
+  { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '160px', cell: (user) => user.location ?? '-' },
+  { key: 'jobTitle', header: 'Job title', icon: 'UserCircleCheck', minWidth: '180px', grow: 1, cell: (user) => user.details.jobTitle },
+];
+
 /**
  * InsightsPage — read-only analytics dashboard. Hosted at #/insights.
  */
@@ -194,7 +200,7 @@ export function InsightsPage() {
                 <h2 className={styles.recentTitle}>Recent Users</h2>
                 <p className={styles.recentHelper}>Most recent identity activity</p>
               </header>
-              <DataTable rows={recentRows} columns={RECENT_COLUMNS} ariaLabel="Recent users" />
+              <DataTable rows={recentRows} columns={RECENT_COLUMNS} columnOptions={RECENT_COLUMN_OPTIONS} ariaLabel="Recent users" />
             </section>
           </>
         )}

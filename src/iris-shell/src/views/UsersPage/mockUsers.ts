@@ -38,6 +38,7 @@ export interface User {
   description: string;
   email: string;
   objectId: string;
+  createdAt?: string;
   avatarUrl?: string;
   tags?: string[];
   location?: string;
@@ -47,11 +48,14 @@ export interface User {
 
 const LOREM = `Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.`;
 
+const JOB_TITLES = ['Identity Administrator', 'Security Analyst', 'Platform Engineer', 'Directory Services Manager', 'Access Governance Specialist', 'Systems Administrator', 'Compliance Manager', 'Service Delivery Lead'];
+const DEPARTMENTS = ['Information Technology', 'Cybersecurity', 'Identity and Access Management', 'Platform Engineering', 'Risk and Compliance', 'Operations', 'Human Resources', 'Finance'];
+
 /**
  * Build the detail payload for a user. Keeps the listing rows compact while
  * still giving the detail page rich content to render.
  */
-function makeDetails(name: string, login: string): UserDetails {
+function makeDetails(name: string, login: string, index = 0): UserDetails {
   const initials = name
     .split(/\s+/)
     .map((p) => p[0])
@@ -82,9 +86,9 @@ function makeDetails(name: string, login: string): UserDetails {
     otherEmails: '',
     faxPhone: '',
     mailNickname: login,
-    jobTitle: 'Identity Administrator',
+    jobTitle: JOB_TITLES[index % JOB_TITLES.length],
     companyName: 'One Identity',
-    department: 'Information Technology',
+    department: DEPARTMENTS[index % DEPARTMENTS.length],
     employeeId: 'EMP-1042',
     employeeType: 'Employee',
     hireDate: '2024-01-15',
@@ -159,10 +163,11 @@ function makeMockUsers(): User[] {
       description: descriptions[i % descriptions.length],
       email: `${first[0]}.${last}@acme.io`.toLowerCase(),
       objectId: `${seq}f${i}b2c4-7d9e-4f2a-b8c3-1d2e3f4a${seq}c`,
+      createdAt: `2024-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 27) + 1).padStart(2, '0')}`,
       avatarUrl: i % 3 === 0 ? STOCK_AVATARS[i % STOCK_AVATARS.length] : undefined,
       location: USER_LOCATIONS[i % USER_LOCATIONS.length],
       groupMembershipIds: makeMembershipIds(i + 10),
-      details: makeDetails(name, login),
+      details: makeDetails(name, login, i),
     };
   });
 }
