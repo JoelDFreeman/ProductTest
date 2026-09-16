@@ -43,6 +43,7 @@ export function AdvancedSearchSideSheet() {
   const { setAiContext } = useAppShell();
   const { groups } = useGroups();
   const groupOptions = groups.map((group) => group.name);
+  const [mounted, setMounted] = useState(open);
   const [discardAdvancedOpen, setDiscardAdvancedOpen] = useState(false);
   const generatedQuery = buildLdapQuery(draftFilters, groupConditions);
   const tabs = TABS.map((item) => item.value === 'basic'
@@ -62,6 +63,14 @@ export function AdvancedSearchSideSheet() {
     setDiscardAdvancedOpen(false);
   };
   useEffect(() => {
+    if (open) {
+      setMounted(true);
+      return undefined;
+    }
+    const timer = setTimeout(() => setMounted(false), 120);
+    return () => clearTimeout(timer);
+  }, [open]);
+  useEffect(() => {
     if (tab !== 'ask-ai') return;
     const filterSummary = [
       ...draftFilters.map((filter) => `${filter.fieldId} ${filter.operator ?? 'is'} ${filter.value || '*'}`),
@@ -74,10 +83,10 @@ export function AdvancedSearchSideSheet() {
     ]);
   }, [tab, draftFilters, groupConditions, filterGroups, ldapQuery, ldapQueryManual, generatedQuery, setAiContext]);
   const handleTabChange = (value: AdvancedSearchTab) => setTab(value);
-  if (!open) return null;
+  if (!mounted) return null;
   return (
     <aside className={styles.panel} role="complementary" aria-label="Advanced Search">
-      <div className={styles.surface}>
+      <div className={`${styles.surface} ${open ? styles.surfaceOpen : ''}`}>
         <header className={styles.header}>
           <div className={styles.headerText}>
             <h2 className={styles.title}>Filter Options</h2>

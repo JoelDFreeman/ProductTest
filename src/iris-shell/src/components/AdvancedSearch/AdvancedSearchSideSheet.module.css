@@ -20,6 +20,29 @@
   box-shadow: var(--oi-shadow-low);
   color: var(--oi-content-color-tertiary);
   font-size: var(--oi-text-caption-font-size);
+  transform: translateX(100%);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition:
+    transform var(--oi-motion-duration-short) var(--oi-motion-ease-exit),
+    opacity var(--oi-motion-duration-short) var(--oi-motion-ease-exit);
+}
+
+.surfaceOpen {
+  transform: translateX(0);
+  opacity: 1;
+  transition:
+    transform var(--oi-motion-duration-default) var(--oi-motion-ease-enter),
+    opacity var(--oi-motion-duration-default) var(--oi-motion-ease-enter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface,
+  .surfaceOpen {
+    transform: none;
+    opacity: 1;
+    transition: none;
+  }
 }
 
 .header {
