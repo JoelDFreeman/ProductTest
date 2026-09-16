@@ -11,6 +11,36 @@
   overflow: hidden;
 }
 
+.columnFilterButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--oi-border-radius-default);
+  background: transparent;
+  cursor: pointer;
+}
+
+.columnFilterButton:hover,
+.columnFilterButton[aria-expanded='true'] {
+  background: var(--oi-background-color-tertiary);
+}
+
+.columnFilterButton:focus-visible {
+  outline: none;
+  box-shadow: var(--oi-focus-ring);
+}
+
+.membersLink {
+  color: var(--oi-content-color-link);
+  font: inherit;
+}
+
+.membersLink:hover {
+  text-decoration: underline;
+}
+
 .pagination {
   display: flex;
   justify-content: center;

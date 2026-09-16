@@ -67,6 +67,20 @@
   color: var(--oi-content-color-secondary);
 }
 
+.membershipLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oi-spacing-xs);
+}
+
+.membershipLinks a {
+  color: var(--oi-content-color-link);
+}
+
+.membershipLinks a:hover {
+  text-decoration: underline;
+}
+
 /* Name link in the table — slightly heavier weight to anchor the row's
    identity. Inherits Link's brand color and hover treatment otherwise. */
 .nameCell {

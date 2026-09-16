@@ -18,12 +18,13 @@ interface Member {
   name: string;
   type: 'User' | 'Computer' | 'Group' | 'Service Account' | 'Contact';
   location: string;
+  createdAt?: string;
   userId?: string;
 }
 
 const PARENT_GROUPS: Member[] = [
-  { id: 'parent-1', name: 'Platform Access', type: 'Group', location: 'Entra 1' },
-  { id: 'parent-2', name: 'All Administrators', type: 'Group', location: 'Entra 1' },
+  { id: 'parent-1', name: 'Platform Access', type: 'Group', location: 'Entra 1', createdAt: '2024-01-12' },
+  { id: 'parent-2', name: 'All Administrators', type: 'Group', location: 'Entra 1', createdAt: '2024-03-21' },
 ];
 
 export function GroupMemberships({ group }: { group: Group }) {
@@ -43,6 +44,7 @@ export function GroupMemberships({ group }: { group: Group }) {
       name: user.name,
       type: 'User',
       location: user.location ?? '',
+      createdAt: user.createdAt,
     })), [group.id, users]);
 
   const members = useMemo(
@@ -58,6 +60,9 @@ export function GroupMemberships({ group }: { group: Group }) {
     { key: 'name', header: 'Name', icon: 'UsersThree', minWidth: '180px', grow: 1, cell: (item) => item.name },
     { key: 'type', header: 'Object type', icon: 'Tag', width: '120px', cell: (item) => item.type },
     { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '150px', cell: (item) => item.location },
+  ];
+  const columnOptions: DataTableColumn<Member>[] = [
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (member) => member.createdAt ?? 'Not set' },
   ];
   const removeMember = (member: Member) => {
     if (member.type === 'User' && member.userId) {
@@ -86,7 +91,7 @@ export function GroupMemberships({ group }: { group: Group }) {
         <TextInput iconLead="MagnifyingGlass" placeholder={searchPlaceholder} value={query} onChange={(event) => setQuery(event.target.value)} aria-label={searchPlaceholder} />
         <Button variant="primary" size="s" iconLead="Plus" onClick={() => setAddMembersOpen(true)}>Add Member</Button>
       </div>
-      <DataTable rows={activeRows} columns={activeColumns} rowLabel={(member) => member.name} density="compact" appearance="light" headerAction={<IconButton icon="SlidersHorizontal" ariaLabel="Table settings" size="s" />} rowActions={view === 'members' ? (member) => <Tooltip label="Remove member from group"><IconButton icon="XCircle" ariaLabel={`Remove ${member.name} from group`} size="s" onClick={() => removeMember(member)} /></Tooltip> : undefined} />
+      <DataTable rows={activeRows} columns={activeColumns} columnOptions={columnOptions} rowLabel={(member) => member.name} density="compact" appearance="light" rowActions={view === 'members' ? (member) => <Tooltip label="Remove member from group"><IconButton icon="XCircle" ariaLabel={`Remove ${member.name} from group`} size="s" onClick={() => removeMember(member)} /></Tooltip> : undefined} />
       <AddUsersToGroupModal
         open={addMembersOpen}
         excludedMemberIds={new Set([

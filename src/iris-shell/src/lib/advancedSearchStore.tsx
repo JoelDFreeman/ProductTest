@@ -84,6 +84,9 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
     syncFilters: (filters) => {
       setDraftFilters(filters);
       setAppliedFilters(filters);
+      const groupId = `table-filters-${Date.now()}`;
+      setFilterGroups(filters.length ? [{ id: groupId, connector: 'AND' }] : []);
+      setGroupConditions(filters.map((filter) => ({ ...filter, id: `condition-${filter.id}`, groupId, connector: 'AND' })));
       setAppliedCount(filters.filter((filter) => filter.value).length);
     },
     applyFilters: () => {

@@ -3,6 +3,7 @@ import { cx } from '../../lib/cx.js';
 import { Checkbox } from '../Checkbox/Checkbox.js';
 import { IconButton } from '../IconButton/IconButton.js';
 import { Icon } from '../Icon/Icon.js';
+import { Menu, type MenuEntry } from '../Menu/Menu.js';
 import styles from './DataTable.module.css';
 
 export type RowKey = string | number;
@@ -61,6 +62,8 @@ export interface DataTableProps<TRow extends DataTableRow> {
   rowProps?: (row: TRow, i: number) => HTMLAttributes<HTMLDivElement>;
   /** Optional control rendered in the top-right table header cell. */
   headerAction?: ReactNode;
+  /** Additional user-facing metadata columns available from the table settings menu. */
+  columnOptions?: DataTableColumn<TRow>[];
   /** Visual density for table headers and rows. */
   density?: 'default' | 'compact';
   /** Visual surface treatment for the table. */
@@ -94,12 +97,18 @@ export function DataTable<TRow extends DataTableRow>({
   rowActions,
   rowProps,
   headerAction,
+  columnOptions = [],
   density = 'default',
   appearance = 'default',
   emptyState,
   emptyContent,
   className,
 }: DataTableProps<TRow>) {
+  const allColumns = [...columns, ...columnOptions];
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<Set<string>>(() => new Set(columns.map((column) => column.key)));
+  const visibleColumns = allColumns.filter((column) => visibleColumnKeys.has(column.key));
+  const visibleOptionCount = columnOptions.filter((column) => visibleColumnKeys.has(column.key)).length;
+  const lockedColumnKey = columns[0]?.key;
   const selectable = !!selected && !!onSelectionChange;
   const allChecked =
     selectable && rows.length > 0 && rows.every((r) => selected!.has(rowKey(r)));
@@ -135,7 +144,7 @@ export function DataTable<TRow extends DataTableRow>({
       el.removeEventListener('scroll', update);
       ro.disconnect();
     };
-  }, [columns, rows.length]);
+  }, [visibleColumns, rows.length]);
 
   const toggleAll = (checked: boolean) => {
     if (!selectable) return;
@@ -161,7 +170,7 @@ export function DataTable<TRow extends DataTableRow>({
       data-ovf-end={overflow.end ? '' : undefined}
       {...(ariaLabel ? { role: 'region', 'aria-label': ariaLabel, tabIndex: 0 } : {})}
     >
-      <div className={cx(styles.table, density === 'compact' && styles.compact, appearance === 'light' && styles.light, className)} role="table">
+      <div className={cx(styles.table, density === 'compact' && styles.compact, appearance === 'light' && styles.light, className)} role="table" data-has-option-columns={visibleOptionCount > 0 || undefined} style={{ '--option-columns-width': `${visibleOptionCount * 200}px` } as CSSProperties}>
       <div className={styles.head} role="row">
         {selectable && (
           <HeadCell width="40px" className={styles.checkboxCell} pin="startInner">
@@ -173,7 +182,7 @@ export function DataTable<TRow extends DataTableRow>({
             />
           </HeadCell>
         )}
-        {columns.map((col, ci) => (
+        {visibleColumns.map((col, ci) => (
           <HeadCell
             key={col.key}
             {...sizing(col)}
@@ -190,7 +199,13 @@ export function DataTable<TRow extends DataTableRow>({
           </HeadCell>
         ))}
         <HeadCell width="44px" className={styles.actionCell} pin="end" aria-label="Table settings">
-          {headerAction}
+          <TableSettingsMenu
+            columns={allColumns}
+            visibleColumnKeys={visibleColumnKeys}
+            lockedColumnKey={lockedColumnKey}
+            onVisibleColumnKeysChange={setVisibleColumnKeys}
+            fallback={headerAction}
+          />
         </HeadCell>
       </div>
 
@@ -238,7 +253,7 @@ export function DataTable<TRow extends DataTableRow>({
                   />
                 </BodyCell>
               )}
-              {columns.map((col, ci) => (
+              {visibleColumns.map((col, ci) => (
                 <BodyCell
                   key={col.key}
                   {...sizing(col)}
@@ -267,6 +282,35 @@ export function DataTable<TRow extends DataTableRow>({
       </div>
     </div>
   );
+}
+
+function TableSettingsMenu<TRow>({ columns, visibleColumnKeys, lockedColumnKey, onVisibleColumnKeysChange, fallback }: { columns: DataTableColumn<TRow>[]; visibleColumnKeys: Set<string>; lockedColumnKey?: string; onVisibleColumnKeysChange: (keys: Set<string>) => void; fallback?: ReactNode }) {
+  if (columns.length === 0) return fallback;
+  const items: MenuEntry[] = [
+    { kind: 'item', label: 'Adjust columns', icon: 'Columns' },
+    {
+      kind: 'submenu',
+      label: 'Add columns',
+      icon: 'ColumnsPlusLeft',
+      items: columns.map((column): MenuEntry => {
+        const locked = column.key === lockedColumnKey;
+        const checked = visibleColumnKeys.has(column.key);
+        return {
+          kind: 'item',
+          label: column.header,
+          disabled: locked,
+          visual: <Checkbox checked={checked} disabled={locked} tabIndex={-1} ariaLabel={`${column.header} column`} />,
+          onSelect: () => {
+            if (locked) return;
+            const next = new Set(visibleColumnKeys);
+            checked ? next.delete(column.key) : next.add(column.key);
+            onVisibleColumnKeysChange(next);
+          },
+        };
+      }),
+    },
+  ];
+  return <Menu ariaLabel="Table settings" align="end" closeOnSelect={false} items={items} trigger={({ ref, onClick, expanded }) => <IconButton ref={ref as React.Ref<HTMLButtonElement>} icon="SlidersHorizontal" ariaLabel="Table settings" size="s" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} />} />;
 }
 
 type Pin = 'start' | 'startInner' | 'end';

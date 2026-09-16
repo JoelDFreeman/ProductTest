@@ -28,6 +28,8 @@ export interface DirectoryObjectDetails {
   description: string;
   created?: string;
   memberCount?: number;
+  computerType?: 'Computer' | 'Device' | 'Operator computer' | 'Workstation';
+  membershipType?: 'Security Group' | 'Distribution Group';
   location?: string;
 }
 
@@ -288,18 +290,18 @@ function makeLeaf(node: RawNode, index: number, rng: () => number, path: string)
 
   if (type === 'computer') {
     const num = 100 + Math.floor(rng() * 900);
-    const kind = pick(rng, ['Computer', 'Device', 'Operator computer', 'Workstation']);
+    const kind = pick(rng, ['Computer', 'Device', 'Operator computer', 'Workstation'] as const);
     const name = kind.endsWith('computer') ? kind : `${kind} ${String(num).padStart(3, '0')}`;
     return {
       id, name, type, description, parentId: node.id, isContainer: false,
-      details: { description, location: path, created: '2024-11-02' },
+      details: { description, location: path, created: '2024-11-02', computerType: kind },
     };
   }
   if (type === 'group') {
     const name = `${pick(rng, ['Security', 'Access', 'Admin', 'Ops', 'Finance'])} ${pick(rng, ['Users', 'Admins', 'Readers', 'Owners'])}`;
     return {
       id, name, type, description, parentId: node.id, isContainer: false,
-      details: { description, location: path, memberCount: 1 + Math.floor(rng() * 40), created: '2024-08-14' },
+      details: { description, location: path, memberCount: 1 + Math.floor(rng() * 40), created: '2024-08-14', membershipType: pick(rng, ['Security Group', 'Distribution Group'] as const) },
     };
   }
   if (type === 'agent' || type === 'application') {

@@ -13,8 +13,10 @@ export interface Group {
   status: 'Active' | 'Inactive';
   description: string;
   members: number;
+  createdAt: string;
   location: string;
   scope: 'Domain local' | 'Global' | 'Universal';
+  membershipType: 'Security Group' | 'Distribution Group';
   nonUserMembers?: GroupNonUserMember[];
 }
 
@@ -27,7 +29,9 @@ export const MOCK_GROUPS: Group[] = Array.from({ length: 48 }, (_, index) => ({
   status: index % 7 === 0 ? 'Inactive' : 'Active',
   description: index % 2 === 0 ? 'Reusable access-control group for delegated administration.' : 'Directory group used to manage access and membership.',
   members: 4 + ((index * 7) % 86),
+  createdAt: `2024-${String((index % 12) + 1).padStart(2, '0')}-${String((index % 27) + 1).padStart(2, '0')}`,
   location: locations[index % locations.length],
   scope: index % 3 === 0 ? 'Global' : index % 3 === 1 ? 'Domain local' : 'Universal',
+  membershipType: index % 4 === 0 ? 'Distribution Group' : 'Security Group',
   nonUserMembers: index % 4 === 0 ? [{ id: `group-${index + 1}-reader`, name: 'Security Readers', type: 'Group', location: 'AD-1\\Users' }] : [],
 }));

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AppShell } from '../AppShell/AppShell.js';
 import { navigate } from '../../lib/router.js';
 import { useUsers } from '../../lib/usersStore.js';
+import { useGroups } from '../../lib/groupsStore.js';
 import { useDirectory } from '../../lib/directoryStore.js';
 import { showToast } from '../../lib/toastStore.js';
 import { useAppShell } from '../../lib/appShellContext.js';
@@ -25,7 +26,7 @@ import { DeleteUserModal } from '../UserDetailPage/DeleteUserModal/DeleteUserMod
 import { NewUserModal, type NewUserModalProps } from './NewUserModal.js';
 import type { User } from './mockUsers.js';
 import styles from './UsersPage.module.css';
-import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
+import { useAdvancedSearch, type AdvancedFilter } from '../../lib/advancedSearchStore.js';
 import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
 import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
 
@@ -192,7 +193,7 @@ function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fie
     { kind: 'item', label: 'Sort ascending', icon: 'CaretUp', onSelect: () => onSort('asc') },
     { kind: 'item', label: 'Sort descending', icon: 'CaretDown', onSelect: () => onSort('desc') },
     { kind: 'divider' },
-    ...(options ?? []).map((option) => ({
+    ...(options ?? []).map((option): MenuEntry => ({
     kind: 'item',
     label: option,
     visual: <Checkbox checked={selected.has(option)} tabIndex={-1} ariaLabel={`${option} filter`} />,
@@ -269,6 +270,7 @@ interface UserSort {
 export function UsersPage() {
   const { openSearch, draftFilters, appliedFilters, syncFilters } = useAdvancedSearch();
   const { users, addUser } = useUsers();
+  const { groups } = useGroups();
   const { selectedDirectories } = useDirectory();
   const { aiOpen, setAiOpen, setAiContext } = useAppShell();
   const [newUserOpen, setNewUserOpen] = useState(false);
@@ -316,15 +318,18 @@ export function UsersPage() {
       if (filter.fieldId === 'status') return user.status === filter.value;
       if (filter.fieldId === 'displayName') return user.name.toLowerCase() === filter.value!.toLowerCase();
       if (filter.fieldId === 'objectType') return 'user'.includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'memberOf') return (user.groupMembershipIds ?? []).some((id) => groups.some((group) => group.id === id && group.name === filter.value));
+      if (filter.fieldId === 'ownerOf') return filter.value === 'Not set';
+      if (filter.fieldId === 'userType') return user.details.type === filter.value;
       return true;
     })));
     if (!sort) return matchingRows;
-    const valueFor = (user: User) => sort.fieldId === 'displayName' ? user.name : sort.fieldId === 'status' ? user.status : sort.fieldId === 'tags' ? getTags(user).join(', ') : getLocation(user);
+    const valueFor = (user: User) => sort.fieldId === 'displayName' ? user.name : sort.fieldId === 'status' ? user.status : sort.fieldId === 'tags' ? getTags(user).join(', ') : sort.fieldId === 'memberOf' ? (user.groupMembershipIds ?? []).map((id) => groups.find((group) => group.id === id)?.name ?? '').join(', ') : sort.fieldId === 'userType' ? user.details.type : getLocation(user);
     return [...matchingRows].sort((left, right) => {
       const comparison = valueFor(left).localeCompare(valueFor(right), undefined, { sensitivity: 'base' });
       return sort.direction === 'asc' ? comparison : -comparison;
     });
-  }, [users, query, appliedFilters, selectedDirectories, sort]);
+  }, [users, query, appliedFilters, selectedDirectories, sort, groups]);
 
   const columns = useMemo<DataTableColumn<User>[]>(() => COLUMNS.map((column) => ({
     ...column,
@@ -338,6 +343,20 @@ export function UsersPage() {
           ? <ColumnFilterMenu fieldId="location" options={Array.from(new Set(users.map(getLocation)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'location', direction })} />
           : undefined,
   })), [draftFilters, syncFilters, users]);
+  const columnOptions = useMemo<DataTableColumn<User>[]>(() => [
+    { key: 'email', header: 'Email', icon: 'Envelope', minWidth: '220px', grow: 1, cell: (user) => user.email },
+    { key: 'objectId', header: 'Object ID', icon: 'IdentificationCard', minWidth: '180px', grow: 1, cell: (user) => <span className={styles.mono}>{user.objectId}</span> },
+    { key: 'jobTitle', header: 'Job title', icon: 'UserCircleCheck', minWidth: '180px', grow: 1, cell: (user) => user.details.jobTitle },
+    { key: 'department', header: 'Department', icon: 'Buildings', minWidth: '180px', grow: 1, cell: (user) => user.details.department },
+    { key: 'employeeId', header: 'Employee ID', icon: 'IdentificationCard', width: '150px', cell: (user) => user.details.employeeId },
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (user) => user.createdAt ?? 'Not set' },
+    { key: 'memberOf', header: 'Member of', icon: 'MemberOf', headerFilter: <ColumnFilterMenu fieldId="memberOf" options={groups.map((group) => group.name)} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'memberOf', direction })} />, minWidth: '180px', grow: 1, cell: (user) => {
+      const memberGroups = (user.groupMembershipIds ?? []).map((id) => groups.find((group) => group.id === id)).filter((group): group is NonNullable<typeof group> => !!group);
+      return memberGroups.length ? <span className={styles.membershipLinks}>{memberGroups.map((group) => <a key={group.id} href={`#/groups/${group.id}?tab=memberships`} onClick={(event) => { event.preventDefault(); navigate(`#/groups/${group.id}?tab=memberships`); }}>{group.name}</a>)}</span> : 'Not set';
+    } },
+    { key: 'ownerOf', header: 'Owner of', icon: 'UserGear', headerFilter: <ColumnFilterMenu fieldId="ownerOf" filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'ownerOf', direction })} />, minWidth: '160px', grow: 1, cell: () => 'Not set' },
+    { key: 'userType', header: 'User type', icon: 'UserCircleCheck', headerFilter: <ColumnFilterMenu fieldId="userType" options={Array.from(new Set(users.map((user) => user.details.type)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'userType', direction })} />, width: '140px', cell: (user) => user.details.type },
+  ], [draftFilters, groups, syncFilters, users]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -442,6 +461,7 @@ export function UsersPage() {
         <DataTable
           rows={pageRows}
           columns={columns}
+          columnOptions={columnOptions}
           ariaLabel="Users"
           appearance="light"
           selected={selected}
@@ -592,6 +612,7 @@ export function UsersPage() {
             description: `Newly created ${newUserKind === 'ad' ? 'AD' : 'Entra'} user.`,
             email: `${draft.userLogonName.toLowerCase()}@example.com`,
             objectId: `new-${Date.now()}`,
+            createdAt: new Date().toISOString().slice(0, 10),
             location: draft.location || draft.directory,
             tags: ['New'],
             details: {
