@@ -198,6 +198,7 @@ export function Menu({
       const t = triggerRef.current;
       if (!t) return;
       const rect = t.getBoundingClientRect();
+      const frameRight = t.closest<HTMLElement>('main')?.getBoundingClientRect().right ?? window.innerWidth;
       // Once the menu is mounted+measured, decide the flip here so a scroll/
       // resize computes the final top in one pass — avoiding a below→above
       // correction (and extra render) from the auto-flip layout effect below.
@@ -208,10 +209,14 @@ export function Menu({
           : measured
             ? resolveTriggerTop(rect, measured.offsetHeight)
             : rect.bottom + 4;
+      const margin = 4;
+      const rightInset = align === 'end'
+        ? Math.max(margin, window.innerWidth - Math.min(rect.right, frameRight))
+        : undefined;
       setPos({
         top,
         left: align === 'end' ? rect.right : rect.left,
-        right: align === 'end' && rightAnchor != null ? rightAnchor : undefined,
+        right: align === 'end' ? (rightAnchor != null ? Math.max(margin, rightAnchor) : rightInset) : undefined,
         align,
       });
     };

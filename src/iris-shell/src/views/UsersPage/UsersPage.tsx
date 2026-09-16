@@ -210,7 +210,7 @@ function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fie
   return (
       <Menu
       ariaLabel={`${fieldId} filters`}
-      align="start"
+      align={fieldId === 'location' ? 'end' : 'start'}
         closeOnSelect={false}
       items={items}
       trigger={({ ref, onClick, expanded }) => (
