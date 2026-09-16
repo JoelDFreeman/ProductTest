@@ -24,16 +24,16 @@
   opacity: 0;
   will-change: transform, opacity;
   transition:
-    transform var(--oi-motion-duration-short) var(--oi-motion-ease-exit),
-    opacity var(--oi-motion-duration-short) var(--oi-motion-ease-exit);
+    transform var(--oi-motion-duration-long) cubic-bezier(0.22, 1, 0.36, 1),
+    opacity var(--oi-motion-duration-long) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .surfaceOpen {
   transform: translateX(0);
   opacity: 1;
   transition:
-    transform var(--oi-motion-duration-default) var(--oi-motion-ease-enter),
-    opacity var(--oi-motion-duration-default) var(--oi-motion-ease-enter);
+    transform var(--oi-motion-duration-long) cubic-bezier(0.22, 1, 0.36, 1),
+    opacity var(--oi-motion-duration-long) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
