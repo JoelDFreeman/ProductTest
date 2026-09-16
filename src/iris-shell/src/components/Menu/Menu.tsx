@@ -96,6 +96,8 @@ export interface MenuProps {
   items: MenuEntry[];
   align?: 'start' | 'end';
   ariaLabel?: string;
+  /** Keep the menu open after selecting an item; outside click and Escape still close it. */
+  closeOnSelect?: boolean;
   /**
    * Controlled open state. When provided, the menu ignores its internal
    * toggle and reports changes via `onOpenChange` (used for context menus).
@@ -156,6 +158,7 @@ export function Menu({
   items,
   align = 'end',
   ariaLabel = 'Menu',
+  closeOnSelect = true,
   open: openProp,
   onOpenChange,
   position,
@@ -303,7 +306,7 @@ export function Menu({
             }}
             onKeyDown={(e) => handleArrowNav(e, menuRef)}
           >
-            {items.map((item, i) => renderItem(item, i, close))}
+            {items.map((item, i) => renderItem(item, i, closeOnSelect ? close : undefined))}
           </div>,
           document.body,
         )}
@@ -427,7 +430,7 @@ function SubmenuItem({ item, close }: { item: MenuSubmenuEntry; close: () => voi
   );
 }
 
-function renderItem(item: MenuEntry, i: number, close: () => void): ReactNode {
+function renderItem(item: MenuEntry, i: number, close?: () => void): ReactNode {
   if (item.kind === 'divider') {
     return <div key={`d-${i}`} className={styles.divider} role="separator" />;
   }
@@ -474,7 +477,7 @@ function renderItem(item: MenuEntry, i: number, close: () => void): ReactNode {
         onClick={() => {
           if (item.disabled || inactive) return;
           item.onSelect?.();
-          close();
+          close?.();
         }}
       >
         {(item.visual !== undefined || item.icon) && (

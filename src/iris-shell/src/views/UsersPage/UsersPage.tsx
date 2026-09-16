@@ -186,13 +186,13 @@ const COLUMNS: DataTableColumn<User>[] = [
   },
 ];
 
-function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fieldId: string; options: string[]; filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; onSort: (direction: SortDirection) => void }) {
+function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fieldId: string; options?: string[]; filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; onSort: (direction: SortDirection) => void }) {
   const selected = new Set(filters.filter((filter) => filter.fieldId === fieldId && filter.value).map((filter) => filter.value!));
   const items: MenuEntry[] = [
     { kind: 'item', label: 'Sort ascending', icon: 'CaretUp', onSelect: () => onSort('asc') },
     { kind: 'item', label: 'Sort descending', icon: 'CaretDown', onSelect: () => onSort('desc') },
     { kind: 'divider' },
-    ...options.map((option) => ({
+    ...(options ?? []).map((option) => ({
     kind: 'item',
     label: option,
     visual: <Checkbox checked={selected.has(option)} tabIndex={-1} ariaLabel={`${option} filter`} />,
@@ -208,9 +208,10 @@ function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fie
     })),
   ];
   return (
-    <Menu
+      <Menu
       ariaLabel={`${fieldId} filters`}
       align="start"
+        closeOnSelect={false}
       items={items}
       trigger={({ ref, onClick, expanded }) => (
         <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.columnFilterButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded} aria-label={`Filter ${fieldId}`}>
@@ -328,7 +329,7 @@ export function UsersPage() {
   const columns = useMemo<DataTableColumn<User>[]>(() => COLUMNS.map((column) => ({
     ...column,
     headerFilter: column.key === 'name'
-      ? <ColumnFilterMenu fieldId="displayName" options={users.map((user) => user.name)} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'displayName', direction })} />
+      ? <ColumnFilterMenu fieldId="displayName" filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'displayName', direction })} />
       : column.key === 'status'
       ? <ColumnFilterMenu fieldId="status" options={['Active', 'Inactive', 'Unknown', 'Pending']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'status', direction })} />
       : column.key === 'tags'
