@@ -17,6 +17,7 @@ import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { Link } from '../../components/Link/Link.js';
 import { ContentHeader } from '../../components/ContentHeader/ContentHeader.js';
 import { DataTable, type DataTableColumn, type RowKey } from '../../components/DataTable/DataTable.js';
+import { Checkbox } from '../../components/Checkbox/Checkbox.js';
 import { Pagination } from '../../components/Pagination/Pagination.js';
 import { ActionBar } from '../../components/ActionBar/ActionBar.js';
 import { ResetPasswordModal } from '../UserDetailPage/ResetPasswordModal/ResetPasswordModal.js';
@@ -185,6 +186,41 @@ const COLUMNS: DataTableColumn<User>[] = [
   },
 ];
 
+function ColumnFilterMenu({ fieldId, options, filters, onChange, onSort }: { fieldId: string; options: string[]; filters: AdvancedFilter[]; onChange: (filters: AdvancedFilter[]) => void; onSort: (direction: SortDirection) => void }) {
+  const selected = new Set(filters.filter((filter) => filter.fieldId === fieldId && filter.value).map((filter) => filter.value!));
+  const items: MenuEntry[] = [
+    { kind: 'item', label: 'Sort ascending', icon: 'CaretUp', onSelect: () => onSort('asc') },
+    { kind: 'item', label: 'Sort descending', icon: 'CaretDown', onSelect: () => onSort('desc') },
+    { kind: 'divider' },
+    ...options.map((option) => ({
+    kind: 'item',
+    label: option,
+    visual: <Checkbox checked={selected.has(option)} tabIndex={-1} ariaLabel={`${option} filter`} />,
+    onSelect: () => {
+      const next = new Set(selected);
+      if (next.has(option)) next.delete(option);
+      else next.add(option);
+      onChange([
+        ...filters.filter((filter) => filter.fieldId !== fieldId),
+        ...Array.from(next, (value) => ({ id: `${fieldId}-${value}-${Date.now()}-${Math.random()}`, fieldId, value, operator: 'is' })),
+      ]);
+    },
+    })),
+  ];
+  return (
+    <Menu
+      ariaLabel={`${fieldId} filters`}
+      align="start"
+      items={items}
+      trigger={({ ref, onClick, expanded }) => (
+        <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.columnFilterButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded} aria-label={`Filter ${fieldId}`}>
+          <Icon name="CaretUpDown" size="16px" />
+        </button>
+      )}
+    />
+  );
+}
+
 function getTags(user: User): string[] {
   return user.tags ?? (user.status.toLowerCase() === 'active' ? ['HR', 'Engineering'] : ['Security', 'Platform']);
 }
@@ -220,12 +256,17 @@ const TABLE_SETTINGS_MENU_ITEMS: MenuEntry[] = [
 
 /** Items-per-page choices offered below the users table. */
 const PAGE_SIZE_OPTIONS = [15, 20, 30, 40, 50];
+type SortDirection = 'asc' | 'desc';
+interface UserSort {
+  fieldId: string;
+  direction: SortDirection;
+}
 
 /**
  * UsersPage — the Directory Management → Users listing view.
  */
 export function UsersPage() {
-  const { openSearch, appliedFilters } = useAdvancedSearch();
+  const { openSearch, draftFilters, appliedFilters, syncFilters } = useAdvancedSearch();
   const { users, addUser } = useUsers();
   const { selectedDirectories } = useDirectory();
   const { aiOpen, setAiOpen, setAiContext } = useAppShell();
@@ -248,6 +289,7 @@ export function UsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [selected, setSelected] = useState<Set<RowKey>>(() => new Set());
+  const [sort, setSort] = useState<UserSort | null>(null);
 
   // Which user (if any) has a row-action modal open. `null` = closed.
   const [resetUser, setResetUser] = useState<User | null>(null);
@@ -260,17 +302,41 @@ export function UsersPage() {
         v.toLowerCase().includes(q),
       ),
     );
-    return filtered.filter((user) =>
-      appliedFilters.every((filter) => {
-        if (!filter.value) return true;
-        if (filter.fieldId === 'tags') return getTags(user).includes(filter.value);
-        if (filter.fieldId === 'location') return getLocation(user) === filter.value;
-        if (filter.fieldId === 'displayName') return user.details.displayName.toLowerCase().includes(filter.value.toLowerCase());
-        if (filter.fieldId === 'objectType') return 'user'.includes(filter.value.toLowerCase());
-        return true;
-      }),
-    );
-  }, [users, query, appliedFilters, selectedDirectories]);
+    const filterGroups = new Map<string, AdvancedFilter[]>();
+    appliedFilters.forEach((filter) => {
+      if (!filter.value) return;
+      const group = filterGroups.get(filter.fieldId) ?? [];
+      group.push(filter);
+      filterGroups.set(filter.fieldId, group);
+    });
+    const matchingRows = filtered.filter((user) => Array.from(filterGroups.values()).every((filtersForField) => filtersForField.some((filter) => {
+      if (filter.fieldId === 'tags') return getTags(user).includes(filter.value!);
+      if (filter.fieldId === 'location') return getLocation(user) === filter.value;
+      if (filter.fieldId === 'status') return user.status === filter.value;
+      if (filter.fieldId === 'displayName') return user.name.toLowerCase() === filter.value!.toLowerCase();
+      if (filter.fieldId === 'objectType') return 'user'.includes(filter.value!.toLowerCase());
+      return true;
+    })));
+    if (!sort) return matchingRows;
+    const valueFor = (user: User) => sort.fieldId === 'displayName' ? user.name : sort.fieldId === 'status' ? user.status : sort.fieldId === 'tags' ? getTags(user).join(', ') : getLocation(user);
+    return [...matchingRows].sort((left, right) => {
+      const comparison = valueFor(left).localeCompare(valueFor(right), undefined, { sensitivity: 'base' });
+      return sort.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [users, query, appliedFilters, selectedDirectories, sort]);
+
+  const columns = useMemo<DataTableColumn<User>[]>(() => COLUMNS.map((column) => ({
+    ...column,
+    headerFilter: column.key === 'name'
+      ? <ColumnFilterMenu fieldId="displayName" options={users.map((user) => user.name)} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'displayName', direction })} />
+      : column.key === 'status'
+      ? <ColumnFilterMenu fieldId="status" options={['Active', 'Inactive', 'Unknown', 'Pending']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'status', direction })} />
+      : column.key === 'tags'
+        ? <ColumnFilterMenu fieldId="tags" options={Array.from(new Set(users.flatMap(getTags)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'tags', direction })} />
+        : column.key === 'location'
+          ? <ColumnFilterMenu fieldId="location" options={Array.from(new Set(users.map(getLocation)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'location', direction })} />
+          : undefined,
+  })), [draftFilters, syncFilters, users]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -374,7 +440,7 @@ export function UsersPage() {
       <div className={styles.tableWrap}>
         <DataTable
           rows={pageRows}
-          columns={COLUMNS}
+          columns={columns}
           ariaLabel="Users"
           appearance="light"
           selected={selected}
