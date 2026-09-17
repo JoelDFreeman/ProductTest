@@ -25,14 +25,7 @@ import styles from './GroupsPage.module.css';
 import { useAdvancedSearch, type AdvancedFilter } from '../../lib/advancedSearchStore.js';
 import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
 import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
-
-const PAGE_ACTIONS: MenuEntry[] = [
-  { kind: 'item', label: 'Customize', icon: 'Pencil' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Add to favorites', icon: 'Star' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Ask AI', icon: 'Sparkle' },
-];
+import { PageMenu } from '../../components/PageMenu/PageMenu.js';
 
 const TABLE_SETTINGS: MenuEntry[] = [
   { kind: 'item', label: 'Adjust columns', icon: 'Columns' },
@@ -81,6 +74,7 @@ export function GroupsPage() {
       if (filter.fieldId === 'location') return group.location === filter.value;
       if (filter.fieldId === 'displayName') return group.name.toLowerCase().includes(filter.value!.toLowerCase());
       if (filter.fieldId === 'objectType') return 'group'.includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'dateCreated') return matchesDateFilter(group.createdAt, filter.operator, filter.value!);
       if (filter.fieldId === 'membershipType') return group.membershipType === filter.value;
       return true;
     }));
@@ -136,8 +130,8 @@ export function GroupsPage() {
     { key: 'location', header: 'Location', icon: 'BuildingOffice', headerFilter: <ColumnFilterMenu fieldId="location" options={directoryOptions} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'location', direction })} />, width: '160px', cell: (group) => group.location },
   ];
   const columnOptions: DataTableColumn<Group>[] = [
-    { key: 'scope', header: 'Scope', icon: 'Globe', width: '150px', cell: (group) => group.scope },
-    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (group) => group.createdAt },
+    { key: 'scope', header: 'Scope', icon: 'Globe', headerFilter: <ColumnFilterMenu fieldId="scope" options={['Domain local', 'Global', 'Universal']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'scope', direction })} />, width: '150px', cell: (group) => group.scope },
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', headerFilter: <ColumnFilterMenu fieldId="dateCreated" options={Array.from(new Set(groups.map((group) => group.createdAt)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'dateCreated', direction })} />, width: '168px', cell: (group) => group.createdAt },
     { key: 'membershipType', header: 'Membership type', icon: 'UsersThree', headerFilter: <ColumnFilterMenu fieldId="membershipType" options={['Security Group', 'Distribution Group']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'membershipType', direction })} />, minWidth: '170px', cell: (group) => group.membershipType },
   ];
 
@@ -146,7 +140,7 @@ export function GroupsPage() {
       <ContentHeader
         icon="UsersThree"
         title="Groups"
-        actions={<Menu ariaLabel="Page actions" align="end" items={PAGE_ACTIONS} trigger={({ ref, onClick, expanded }) => <Tooltip label="More options"><IconButton ref={ref as Ref<HTMLButtonElement>} icon="DotsThree" ariaLabel="Page actions" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} /></Tooltip>} />}
+        actions={<PageMenu />}
         search={<TextInput iconLead="MagnifyingGlass" placeholder="Search groups" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} aria-label="Search groups" />}
         toolbarActions={<><span className={styles.toolbarSeparator} aria-hidden="true" /><AdvancedSearchButton /><Button variant="primary" iconLead="Plus" onClick={() => setNewGroupOpen(true)}>Create</Button></>}
       />
@@ -225,4 +219,11 @@ export function GroupsPage() {
       />
     </AppShell>
   );
+}
+
+function matchesDateFilter(date: string | undefined, operator: string | undefined, value: string): boolean {
+  if (!date) return false;
+  if (operator === 'is after') return date > value;
+  if (operator === 'is before') return date < value;
+  return date === value;
 }

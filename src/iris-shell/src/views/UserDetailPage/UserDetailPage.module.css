@@ -42,6 +42,129 @@
   border: 0;
 }
 
+.accountProperties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oi-spacing-m) var(--oi-spacing-xl);
+  margin: 0;
+}
+
+.accountLayout {
+  display: grid;
+  gap: var(--oi-spacing-l);
+  width: 100%;
+}
+
+.accountFormGrid,
+.passwordGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oi-spacing-m);
+}
+
+.inlineField {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-spacing-xs);
+}
+
+.inlineField > :first-child {
+  flex: 1 1 auto;
+}
+
+.directorySuffix {
+  color: var(--oi-content-color-secondary);
+  white-space: nowrap;
+}
+
+.accountSection {
+  display: grid;
+  gap: var(--oi-spacing-s);
+  margin-top: var(--oi-spacing-l);
+}
+
+.accountSectionTitle {
+  margin: 0;
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-body-s-strong-font-size);
+}
+
+.checkboxGrid,
+.checkboxList {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--oi-spacing-s) var(--oi-spacing-xs);
+}
+
+.checkboxGrid label {
+  display: contents;
+}
+
+.radioRow,
+.accountActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--oi-spacing-s);
+}
+
+.nestedAccountCard {
+  box-shadow: none;
+}
+
+.ownerTable {
+  border: var(--oi-border-width-default) var(--oi-border-style-solid) var(--oi-border-color-muted);
+  border-radius: var(--oi-border-radius-default);
+  overflow: hidden;
+}
+
+.ownerTableHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px;
+  gap: var(--oi-spacing-s);
+  padding: var(--oi-spacing-s);
+  background: var(--oi-background-color-secondary);
+  color: var(--oi-content-color-secondary);
+  font-size: var(--oi-text-caption-font-size);
+}
+
+.ownerEmpty {
+  padding: var(--oi-spacing-m);
+  color: var(--oi-content-color-tertiary);
+}
+
+.modalBody {
+  display: grid;
+  gap: var(--oi-spacing-m);
+}
+
+.accountProperties > div {
+  display: grid;
+  gap: var(--oi-spacing-xs);
+  min-width: 0;
+}
+
+.accountProperties dt {
+  color: var(--oi-content-color-secondary);
+  font-size: var(--oi-text-caption-font-size);
+}
+
+.accountProperties dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-body-s-font-size);
+}
+
+@media (max-width: 720px) {
+  .accountProperties,
+  .accountFormGrid,
+  .passwordGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .managementGroup {
   padding: var(--oi-spacing-s);
   border: 0.5px var(--oi-border-style-solid) var(--oi-border-color-default);

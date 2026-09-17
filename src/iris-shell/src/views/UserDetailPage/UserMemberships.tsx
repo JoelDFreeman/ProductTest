@@ -57,7 +57,7 @@ export function UserMemberships({ user, onMembershipChange }: UserMembershipsPro
     { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '150px', cell: (item) => item.location },
   ];
   const columnOptions: DataTableColumn<MembershipRow>[] = [
-    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (group) => group.createdAt },
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '168px', cell: (group) => group.createdAt },
   ];
 
   const removeMembership = (group: MembershipRow) => {

@@ -203,6 +203,7 @@ export function Menu({
       // resize computes the final top in one pass — avoiding a below→above
       // correction (and extra render) from the auto-flip layout effect below.
       const measured = menuRef.current;
+      const measuredWidth = measured?.offsetWidth ?? 0;
       const top =
         topAnchor != null
           ? topAnchor
@@ -213,9 +214,12 @@ export function Menu({
       const rightInset = align === 'end'
         ? Math.max(margin, window.innerWidth - Math.min(rect.right, frameRight))
         : undefined;
+      const startLeft = measuredWidth
+        ? Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - measuredWidth - margin))
+        : rect.left;
       setPos({
         top,
-        left: align === 'end' ? rect.right : rect.left,
+        left: align === 'end' ? rect.right : startLeft,
         right: align === 'end' ? (rightAnchor != null ? Math.max(margin, rightAnchor) : rightInset) : undefined,
         align,
       });
@@ -260,8 +264,11 @@ export function Menu({
     const el = menuRef.current;
     const t = triggerRef.current;
     if (!el || !t) return;
-    const top = resolveTriggerTop(t.getBoundingClientRect(), el.offsetHeight);
-    setPos((p) => (p && p.top !== top ? { ...p, top } : p));
+    const rect = t.getBoundingClientRect();
+    const top = resolveTriggerTop(rect, el.offsetHeight);
+    const margin = 4;
+    const left = Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - el.offsetWidth - margin));
+    setPos((p) => (p && (p.top !== top || (p.align === 'start' && p.left !== left)) ? { ...p, top, left } : p));
   }, [open, position, topAnchor, pos]);
 
   // Click outside + Escape to dismiss. `[data-oi-menu]` covers the menu and
