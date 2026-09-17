@@ -47,7 +47,7 @@
   background-color: var(--oi-background-color-primary);
   border-top: var(--oi-border-width-default) var(--oi-border-style-solid)
     var(--oi-border-color-muted);
-  width: max-content;
+  width: 100%;
   min-width: 100%;
 }
 
@@ -62,6 +62,7 @@
 }
 
 .headCell {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--oi-spacing-s);
@@ -95,6 +96,32 @@
   display: inline-flex;
   color: var(--oi-content-color-tertiary);
   flex-shrink: 0;
+}
+
+.headerTooltipTrigger {
+  display: inline-flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: var(--oi-spacing-s);
+}
+
+.columnResizeHandle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  z-index: 5;
+  width: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+}
+
+.columnResizeHandle:hover,
+.columnResizeHandle:focus-visible {
+  background: var(--oi-border-color-focus);
 }
 
 .headLabel {
@@ -197,6 +224,10 @@
 .actionCell {
   justify-content: center;
   padding-inline: var(--oi-spacing-s);
+}
+
+.actionCell {
+  margin-inline-start: auto;
 }
 
 /* ── Pinned (sticky) columns ────────────────────────────────
@@ -317,6 +348,6 @@
    stay aligned while scrolling. */
 @container datatable (max-width: 1080px) {
   .table {
-    min-width: max-content;
+    min-width: 100%;
   }
 }

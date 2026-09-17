@@ -259,10 +259,27 @@
 }
 
 .emptyFilterState {
+  position: relative;
   display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--oi-spacing-m);
   align-items: center;
   justify-content: center;
+}
+
+.emptyFilterIllustration {
+  display: block;
+  width: 153px;
+  height: 90px;
+  flex: 0 0 auto;
+}
+
+.filtersGuide {
+  position: absolute;
+  bottom: var(--oi-spacing-l);
+  color: var(--oi-content-color-secondary);
+  font-size: var(--oi-text-caption-font-size);
 }
 
 .advancedModeRow {
@@ -406,9 +423,23 @@
   display: grid;
   gap: var(--oi-spacing-s);
   overflow-anchor: none;
-  padding: var(--oi-spacing-l);
+  overflow: visible;
+  padding: 0 var(--oi-spacing-l) var(--oi-spacing-l);
   border-radius: var(--oi-border-radius-default);
   background: var(--oi-background-color-brand);
+}
+
+.groupContainer::after {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--oi-size-s) / -2 - var(--oi-spacing-xs));
+  right: calc(var(--oi-size-s) / -2 - var(--oi-spacing-xs));
+  width: calc(var(--oi-size-s) + (var(--oi-spacing-xs) * 2));
+  height: calc(var(--oi-size-s) + (var(--oi-spacing-xs) * 2));
+  border-radius: var(--oi-border-radius-max);
+  background: var(--oi-background-color-primary);
+  content: '';
+  pointer-events: none;
 }
 
 .groupContainerFilled {
@@ -558,23 +589,36 @@
   align-items: center;
   justify-content: space-between;
   min-height: var(--oi-size-s);
-  margin: calc(-1 * var(--oi-spacing-s));
+  margin: calc(-1 * var(--oi-spacing-xs));
   margin-bottom: var(--oi-spacing-xs);
-  padding: var(--oi-spacing-s);
+  padding: var(--oi-spacing-xs);
 }
 
 .dragHandle {
+  position: absolute;
+  z-index: 3;
+  top: var(--oi-spacing-m);
+  left: calc(var(--oi-size-xs) * -1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--oi-size-s);
-  height: var(--oi-size-s);
+  width: var(--oi-size-xs);
+  height: var(--oi-size-xs);
   padding: 0;
   border: 0;
   border-radius: var(--oi-border-radius-default);
   background: transparent;
   color: var(--oi-content-color-tertiary);
   cursor: grab;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--oi-motion-duration-short) var(--oi-motion-ease-default);
+}
+
+.groupContainer:hover .dragHandle,
+.groupContainer:focus-within .dragHandle {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .dragHandle:active {
@@ -624,16 +668,35 @@
 }
 
 .removeGroup {
+  position: absolute;
+  z-index: 3;
+  top: calc(var(--oi-size-s) / -2);
+  right: calc(var(--oi-size-s) / -2);
   display: inline-flex;
   width: var(--oi-size-s);
   height: var(--oi-size-s);
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 0;
-  background: transparent;
+  border: var(--oi-border-width-default) var(--oi-border-style-solid) var(--oi-border-color-default);
+  border-radius: var(--oi-border-radius-max);
+  background: var(--oi-background-color-primary);
   color: var(--oi-content-color-secondary);
   cursor: pointer;
+  transition:
+    background-color var(--oi-motion-duration-short) var(--oi-motion-ease-default),
+    border-color var(--oi-motion-duration-short) var(--oi-motion-ease-default),
+    color var(--oi-motion-duration-short) var(--oi-motion-ease-default);
+}
+
+.removeGroup:hover {
+  border-color: var(--oi-border-color-strong);
+  background: var(--oi-background-color-tertiary);
+  color: var(--oi-content-color-error);
+}
+
+.filterRemove:hover:not(:disabled) {
+  color: var(--oi-content-color-error) !important;
 }
 
 .groupAction {

@@ -39,6 +39,7 @@ export function AdvancedSearchSideSheet() {
   const [panelWidth, setPanelWidth] = useState(512);
   const resizeCleanupRef = useRef<(() => void) | null>(null);
   const generatedQuery = buildLdapQuery(draftFilters, groupConditions);
+  const hasFilledCondition = draftFilters.some((filter) => filter.value) || groupConditions.some((condition) => condition.value);
   const addFilterToGroup = (fieldId: string, value?: string) => {
     const groupId = createFilterGroup();
     setGroupConditions([...groupConditions, {
@@ -134,13 +135,13 @@ export function AdvancedSearchSideSheet() {
       {tab === 'ask-ai' && <AiPanel open onClose={() => setTab('basic')} className={styles.aiPanel} />}
       </div>
         </div>
-        <footer className={styles.footer}>
+        {hasFilledCondition && <footer className={styles.footer}>
           <button type="button" className={styles.clearAllButton} onClick={clearFilters}>Clear all</button>
           <div className={styles.footerActions}>
             <Button variant="secondary" size="s" onClick={closeSearch}>Cancel</Button>
             <Button variant="primary" size="s" onClick={applyFilters}>Apply filter</Button>
           </div>
-        </footer>
+        </footer>}
       </div>
     </aside>
   );
@@ -173,7 +174,7 @@ function FilterAddMenu({ onAdd, onCreateGroup, groupOptions = [] }: { onAdd: (fi
     ...(onCreateGroup ? [{ kind: 'item' as const, label: 'Add filter group', icon: 'FunnelSimple', onSelect: onCreateGroup }, { kind: 'divider' as const }] : []),
     ...MENU_ITEMS.map((item): MenuEntry => ({ kind: 'submenu', label: item, icon: categoryIcons[item], selected: category === item, onOpen: () => setCategory(item), items: item === 'Common' ? propertyItems : item === 'User' ? userItems : item === 'Computer' ? computerItems : item === 'Groups' ? groupItems : placeholderItems })),
   ];
-  return <Menu ariaLabel="Filter categories" align="start" open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setCategory(null); }} items={categoryItems} trigger={({ ref, onClick, expanded }) => <Button ref={ref as React.Ref<HTMLButtonElement>} variant="secondary" size="s" iconLead="Plus" className={styles.addFiltersButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>Add filter</Button>} />;
+  return <Menu ariaLabel="Filter categories" align="center" open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setCategory(null); }} items={categoryItems} trigger={({ ref, onClick, expanded }) => <Button ref={ref as React.Ref<HTMLButtonElement>} variant="secondary" iconLead="Plus" className={styles.addFiltersButton} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>Add filter</Button>} />;
 }
 
 function FilterChip({ filter, onChange, onRemove, groupOptions = [] }: { filter: AdvancedFilter; onChange: (patch: Partial<AdvancedFilter>) => void; onRemove: () => void; groupOptions?: string[] }) {
@@ -203,7 +204,11 @@ function BasicFilterTab({ filters, onChange, onAddFilter, onCreateGroup, groupOp
     <div className={styles.basic}>
       {showAddCard && <section className={styles.addCard}>
         {filters.length === 0
-          ? <div className={styles.emptyFilterState}><FilterAddMenu onAdd={onAddFilter} onCreateGroup={onCreateGroup} /></div>
+          ? <div className={styles.emptyFilterState}>
+            <img className={styles.emptyFilterIllustration} src="/filter-empty-illustration.svg" alt="" />
+            <FilterAddMenu onAdd={onAddFilter} onCreateGroup={onCreateGroup} />
+            <span className={styles.filtersGuide}>Read the filters guide</span>
+          </div>
           : <div className={styles.menuTriggerRow}><FilterAddMenu onAdd={onAddFilter} onCreateGroup={onCreateGroup} /></div>}
       </section>}
       <div className={styles.selectedFilters} aria-label="Added filters">
