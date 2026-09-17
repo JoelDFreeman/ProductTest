@@ -62,7 +62,7 @@ export function GroupMemberships({ group }: { group: Group }) {
     { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '150px', cell: (item) => item.location },
   ];
   const columnOptions: DataTableColumn<Member>[] = [
-    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (member) => member.createdAt ?? 'Not set' },
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '168px', cell: (member) => member.createdAt ?? 'Not set' },
   ];
   const removeMember = (member: Member) => {
     if (member.type === 'User' && member.userId) {

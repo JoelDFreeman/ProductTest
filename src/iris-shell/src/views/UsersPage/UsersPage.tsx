@@ -29,6 +29,7 @@ import styles from './UsersPage.module.css';
 import { useAdvancedSearch, type AdvancedFilter } from '../../lib/advancedSearchStore.js';
 import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
 import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
+import { PageMenu } from '../../components/PageMenu/PageMenu.js';
 
 /** Map a status string to its semantic badge tone. */
 function statusBadge(status: string): { tone: BadgeTone } {
@@ -239,14 +240,6 @@ function directoryKey(location: string): string {
 }
 
 /** Page-level actions shown in the heading's overflow menu. */
-const PAGE_ACTIONS_MENU_ITEMS: MenuEntry[] = [
-  { kind: 'item', label: 'Customize', icon: 'Pencil' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Add to favorites', icon: 'Star' },
-  { kind: 'divider' },
-  { kind: 'item', label: 'Ask AI', icon: 'Sparkle' },
-];
-
 const TABLE_SETTINGS_MENU_ITEMS: MenuEntry[] = [
   { kind: 'item', label: 'Adjust columns', icon: 'Columns' },
   { kind: 'item', label: 'Add columns', icon: 'ColumnsPlusLeft' },
@@ -318,6 +311,7 @@ export function UsersPage() {
       if (filter.fieldId === 'status') return user.status === filter.value;
       if (filter.fieldId === 'displayName') return user.name.toLowerCase() === filter.value!.toLowerCase();
       if (filter.fieldId === 'objectType') return 'user'.includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'dateCreated') return matchesDateFilter(user.createdAt, filter.operator, filter.value!);
       if (filter.fieldId === 'memberOf') return (user.groupMembershipIds ?? []).some((id) => groups.some((group) => group.id === id && group.name === filter.value));
       if (filter.fieldId === 'ownerOf') return filter.value === 'Not set';
       if (filter.fieldId === 'userType') return user.details.type === filter.value;
@@ -344,12 +338,12 @@ export function UsersPage() {
           : undefined,
   })), [draftFilters, syncFilters, users]);
   const columnOptions = useMemo<DataTableColumn<User>[]>(() => [
-    { key: 'email', header: 'Email', icon: 'Envelope', minWidth: '220px', grow: 1, cell: (user) => user.email },
-    { key: 'objectId', header: 'Object ID', icon: 'IdentificationCard', minWidth: '180px', grow: 1, cell: (user) => <span className={styles.mono}>{user.objectId}</span> },
-    { key: 'jobTitle', header: 'Job title', icon: 'UserCircleCheck', minWidth: '180px', grow: 1, cell: (user) => user.details.jobTitle },
-    { key: 'department', header: 'Department', icon: 'Buildings', minWidth: '180px', grow: 1, cell: (user) => user.details.department },
-    { key: 'employeeId', header: 'Employee ID', icon: 'IdentificationCard', width: '150px', cell: (user) => user.details.employeeId },
-    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (user) => user.createdAt ?? 'Not set' },
+    { key: 'email', header: 'Email', icon: 'Envelope', headerFilter: <ColumnFilterMenu fieldId="email" options={Array.from(new Set(users.map((user) => user.email)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'email', direction })} />, minWidth: '220px', grow: 1, cell: (user) => user.email },
+    { key: 'objectId', header: 'Object ID', icon: 'IdentificationCard', headerFilter: <ColumnFilterMenu fieldId="objectId" filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'objectId', direction })} />, minWidth: '180px', grow: 1, cell: (user) => <span className={styles.mono}>{user.objectId}</span> },
+    { key: 'jobTitle', header: 'Job title', icon: 'UserCircleCheck', headerFilter: <ColumnFilterMenu fieldId="jobTitle" options={Array.from(new Set(users.map((user) => user.details.jobTitle)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'jobTitle', direction })} />, minWidth: '180px', grow: 1, cell: (user) => user.details.jobTitle },
+    { key: 'department', header: 'Department', icon: 'Buildings', headerFilter: <ColumnFilterMenu fieldId="department" options={Array.from(new Set(users.map((user) => user.details.department)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'department', direction })} />, minWidth: '180px', grow: 1, cell: (user) => user.details.department },
+    { key: 'employeeId', header: 'Employee ID', icon: 'IdentificationCard', headerFilter: <ColumnFilterMenu fieldId="employeeId" options={Array.from(new Set(users.map((user) => user.details.employeeId)))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'employeeId', direction })} />, width: '150px', cell: (user) => user.details.employeeId },
+    { key: 'dateCreated', header: 'Date created', icon: 'CalendarDots', headerFilter: <ColumnFilterMenu fieldId="dateCreated" options={Array.from(new Set(users.map((user) => user.createdAt ?? 'Not set')))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'dateCreated', direction })} />, width: '168px', cell: (user) => user.createdAt ?? 'Not set' },
     { key: 'memberOf', header: 'Member of', icon: 'MemberOf', headerFilter: <ColumnFilterMenu fieldId="memberOf" options={groups.map((group) => group.name)} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'memberOf', direction })} />, minWidth: '180px', grow: 1, cell: (user) => {
       const memberGroups = (user.groupMembershipIds ?? []).map((id) => groups.find((group) => group.id === id)).filter((group): group is NonNullable<typeof group> => !!group);
       return memberGroups.length ? <span className={styles.membershipLinks}>{memberGroups.map((group) => <a key={group.id} href={`#/groups/${group.id}?tab=memberships`} onClick={(event) => { event.preventDefault(); navigate(`#/groups/${group.id}?tab=memberships`); }}>{group.name}</a>)}</span> : 'Not set';
@@ -399,25 +393,7 @@ export function UsersPage() {
       <ContentHeader
         icon="Users"
         title="Users"
-        actions={
-          <Menu
-            ariaLabel="Page actions"
-            align="end"
-            items={PAGE_ACTIONS_MENU_ITEMS}
-            trigger={({ ref, onClick, expanded }) => (
-              <Tooltip label="More options">
-                <IconButton
-                  ref={ref as React.Ref<HTMLButtonElement>}
-                  icon="DotsThree"
-                  ariaLabel="Page actions"
-                  aria-haspopup="menu"
-                  aria-expanded={expanded}
-                  onClick={onClick}
-                />
-              </Tooltip>
-            )}
-          />
-        }
+        actions={<PageMenu />}
         search={
           <TextInput
             iconLead="MagnifyingGlass"
@@ -641,4 +617,11 @@ export function UsersPage() {
       />
     </AppShell>
   );
+}
+
+function matchesDateFilter(date: string | undefined, operator: string | undefined, value: string): boolean {
+  if (!date) return false;
+  if (operator === 'is after') return date > value;
+  if (operator === 'is before') return date < value;
+  return date === value;
 }

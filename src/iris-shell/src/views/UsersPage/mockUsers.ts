@@ -172,6 +172,31 @@ function makeMockUsers(): User[] {
   });
 }
 
+function makePlatformApplicationUsers(): User[] {
+  const locations = ['Entra 1', 'Entra 2', 'AD-1\\Users', 'AD-2\\OU1'];
+  const start = Date.UTC(2024, 0, 1);
+  const end = Date.UTC(2026, 8, 17);
+  const dayRange = Math.floor((end - start) / 86400000);
+  return Array.from({ length: 50 }, (_, index) => {
+    const sequence = String(index + 1).padStart(2, '0');
+    const name = `Group Test User ${sequence}`;
+    const login = `Group.Test.User${sequence}`;
+    const createdAt = new Date(start + ((index * 137) % (dayRange + 1)) * 86400000).toISOString().slice(0, 10);
+    return {
+      id: `group-test-user-${sequence}`,
+      name,
+      status: index % 9 === 0 ? 'Inactive' : 'Active',
+      description: 'Test user assigned to Platform Admins and Application Owners.',
+      email: `group.test.user${sequence}@acme.io`,
+      objectId: `test-${sequence}-f2a-b8c3-1d2e3f4a5b6c`,
+      createdAt,
+      location: locations[(index * 3 + 1) % locations.length],
+      groupMembershipIds: ['group-1', 'group-5'],
+      details: makeDetails(name, login, index + 50),
+    };
+  });
+}
+
 export const MOCK_USERS: User[] = [
   {
     id: 'isabella-clark',
@@ -213,11 +238,11 @@ export const MOCK_USERS: User[] = [
     name: 'Noah Kim',
     status: 'Active',
     description: 'Directs security operations and engineering teams.',
-    email: 'n.kim@acme.io',
+    email: 'noa.kim@acme.io',
     objectId: 'a3f1b2c4-7d9e-4f2a-b8c3-1d2e3f4a5b6c',
     location: 'AD-2\\OU1',
     groupMembershipIds: makeMembershipIds(3),
-    details: makeDetails('Noah Kim', 'Noah.Kim'),
+    details: { ...makeDetails('Noah Kim', 'Noah.Kim'), userPrincipalName: 'Noa.Kim@Entra1', email: 'Noa.Kim@Entra1' },
   },
   {
     id: 'mason-patel',
@@ -292,6 +317,7 @@ export const MOCK_USERS: User[] = [
     details: makeDetails('Mia Foster', 'Mia.Foster'),
   },
   ...makeMockUsers(),
+  ...makePlatformApplicationUsers(),
 ];
 
 /** Lookup helpers. */

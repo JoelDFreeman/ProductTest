@@ -28,6 +28,7 @@ import styles from './TreeView.module.css';
 import { useAdvancedSearch, type AdvancedFilter } from '../../lib/advancedSearchStore.js';
 import { AdvancedSearchButton } from '../../components/AdvancedSearch/AdvancedSearchButton.js';
 import { AppliedFiltersEmptyState } from '../../components/AdvancedSearch/AppliedFiltersEmptyState.js';
+import { PageMenu } from '../../components/PageMenu/PageMenu.js';
 
 const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
 type SortDirection = 'asc' | 'desc';
@@ -170,6 +171,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
       if (filter.fieldId === 'objectType') return OBJECT_TYPE_META[object.type].label.toLowerCase().includes(filter.value!.toLowerCase());
       if (filter.fieldId === 'location') return (object.details.location ?? '').toLowerCase().includes(filter.value!.toLowerCase());
       if (filter.fieldId === 'displayName') return object.name.toLowerCase().includes(filter.value!.toLowerCase());
+      if (filter.fieldId === 'dateCreated') return matchesDateFilter(object.details.created, filter.operator, filter.value!);
       if (filter.fieldId === 'computerType') return object.details.computerType === filter.value;
       if (filter.fieldId === 'membershipType') return object.details.membershipType === filter.value;
       return true;
@@ -235,12 +237,12 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
     [allRows, draftFilters, isAdNode, nodeId, syncFilters],
   );
   const columnOptions = useMemo<DataTableColumn<DirectoryObject>[]>(() => [
-    { key: 'location', header: 'Location', icon: 'BuildingOffice', width: '180px', cell: (object) => object.details.location ?? '-' },
-    { key: 'created', header: 'Date created', icon: 'CalendarDots', width: '140px', cell: (object) => object.details.created ?? '-' },
-    { key: 'memberCount', header: 'Members', icon: 'Users', width: '120px', cell: (object) => object.details.memberCount == null ? '-' : String(object.details.memberCount) },
+    { key: 'location', header: 'Location', icon: 'BuildingOffice', headerFilter: <ColumnFilterMenu fieldId="location" options={Array.from(new Set(allRows.map((object) => object.details.location ?? '-')))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'location', direction })} />, width: '180px', cell: (object) => object.details.location ?? '-' },
+    { key: 'created', header: 'Date created', icon: 'CalendarDots', headerFilter: <ColumnFilterMenu fieldId="dateCreated" options={Array.from(new Set(allRows.map((object) => object.details.created ?? '-')))} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'dateCreated', direction })} />, width: '168px', cell: (object) => object.details.created ?? '-' },
+    { key: 'memberCount', header: 'Members', icon: 'Users', headerFilter: <ColumnFilterMenu fieldId="memberCount" filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'memberCount', direction })} />, width: '120px', cell: (object) => object.details.memberCount == null ? '-' : String(object.details.memberCount) },
     { key: 'computerType', header: 'Computer type', icon: 'Devices', headerFilter: <ColumnFilterMenu fieldId="computerType" options={['Computer', 'Device', 'Operator computer', 'Workstation']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'computerType', direction })} />, minWidth: '170px', cell: (object) => object.details.computerType ?? '-' },
     { key: 'membershipType', header: 'Membership type', icon: 'UsersThree', headerFilter: <ColumnFilterMenu fieldId="membershipType" options={['Security Group', 'Distribution Group']} filters={draftFilters} onChange={syncFilters} onSort={(direction) => setSort({ fieldId: 'membershipType', direction })} />, minWidth: '170px', cell: (object) => object.details.membershipType ?? '-' },
-  ], [draftFilters, syncFilters]);
+  ], [allRows, draftFilters, syncFilters]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -317,39 +319,7 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
       <ContentHeader
         icon={getNodeIcon(nodeId)}
         title={nodeName}
-        actions={
-          <Menu
-            ariaLabel="Node actions"
-            align="end"
-            items={[
-              { kind: 'item', label: 'Customize', icon: 'Pencil' },
-              {
-                kind: 'item',
-                label: isFavorite(nodeId) ? 'Remove from favourites' : 'Add to favourites',
-                icon: 'Heart',
-                onSelect: () =>
-                  toggleFavorite({
-                    id: nodeId,
-                    name: nodeName ?? 'Directory',
-                    type: 'Folder',
-                    href: `#/tree/${nodeId}`,
-                  }),
-              },
-            ]}
-            trigger={({ ref, onClick, expanded }) => (
-              <Tooltip label="More options">
-                <IconButton
-                  ref={ref as React.Ref<HTMLButtonElement>}
-                  icon="DotsThree"
-                  ariaLabel="Node actions"
-                  aria-haspopup="menu"
-                  aria-expanded={expanded}
-                  onClick={onClick}
-                />
-              </Tooltip>
-            )}
-          />
-        }
+        actions={<PageMenu ariaLabel="Node actions" favoriteLabel={isFavorite(nodeId) ? 'Remove from Favorites' : 'Add to Favorites'} onFavorite={() => toggleFavorite({ id: nodeId, name: nodeName ?? 'Directory', type: 'Folder', href: `#/tree/${nodeId}` })} />}
         search={
           <TextInput
             iconLead="MagnifyingGlass"
@@ -549,4 +519,11 @@ export function TreeListPage({ nodeId }: TreeListPageProps) {
       )}
     </AppShell>
   );
+}
+
+function matchesDateFilter(date: string | undefined, operator: string | undefined, value: string): boolean {
+  if (!date) return false;
+  if (operator === 'is after') return date > value;
+  if (operator === 'is before') return date < value;
+  return date === value;
 }

@@ -90,7 +90,8 @@ export function AdvancedSearchProvider({ children }: { children: ReactNode }) {
       setAppliedCount(filters.filter((filter) => filter.value).length);
     },
     applyFilters: () => {
-      setAppliedFilters(draftFilters);
+      const appliedGroupConditions = groupConditions.filter((condition) => !draftFilters.some((filter) => filter.id === condition.id.replace('condition-', '')));
+      setAppliedFilters([...draftFilters, ...appliedGroupConditions]);
       setAppliedCount(
         draftFilters.filter((filter) => filter.value).length +
         groupConditions.filter((condition) => condition.value).length,

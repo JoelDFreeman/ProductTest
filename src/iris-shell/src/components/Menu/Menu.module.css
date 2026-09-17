@@ -3,6 +3,10 @@
   z-index: 1000;
   min-width: 180px;
   max-width: 240px;
+  max-height: min(320px, calc(100vh - (var(--oi-spacing-l) * 2)));
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
   background-color: var(--oi-background-color-primary);
   border-radius: var(--oi-border-radius-l);
   box-shadow: var(--oi-shadow-mid);
