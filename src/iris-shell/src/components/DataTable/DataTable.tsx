@@ -31,6 +31,10 @@ export interface DataTableColumn<TRow> {
   maxWidth?: string | number;
   /** Flex-grow weight; columns with `grow` share leftover horizontal space. */
   grow?: number;
+  /** Size the column to its widest rendered content. */
+  fitContent?: boolean;
+  /** Fixed width to use when optional columns are visible. */
+  widthWhenOptions?: string | number;
   cell: (row: TRow, i: number) => ReactNode;
 }
 
@@ -170,7 +174,7 @@ export function DataTable<TRow extends DataTableRow>({
       data-ovf-end={overflow.end ? '' : undefined}
       {...(ariaLabel ? { role: 'region', 'aria-label': ariaLabel, tabIndex: 0 } : {})}
     >
-      <div className={cx(styles.table, density === 'compact' && styles.compact, appearance === 'light' && styles.light, className)} role="table" data-has-option-columns={visibleOptionCount > 0 || undefined} style={{ '--option-columns-width': `${visibleOptionCount * 200}px` } as CSSProperties}>
+      <div className={cx(styles.table, density === 'compact' && styles.compact, appearance === 'light' && styles.light, className)} role="table">
       <div className={styles.head} role="row">
         {selectable && (
           <HeadCell width="40px" className={styles.checkboxCell} pin="startInner">
@@ -185,7 +189,7 @@ export function DataTable<TRow extends DataTableRow>({
         {visibleColumns.map((col, ci) => (
           <HeadCell
             key={col.key}
-            {...sizing(col)}
+            {...sizing(col, visibleOptionCount > 0)}
             pin={ci === 0 ? 'start' : undefined}
             pinOffset={ci === 0 ? firstColOffset : undefined}
           >
@@ -256,7 +260,7 @@ export function DataTable<TRow extends DataTableRow>({
               {visibleColumns.map((col, ci) => (
                 <BodyCell
                   key={col.key}
-                  {...sizing(col)}
+                  {...sizing(col, visibleOptionCount > 0)}
                   pin={ci === 0 ? 'start' : undefined}
                   pinOffset={ci === 0 ? firstColOffset : undefined}
                 >
@@ -320,11 +324,18 @@ interface CellSizing {
   minWidth?: string | number;
   maxWidth?: string | number;
   grow?: number;
+  fitContent?: boolean;
 }
 
 /** Convert a column config to {width, minWidth, grow} props for cells. */
-function sizing<TRow>(col: DataTableColumn<TRow>): CellSizing {
-  return { width: col.width, minWidth: col.minWidth, maxWidth: col.maxWidth, grow: col.grow };
+function sizing<TRow>(col: DataTableColumn<TRow>, optionsVisible = false): CellSizing {
+  return {
+    width: optionsVisible && col.widthWhenOptions != null ? col.widthWhenOptions : col.width,
+    minWidth: col.minWidth,
+    maxWidth: col.maxWidth,
+    grow: optionsVisible && col.widthWhenOptions != null ? undefined : col.grow,
+    fitContent: col.fitContent,
+  };
 }
 
 /** Class list for a pinned (sticky) cell, or undefined when not pinned. */
@@ -387,11 +398,14 @@ function BodyCell(props: BodyCellProps) {
  *  emitted as custom properties so the container-query card layout can override
  *  it (inline `flex`/`width` would otherwise win over the stylesheet). */
 function cellStyle(
-  { width, minWidth, maxWidth, grow }: CellSizing,
+  { width, minWidth, maxWidth, grow, fitContent }: CellSizing,
   pinOffset?: string,
 ): CSSProperties {
   const style: Record<string, string> = {};
-  if (grow) {
+  if (fitContent) {
+    style['--cell-flex'] = '0 0 max-content';
+    style['--cell-min-width'] = 'max-content';
+  } else if (grow) {
     // Flex column: grow shares free space, never shrinks below the floor.
     const floor = normalizeWidth(minWidth ?? width ?? 0);
     style['--cell-flex'] = `${grow} 0 ${floor}`;
@@ -409,7 +423,7 @@ function cellStyle(
 
 /** Drop sizing keys before spreading the remaining attrs onto the DOM node. */
 function stripStyleProps<T extends CellSizing>(props: T): Omit<T, keyof CellSizing> {
-  const { width: _width, minWidth: _minWidth, maxWidth: _maxWidth, grow: _grow, ...rest } = props;
+  const { width: _width, minWidth: _minWidth, maxWidth: _maxWidth, grow: _grow, fitContent: _fitContent, ...rest } = props;
   return rest;
 }
 
