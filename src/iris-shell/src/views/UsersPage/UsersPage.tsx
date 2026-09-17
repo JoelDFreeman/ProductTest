@@ -144,7 +144,7 @@ const COLUMNS: DataTableColumn<User>[] = [
     key: 'status',
     header: 'Status',
     icon: 'UserCircleCheck',
-    width: '128px',
+    width: '144px',
     cell: (u) => {
       const { tone } = statusBadge(u.status);
       return (
@@ -166,8 +166,7 @@ const COLUMNS: DataTableColumn<User>[] = [
     key: 'tags',
     header: 'Tags',
     icon: 'Tag',
-    minWidth: '190px',
-    grow: 1,
+    width: '190px',
     cell: (u) => (
       <span className={styles.tagsCell}>
         {getTags(u).map((tag) => (

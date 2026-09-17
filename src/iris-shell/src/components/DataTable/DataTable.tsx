@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { cx } from '../../lib/cx.js';
 import { Checkbox } from '../Checkbox/Checkbox.js';
 import { IconButton } from '../IconButton/IconButton.js';
 import { Icon } from '../Icon/Icon.js';
 import { Menu, type MenuEntry } from '../Menu/Menu.js';
+import { Tooltip } from '../Tooltip/Tooltip.js';
 import styles from './DataTable.module.css';
 
 export type RowKey = string | number;
@@ -33,6 +34,8 @@ export interface DataTableColumn<TRow> {
   grow?: number;
   /** Size the column to its widest rendered content. */
   fitContent?: boolean;
+  /** Optional explanation shown when the header is hovered or focused. */
+  headerTooltip?: string;
   /** Fixed width to use when optional columns are visible. */
   widthWhenOptions?: string | number;
   cell: (row: TRow, i: number) => ReactNode;
@@ -112,6 +115,7 @@ export function DataTable<TRow extends DataTableRow>({
   const [visibleColumnKeys, setVisibleColumnKeys] = useState<Set<string>>(() => new Set(columns.map((column) => column.key)));
   const visibleColumns = allColumns.filter((column) => visibleColumnKeys.has(column.key));
   const visibleOptionCount = columnOptions.filter((column) => visibleColumnKeys.has(column.key)).length;
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const lockedColumnKey = columns[0]?.key;
   const selectable = !!selected && !!onSelectionChange;
   const allChecked =
@@ -166,6 +170,33 @@ export function DataTable<TRow extends DataTableRow>({
     onSelectionChange!(next);
   };
 
+  const getColumnSizing = (column: DataTableColumn<TRow>) => {
+    const base = sizing(column, visibleOptionCount > 0);
+    const width = columnWidths[column.key];
+    return width == null ? base : { ...base, width, minWidth: width, grow: undefined, fitContent: false };
+  };
+
+  const handleColumnResize = (columnKey: string, event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    const cell = event.currentTarget.parentElement;
+    if (!cell) return;
+    const startWidth = cell.getBoundingClientRect().width;
+    const startX = event.clientX;
+    const move = (moveEvent: PointerEvent) => {
+      setColumnWidths((current) => ({ ...current, [columnKey]: Math.max(80, Math.round(startWidth + moveEvent.clientX - startX)) }));
+    };
+    const finish = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+    };
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+  };
+
   return (
     <div
       ref={scrollerRef}
@@ -189,17 +220,18 @@ export function DataTable<TRow extends DataTableRow>({
         {visibleColumns.map((col, ci) => (
           <HeadCell
             key={col.key}
-            {...sizing(col, visibleOptionCount > 0)}
+            {...getColumnSizing(col)}
             pin={ci === 0 ? 'start' : undefined}
             pinOffset={ci === 0 ? firstColOffset : undefined}
           >
-            {col.icon && (
-              <span className={styles.headIcon}>
-                <Icon name={col.icon} size="20px" />
+            <Tooltip label={col.headerTooltip ?? `Shows ${col.header.toLowerCase()} for each row.`}>
+              <span className={styles.headerTooltipTrigger}>
+                {col.icon && <span className={styles.headIcon}><Icon name={col.icon} size="20px" /></span>}
+                <span className={styles.headLabel}>{col.header}</span>
               </span>
-            )}
-            <span className={styles.headLabel}>{col.header}</span>
+            </Tooltip>
             {col.headerFilter}
+            <button type="button" className={styles.columnResizeHandle} aria-label={`Resize ${col.header} column`} onPointerDown={(event) => handleColumnResize(col.key, event)} />
           </HeadCell>
         ))}
         <HeadCell width="44px" className={styles.actionCell} pin="end" aria-label="Table settings">
@@ -260,7 +292,7 @@ export function DataTable<TRow extends DataTableRow>({
               {visibleColumns.map((col, ci) => (
                 <BodyCell
                   key={col.key}
-                  {...sizing(col, visibleOptionCount > 0)}
+                  {...getColumnSizing(col)}
                   pin={ci === 0 ? 'start' : undefined}
                   pinOffset={ci === 0 ? firstColOffset : undefined}
                 >

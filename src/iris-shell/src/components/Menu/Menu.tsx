@@ -94,7 +94,7 @@ export interface MenuProps {
   /** Optional in controlled/context-menu mode (no anchor element). */
   trigger?: (args: MenuTriggerArgs) => ReactNode;
   items: MenuEntry[];
-  align?: 'start' | 'end';
+  align?: 'start' | 'center' | 'end';
   ariaLabel?: string;
   /** Keep the menu open after selecting an item; outside click and Escape still close it. */
   closeOnSelect?: boolean;
@@ -129,7 +129,7 @@ interface MenuPos {
   top: number;
   left: number;
   right?: number;
-  align: 'start' | 'end';
+  align: 'start' | 'center' | 'end';
 }
 
 /**
@@ -217,9 +217,12 @@ export function Menu({
       const startLeft = measuredWidth
         ? Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - measuredWidth - margin))
         : rect.left;
+      const centerLeft = measuredWidth
+        ? Math.min(Math.max(margin, rect.left + (rect.width - measuredWidth) / 2), Math.max(margin, window.innerWidth - measuredWidth - margin))
+        : rect.left;
       setPos({
         top,
-        left: align === 'end' ? rect.right : startLeft,
+        left: align === 'end' ? rect.right : align === 'center' ? centerLeft : startLeft,
         right: align === 'end' ? (rightAnchor != null ? Math.max(margin, rightAnchor) : rightInset) : undefined,
         align,
       });
@@ -268,7 +271,12 @@ export function Menu({
     const top = resolveTriggerTop(rect, el.offsetHeight);
     const margin = 4;
     const left = Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - el.offsetWidth - margin));
-    setPos((p) => (p && (p.top !== top || (p.align === 'start' && p.left !== left)) ? { ...p, top, left } : p));
+    const centerLeft = Math.min(Math.max(margin, rect.left + (rect.width - el.offsetWidth) / 2), Math.max(margin, window.innerWidth - el.offsetWidth - margin));
+    setPos((p) => {
+      if (!p) return p;
+      const nextLeft = p.align === 'center' ? centerLeft : p.align === 'start' ? left : p.left;
+      return p.top !== top || (p.align !== 'end' && p.left !== nextLeft) ? { ...p, top, left: nextLeft } : p;
+    });
   }, [open, position, topAnchor, pos]);
 
   // Click outside + Escape to dismiss. `[data-oi-menu]` covers the menu and
