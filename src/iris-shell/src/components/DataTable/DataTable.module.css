@@ -51,10 +51,6 @@
   min-width: 100%;
 }
 
-.table[data-has-option-columns] {
-  min-width: calc(100% + var(--option-columns-width));
-}
-
 .head {
   display: flex;
   align-items: stretch;
@@ -228,6 +224,7 @@
 
 .pinEnd {
   inset-inline-end: 0;
+  border-left: var(--oi-border-width-default) var(--oi-border-style-solid) var(--oi-border-color-muted);
 }
 
 .row:hover .pin {
