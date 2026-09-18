@@ -664,6 +664,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
+  padding-top: var(--oi-spacing-l);
   gap: var(--oi-spacing-m);
 }
 
