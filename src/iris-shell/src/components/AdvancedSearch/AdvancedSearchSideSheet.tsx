@@ -310,10 +310,10 @@ function FilterGroupsTab({ groups, conditions, draftFilters, onChange, onDraftFi
       trigger={({ ref, onClick, expanded }) => <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={styles.connectorChip} onClick={onClick} aria-haspopup="menu" aria-expanded={expanded}>{group.connector ?? 'AND'}<Icon name="CaretDown" size="12px" /></button>}
     />
   );
-  const conditionConnector = (condition: FilterGroupCondition) => (
+  const conditionConnector = (condition: FilterGroupCondition, groupId: string) => (
     <div className={styles.conditionSeparator}>
       <span className={styles.conditionSeparatorLine} />
-      <button type="button" className={styles.conditionConnector} onClick={() => update(condition.id, { connector: condition.connector === 'OR' ? 'AND' : 'OR' })} aria-label={`Change ${condition.connector} to ${condition.connector === 'OR' ? 'AND' : 'OR'}`}>
+      <button type="button" className={styles.conditionConnector} onClick={() => onChange(conditions.map((item) => item.groupId === groupId ? { ...item, connector: item.connector === 'OR' ? 'AND' : 'OR' } : item))} aria-label={`Match ${condition.connector === 'OR' ? 'all of the following' : 'any of the following'}`} title={condition.connector === 'OR' ? 'Match all of the following' : 'Match any of the following'}>
         <span key={condition.connector} className={styles.conditionConnectorLabel}>{condition.connector}</span>
       </button>
     </div>
@@ -323,14 +323,13 @@ function FilterGroupsTab({ groups, conditions, draftFilters, onChange, onDraftFi
     if (!group) return null;
     const groupConditions = conditions.filter((condition) => (condition.groupId ?? 'default') === groupId);
     return <section className={`${styles.groupBlock} ${depth > 0 ? styles.nestedGroup : ''}`} key={groupId} onDragOver={(event) => { if (dragGroupId && dragGroupId !== groupId) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (dragGroupId) reorderGroup(dragGroupId, groupId); setDragGroupId(null); }}>
-      {depth === 0 && <p className={styles.groupConditionLabel}>Where all conditions are met</p>}
       <div className={`${styles.groupContainer} ${groupConditions.length > 0 ? styles.groupContainerFilled : ''}`}>
       <div className={styles.groupCardHeader}>
         {depth === 0 ? <button type="button" className={styles.dragHandle} draggable aria-label="Reorder filter group" onDragStart={() => setDragGroupId(groupId)} onDragEnd={() => setDragGroupId(null)}><Icon name="DotsSixVertical" size="16px" /></button> : <span />}
         {depth === 0 && <button type="button" className={styles.removeGroup} aria-label="Remove filter group" onClick={() => removeGroup(groupId)}><Icon name="X" size="16px" /></button>}
       </div>
       {groupConditions.length === 0 && <EmptyRule onAdd={(fieldId) => addCondition(groupId, fieldId)} />}
-      {groupConditions.map((condition, index) => <Fragment key={condition.id}>{index > 0 && conditionConnector(condition)}<FilterChip filter={condition} groupOptions={groupOptions} onChange={(patch) => update(condition.id, patch)} onRemove={() => {
+      {groupConditions.map((condition, index) => <Fragment key={condition.id}>{index > 0 && conditionConnector(condition, groupId)}<FilterChip filter={condition} groupOptions={groupOptions} onChange={(patch) => update(condition.id, patch)} onRemove={() => {
         onChange(conditions.filter((item) => item.id !== condition.id));
         onDraftFiltersChange(draftFilters.filter((filter) => filter.id !== condition.id.replace('condition-', '')));
       }} /></Fragment>)}
@@ -342,6 +341,7 @@ function FilterGroupsTab({ groups, conditions, draftFilters, onChange, onDraftFi
   const rootGroupIds = groupIds.filter((groupId) => !groups.some((group) => group.id === groupId && group.parentGroupId));
   return (
     <section className={styles.groupBuilder}>
+      <p className={styles.groupConditionLabel}>Where all conditions are met</p>
       {rootGroupIds.map((groupId, index) => <Fragment key={groupId}>{index > 0 && connectorMenu(groups.find((group) => group.id === groupId) ?? groups[0])}{renderGroup(groupId)}</Fragment>)}
       <button type="button" className={styles.addAndButton} onClick={() => onCreateGroup()}>+AND</button>
     </section>
