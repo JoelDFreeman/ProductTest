@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Button } from '../../components/Button/Button.js';
+import { Icon } from '../../components/Icon/Icon.js';
+import { Menu, type MenuEntry } from '../../components/Menu/Menu.js';
 import { useUsers } from '../../lib/usersStore.js';
 import type { User } from '../UsersPage/mockUsers.js';
 import styles from './AddUsersToGroupModal.module.css';
@@ -14,8 +16,26 @@ export interface DirectoryMemberCandidate {
   type: 'User' | NonUserType;
   description: string;
   location?: string;
+  createdAt?: string;
   user?: User;
 }
+
+type BasicFilterField = 'displayName' | 'objectType' | 'location' | 'dateCreated';
+
+interface BasicFilter {
+  id: string;
+  fieldId: BasicFilterField;
+  label: string;
+  operator: 'contains' | 'is';
+  value: string;
+}
+
+const BASIC_FILTER_META: Record<BasicFilterField, { label: string; icon: string; operator: 'contains' | 'is' }> = {
+  displayName: { label: 'Display name', icon: 'IdentificationCard', operator: 'contains' },
+  objectType: { label: 'Object type', icon: 'Lego', operator: 'is' },
+  location: { label: 'Location', icon: 'MapPinSimpleArea', operator: 'is' },
+  dateCreated: { label: 'Dates', icon: 'CalendarDots', operator: 'is' },
+};
 
 const NON_USER_CANDIDATES: DirectoryMemberCandidate[] = Array.from({ length: 28 }, (_, index) => {
   const types: NonUserType[] = ['Computer', 'Group', 'Service Account', 'Contact'];
@@ -42,6 +62,7 @@ const NON_USER_CANDIDATES: DirectoryMemberCandidate[] = Array.from({ length: 28 
             ? 'Managed identity used by automation jobs.'
             : 'External contact synced to the directory.',
     location: ['Entra 1', 'Entra 2', 'AD-1\\Users', 'AD-2\\OU1'][index % 4],
+    createdAt: `2024-${String((index % 12) + 1).padStart(2, '0')}-${String((index % 27) + 1).padStart(2, '0')}`,
   };
 });
 
@@ -55,25 +76,37 @@ export interface AddUsersToGroupModalProps {
 export function AddUsersToGroupModal({ open, excludedMemberIds, onClose, onAdd }: AddUsersToGroupModalProps) {
   const { users } = useUsers();
   const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<BasicFilter[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const rows = useMemo(() => {
-    const normalized = query.toLowerCase();
+  const candidates = useMemo(() => {
     const userRows: DirectoryMemberCandidate[] = users.map((user) => ({
       id: user.id,
       name: user.name,
       type: 'User',
       description: user.description,
       location: user.location,
+      createdAt: user.createdAt,
       user,
     }));
-    return [...userRows, ...NON_USER_CANDIDATES].filter((member) => {
-      if (excludedMemberIds.has(member.id)) return false;
-      return `${member.name} ${member.type} ${member.description} ${member.location ?? ''}`.toLowerCase().includes(normalized);
+    return [...userRows, ...NON_USER_CANDIDATES].filter((member) => !excludedMemberIds.has(member.id));
+  }, [excludedMemberIds, users]);
+
+  const rows = useMemo(() => {
+    const normalized = query.toLowerCase();
+    return candidates.filter((member) => {
+      if (!`${member.name} ${member.type} ${member.description} ${member.location ?? ''}`.toLowerCase().includes(normalized)) return false;
+      return filters.every((filter) => {
+        if (filter.fieldId === 'displayName') return member.name.toLowerCase().includes(filter.value.toLowerCase());
+        if (filter.fieldId === 'objectType') return member.type === filter.value;
+        if (filter.fieldId === 'location') return (member.location ?? '') === filter.value;
+        if (filter.fieldId === 'dateCreated') return (member.createdAt ?? '') === filter.value;
+        return true;
+      });
     });
-  }, [excludedMemberIds, query, users]);
+  }, [candidates, filters, query]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
@@ -89,6 +122,7 @@ export function AddUsersToGroupModal({ open, excludedMemberIds, onClose, onAdd }
 
   const close = () => {
     setQuery('');
+    setFilters([]);
     setPage(1);
     setSelected(new Set());
     onClose();
@@ -134,8 +168,11 @@ export function AddUsersToGroupModal({ open, excludedMemberIds, onClose, onAdd }
             }}
             aria-label="Search all directory objects"
           />
-          <Button variant="secondary" size="s" iconOnly iconLead="FunnelSimple" aria-label="Filter objects" />
+          <BasicFilterMenu candidates={candidates} onAdd={(filter) => { setFilters((current) => [...current, filter]); setPage(1); }} />
         </div>
+        {filters.length > 0 && <div className={styles.filterChips} aria-label="Basic filters">
+          {filters.map((filter) => <button key={filter.id} type="button" className={styles.filterChip} onClick={() => { setFilters((current) => current.filter((item) => item.id !== filter.id)); setPage(1); }} aria-label={`Remove ${filter.label} filter`}><Icon name="DiamondsFour" size="14px" /><span>{filter.label}</span><span className={styles.filterOperator}>{filter.operator}</span><span>{filter.value}</span><Icon name="X" size="14px" /></button>)}
+        </div>}
         <div className={styles.list} role="listbox" aria-label="Available members" aria-multiselectable="true">
           <div className={styles.header}><span aria-hidden="true" /><span>Name</span><span>Object type</span><span>Description</span></div>
           {pageRows.map((member) => (
@@ -170,4 +207,21 @@ export function AddUsersToGroupModal({ open, excludedMemberIds, onClose, onAdd }
       </div>
     </Modal>
   );
+}
+
+function BasicFilterMenu({ candidates, onAdd }: { candidates: DirectoryMemberCandidate[]; onAdd: (filter: BasicFilter) => void }) {
+  const valuesFor = (fieldId: BasicFilterField) => Array.from(new Set(candidates.map((candidate) => fieldValue(candidate, fieldId)).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b));
+  const items: MenuEntry[] = (Object.keys(BASIC_FILTER_META) as BasicFilterField[]).map((fieldId): MenuEntry => {
+    const meta = BASIC_FILTER_META[fieldId];
+    return { kind: 'submenu', label: meta.label, icon: meta.icon, items: valuesFor(fieldId).map((value): MenuEntry => ({ kind: 'item', label: value, onSelect: () => onAdd({ id: `${fieldId}-${value}-${Date.now()}-${Math.random()}`, fieldId, label: meta.label, operator: meta.operator, value }) })) };
+  });
+  return <Menu ariaLabel="Basic Filter" align="end" items={items} trigger={({ ref, onClick, expanded }) => <Button ref={ref as React.Ref<HTMLButtonElement>} variant="secondary" size="s" iconLead="FunnelSimple" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick}>Filter</Button>} />;
+}
+
+function fieldValue(candidate: DirectoryMemberCandidate, fieldId: BasicFilterField): string | undefined {
+  if (fieldId === 'displayName') return candidate.name;
+  if (fieldId === 'objectType') return candidate.type;
+  if (fieldId === 'location') return candidate.location;
+  if (fieldId === 'dateCreated') return candidate.createdAt;
+  return undefined;
 }
