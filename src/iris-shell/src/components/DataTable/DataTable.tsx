@@ -444,7 +444,7 @@ function cellStyle(
     style['--cell-min-width'] = floor;
   } else {
     // Fixed column.
-    const w = normalizeWidth(width);
+    const w = normalizeWidth(width ?? minWidth);
     style['--cell-flex'] = `0 0 ${w}`;
     style['--cell-min-width'] = w;
   }

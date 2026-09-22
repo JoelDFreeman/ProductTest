@@ -27,6 +27,43 @@
   flex: 1;
 }
 
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oi-spacing-xs);
+  align-items: center;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oi-spacing-xs);
+  min-height: var(--oi-size-s);
+  padding: 0 var(--oi-spacing-xs);
+  border: var(--oi-border-width-default) var(--oi-border-style-solid) var(--oi-border-color-default);
+  border-radius: var(--oi-border-radius-default);
+  background: var(--oi-background-color-primary);
+  color: var(--oi-content-color-primary);
+  font: inherit;
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
+  box-shadow: var(--oi-shadow-low);
+  cursor: pointer;
+}
+
+.filterChip:hover {
+  background: var(--oi-background-color-secondary);
+}
+
+.filterChip:focus-visible {
+  outline: none;
+  box-shadow: var(--oi-focus-ring);
+}
+
+.filterOperator {
+  color: var(--oi-content-color-secondary);
+}
+
 .list {
   display: flex;
   flex-direction: column;

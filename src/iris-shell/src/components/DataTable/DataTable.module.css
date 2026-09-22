@@ -8,7 +8,7 @@
   container-type: inline-size;
   container-name: datatable;
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+  scrollbar-color: var(--oi-border-color-muted) transparent;
 }
 
 .scroller:hover,
@@ -22,7 +22,7 @@
 }
 
 .scroller::-webkit-scrollbar-thumb {
-  background-color: transparent;
+  background-color: var(--oi-border-color-muted);
   border-radius: var(--oi-border-radius-max);
 }
 
