@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Button } from '../../components/Button/Button.js';
+import { Checkbox } from '../../components/Checkbox/Checkbox.js';
 import { Icon } from '../../components/Icon/Icon.js';
 import { Menu, type MenuEntry } from '../../components/Menu/Menu.js';
 import { useUsers } from '../../lib/usersStore.js';
@@ -120,6 +121,16 @@ export function AddUsersToGroupModal({ open, excludedMemberIds, onClose, onAdd }
     });
   };
 
+  const allVisibleSelected = rows.length > 0 && rows.every((member) => selected.has(member.id));
+  const someVisibleSelected = !allVisibleSelected && rows.some((member) => selected.has(member.id));
+  const toggleAllVisible = (checked: boolean) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      rows.forEach((member) => checked ? next.add(member.id) : next.delete(member.id));
+      return next;
+    });
+  };
+
   const close = () => {
     setQuery('');
     setFilters([]);
@@ -174,7 +185,7 @@ export function AddUsersToGroupModal({ open, excludedMemberIds, onClose, onAdd }
           {filters.map((filter) => <button key={filter.id} type="button" className={styles.filterChip} onClick={() => { setFilters((current) => current.filter((item) => item.id !== filter.id)); setPage(1); }} aria-label={`Remove ${filter.label} filter`}><Icon name="DiamondsFour" size="14px" /><span>{filter.label}</span><span className={styles.filterOperator}>{filter.operator}</span><span>{filter.value}</span><Icon name="X" size="14px" /></button>)}
         </div>}
         <div className={styles.list} role="listbox" aria-label="Available members" aria-multiselectable="true">
-          <div className={styles.header}><span aria-hidden="true" /><span>Name</span><span>Object type</span><span>Description</span></div>
+          <div className={styles.header}><Checkbox checked={allVisibleSelected} indeterminate={someVisibleSelected} onChange={toggleAllVisible} ariaLabel="Select all filtered members" /><span>Name</span><span>Object type</span><span>Description</span></div>
           {pageRows.map((member) => (
             <label key={member.id} className={styles.row}>
               <input type="checkbox" checked={selected.has(member.id)} onChange={() => toggle(member.id)} />
