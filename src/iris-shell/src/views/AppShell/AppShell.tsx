@@ -5,8 +5,11 @@ import { GlobalSidebar, type SidebarMode } from '../../components/GlobalSidebar/
 import { Sidebar } from '../../components/Sidebar/Sidebar.js';
 import { AiPanel } from '../../components/AiPanel/AiPanel.js';
 import { AdvancedSearchSideSheet } from '../../components/AdvancedSearch/AdvancedSearchSideSheet.js';
+import { Modal } from '../../components/Modal/Modal.js';
+import { Button } from '../../components/Button/Button.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
 import { navigate, useRoute } from '../../lib/router.js';
+import { useAdvancedSearch } from '../../lib/advancedSearchStore.js';
 import { useSidebarPinned } from '../../lib/useSidebarPinned.js';
 import { useAppShell } from '../../lib/appShellContext.js';
 import { useVertical } from '../../lib/verticals.js';
@@ -68,6 +71,7 @@ const ROUTE_TO_SECONDARY_NAV: Record<string, string> = {
   usersList: 'users',
   userDetail: 'users',
   groups: 'groups',
+  groupDetail: 'groups',
   devices: 'devices',
   agents: 'agents',
   applications: 'applications',
@@ -80,6 +84,7 @@ const ROUTE_TO_SECONDARY_NAV: Record<string, string> = {
 const ROUTE_TO_VIEW: Record<string, string> = {
   usersList: 'flat',
   userDetail: 'flat',
+  groupDetail: 'flat',
   groups: 'flat',
   devices: 'flat',
   agents: 'flat',
@@ -139,8 +144,20 @@ export function AppShell({
   const [sidebarDragging, setSidebarDragging] = useState(false);
   const vertical = useVertical();
   const route = useRoute();
+  const { draftFilters, appliedFilters, groupConditions, filterGroups, ldapQuery, clearFilters } = useAdvancedSearch();
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const secondarySidebar = vertical.secondarySidebar;
   const dragCleanupRef = useRef<(() => void) | null>(null);
+
+  const hasAdvancedFilters = draftFilters.length > 0 || appliedFilters.length > 0 || groupConditions.length > 0 || filterGroups.length > 0 || Boolean(ldapQuery.trim());
+
+  const navigateWithFilterWarning = (target: string, changesView: boolean) => {
+    if (changesView && hasAdvancedFilters) {
+      setPendingNavigation(target);
+      return;
+    }
+    navigate(target);
+  };
 
   const handleGlobalNavChange = (value: string) => {
     const route = GLOBAL_NAV_ROUTES[value];
@@ -149,12 +166,12 @@ export function AppShell({
 
   const handleSecondaryNavChange = (value: string) => {
     const target = SECONDARY_NAV_ROUTES[value];
-    if (target) navigate(target);
+    if (target) navigateWithFilterWarning(target, ROUTE_TO_SECONDARY_NAV[route.name] !== value);
   };
 
   const handleViewChange = (value: string) => {
     const target = VIEW_ROUTES[value];
-    if (target) navigate(target);
+    if (target) navigateWithFilterWarning(target, ROUTE_TO_VIEW[route.name] !== value);
   };
 
   // Debounce closing the peek so quickly moving cursor between the toggle
@@ -424,6 +441,29 @@ export function AppShell({
 
           <AdvancedSearchSideSheet />
           <AiPanel open={aiOpen} onClose={() => setAiOpen(false)} />
+          <Modal
+            open={pendingNavigation !== null}
+            onClose={() => setPendingNavigation(null)}
+            title="Change view?"
+            subtitle="Your advanced filter selections will be lost if you continue."
+            size="s"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setPendingNavigation(null)}>Cancel</Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    if (!pendingNavigation) return;
+                    clearFilters();
+                    navigate(pendingNavigation);
+                    setPendingNavigation(null);
+                  }}
+                >
+                  Proceed
+                </Button>
+              </>
+            }
+          />
         </div>
       </div>
     </div>
