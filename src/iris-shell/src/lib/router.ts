@@ -24,6 +24,12 @@ export type Route =
   | { name: 'applications'; params: Record<string, never> }
   | { name: 'accessTemplates'; params: Record<string, never> }
   | { name: 'managementUnits'; params: Record<string, never> }
+  | { name: 'customization'; params: Record<string, never> }
+  | { name: 'customizationTasks'; params: Record<string, never> }
+  | { name: 'customizationSettings'; params: Record<string, never> }
+  | { name: 'customizationObjectPages'; params: Record<string, never> }
+  | { name: 'customizationObjectDetail'; params: { objectId: string } }
+  | { name: 'customizationNewEntry'; params: { objectId: string } }
   | { name: 'insights'; params: Record<string, never> }
   | { name: 'services'; params: Record<string, never> }
   | { name: 'identityHome'; params: Record<string, never> }
@@ -51,6 +57,12 @@ const ROUTES: RouteDef[] = [
   { name: 'applications', pattern: /^#\/applications$/, keys: [] },
   { name: 'accessTemplates', pattern: /^#\/access-templates$/, keys: [] },
   { name: 'managementUnits', pattern: /^#\/management-units$/, keys: [] },
+  { name: 'customization', pattern: /^#\/customization$/, keys: [] },
+  { name: 'customizationTasks', pattern: /^#\/customization\/tasks$/, keys: [] },
+  { name: 'customizationSettings', pattern: /^#\/customization\/settings$/, keys: [] },
+  { name: 'customizationObjectPages', pattern: /^#\/customization\/object-pages$/, keys: [] },
+  { name: 'customizationObjectDetail', pattern: /^#\/customization\/objects\/([^/?]+)$/, keys: ['objectId'] },
+  { name: 'customizationNewEntry', pattern: /^#\/customization\/objects\/([^/?]+)\/new$/, keys: ['objectId'] },
   { name: 'insights', pattern: /^#\/insights$/, keys: [] },
   { name: 'services', pattern: /^#\/services$/, keys: [] },
   { name: 'identityHome', pattern: /^#\/identity$/, keys: [] },

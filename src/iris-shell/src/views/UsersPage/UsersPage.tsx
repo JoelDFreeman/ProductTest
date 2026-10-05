@@ -392,7 +392,7 @@ export function UsersPage() {
       <ContentHeader
         icon="Users"
         title="Users"
-        actions={<PageMenu />}
+        actions={<PageMenu customizeLabel="Customization" onCustomize={() => navigate('#/customization/objects/user')} />}
         search={
           <TextInput
             iconLead="MagnifyingGlass"

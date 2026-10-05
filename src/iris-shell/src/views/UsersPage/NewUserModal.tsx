@@ -5,6 +5,7 @@ import { Modal } from '../../components/Modal/Modal.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Stepper } from '../../components/Stepper/Stepper.js';
 import { Icon } from '../../components/Icon/Icon.js';
+import { getObjectTemplate, loadCustomizedEntries, type CustomizationEntry } from '../../lib/customizationSchemas.js';
 import { useDirectory } from '../../lib/directoryStore.js';
 import { MoveGroupsModal } from '../GroupsPage/MoveGroupsModal.js';
 import styles from './NewUserModal.module.css';
@@ -59,6 +60,25 @@ const EMPTY_DRAFT: Draft = {
 
 export function NewUserModal({ open, onClose, objectKind, directories, onCreate }: NewUserModalProps) {
   const { getPath } = useDirectory();
+  const customizedEntries = useMemo(
+    () => loadCustomizedEntries(getObjectTemplate('user')!),
+    [open],
+  );
+  const customizedEntry = (id: string): CustomizationEntry | undefined =>
+    customizedEntries.find((entry) => entry.id === id);
+  const isRequired = (id: string, fallback = false) => customizedEntry(id)?.required ?? fallback;
+  const inputType = (id: string): 'text' | 'number' | 'date' =>
+    customizedEntry(id)?.dataType === 'Number' ? 'number' : customizedEntry(id)?.dataType === 'Date' ? 'date' : 'text';
+  const customizationIndex = (id: string) => {
+    const index = customizedEntries.findIndex((entry) => entry.id === id);
+    return index < 0 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  const generalRowIds = ['names', 'initials', 'displayName'].sort((left, right) => {
+    const rank = (rowId: string) => rowId === 'names'
+      ? Math.min(customizationIndex('firstName'), customizationIndex('lastName'))
+      : customizationIndex(rowId);
+    return rank(left) - rank(right);
+  });
   const [draft, setDraft] = useState<Draft>(() => ({ ...EMPTY_DRAFT, directory: directories[0] ?? 'Entra 1' }));
   const [step, setStep] = useState<1 | 2>(1);
   const [furthestStep, setFurthestStep] = useState<1 | 2>(1);
@@ -77,15 +97,15 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
 
   const canContinue = useMemo(() => {
     const baseValid = Boolean(
-      draft.firstName.trim() &&
-      draft.lastName.trim() &&
+      (!isRequired('firstName', true) || draft.firstName.trim()) &&
+      (!isRequired('lastName', true) || draft.lastName.trim()) &&
       draft.name.trim() &&
-      draft.displayName.trim() &&
+      (!isRequired('displayName', true) || draft.displayName.trim()) &&
       draft.userLogonName.trim(),
     );
     if (objectKind !== 'ad') return baseValid;
     return baseValid && Boolean(draft.preWindowsLogonName.trim()) && Boolean(draft.location.trim());
-  }, [draft, objectKind]);
+  }, [draft, objectKind, customizedEntries]);
   const canCreate = Boolean(draft.password && draft.password === draft.confirmPassword);
 
   const close = () => {
@@ -93,6 +113,33 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
     setStep(1);
     setFurthestStep(1);
     onClose();
+  };
+
+  const renderGeneralRow = (rowId: string) => {
+    if (rowId === 'names') {
+      return (
+        <div className={styles.twoColumn} key={rowId}>
+          <FormField label={customizedEntry('firstName')?.label ?? 'First name'} required={isRequired('firstName', true)}>
+            <TextInput type={inputType('firstName')} value={draft.firstName} onChange={setField('firstName')} readOnly={customizedEntry('firstName')?.readOnly} />
+          </FormField>
+          <FormField label={customizedEntry('lastName')?.label ?? 'Last name'} required={isRequired('lastName', true)}>
+            <TextInput type={inputType('lastName')} value={draft.lastName} onChange={setField('lastName')} readOnly={customizedEntry('lastName')?.readOnly} />
+          </FormField>
+        </div>
+      );
+    }
+    if (rowId === 'initials') {
+      return (
+        <FormField key={rowId} label={customizedEntry('initials')?.label ?? 'Initials'} required={isRequired('initials')}>
+          <TextInput type={inputType('initials')} value={draft.initials} onChange={setField('initials')} readOnly={customizedEntry('initials')?.readOnly} />
+        </FormField>
+      );
+    }
+    return (
+      <FormField key={rowId} label={customizedEntry('displayName')?.label ?? 'Display name'} required={isRequired('displayName', true)} helperText={customizedEntry('displayName')?.description || 'The name shown to other users.'}>
+        <TextInput type={inputType('displayName')} value={draft.displayName} onChange={setField('displayName')} readOnly={customizedEntry('displayName')?.readOnly} />
+      </FormField>
+    );
   };
 
   return (
@@ -150,23 +197,12 @@ export function NewUserModal({ open, onClose, objectKind, directories, onCreate 
       <div className={styles.content}>
         <div className={styles.form}>
         {step === 1 ? <>
-          <div className={styles.twoColumn}>
-            <FormField label="First name" required>
-              <TextInput value={draft.firstName} onChange={setField('firstName')} />
-            </FormField>
-            <FormField label="Last name" required>
-              <TextInput value={draft.lastName} onChange={setField('lastName')} />
-            </FormField>
-          </div>
-          <FormField label="Initials">
-            <TextInput value={draft.initials} onChange={setField('initials')} />
-          </FormField>
+          {renderGeneralRow(generalRowIds[0])}
+          {renderGeneralRow(generalRowIds[1])}
           <FormField label="Name" required helperText="The object name used in the directory.">
             <TextInput value={draft.name} onChange={setField('name')} />
           </FormField>
-          <FormField label="Display name" required helperText="The name shown to other users.">
-            <TextInput value={draft.displayName} onChange={setField('displayName')} />
-          </FormField>
+          {renderGeneralRow(generalRowIds[2])}
           <div className={styles.twoColumnLogon}>
             <FormField label="User logon name" required helperText="The sign-in name for this user.">
               <TextInput value={draft.userLogonName} onChange={setField('userLogonName')} />

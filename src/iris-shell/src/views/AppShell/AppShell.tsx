@@ -24,6 +24,7 @@ const GLOBAL_NAV_ROUTES: Record<string, string | undefined> = {
   services: '#/services',
   home: '#/identity',
   instance: '#/safeguard',
+  customization: '#/customization',
 };
 
 const SIDEBAR_WIDTH_STORAGE_KEY = 'ars.globalSidebar.width';
