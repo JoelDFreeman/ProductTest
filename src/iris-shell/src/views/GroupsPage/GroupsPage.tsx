@@ -140,7 +140,7 @@ export function GroupsPage() {
       <ContentHeader
         icon="UsersThree"
         title="Groups"
-        actions={<PageMenu />}
+        actions={<PageMenu customizeLabel="Customization" onCustomize={() => navigate('#/customization/objects/group')} />}
         search={<TextInput iconLead="MagnifyingGlass" placeholder="Search groups" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} aria-label="Search groups" />}
         toolbarActions={<><span className={styles.toolbarSeparator} aria-hidden="true" /><AdvancedSearchButton /><Button variant="primary" iconLead="Plus" onClick={() => setNewGroupOpen(true)}>Create</Button></>}
       />

@@ -59,7 +59,7 @@ export const ACTIVE_ROLES_VERTICAL: Vertical = {
     { value: 'directory', label: 'Directory management', icon: 'TreeView' },
     { value: 'insights', label: 'Insights', icon: 'PresentationChart' },
     { value: 'approval', label: 'Approval', icon: 'SealCheck', disabled: true },
-    { value: 'customization', label: 'Customization', icon: 'Wrench', disabled: true },
+    { value: 'customization', label: 'Customization', icon: 'Wrench' },
   ],
   otherNav: COMMON_OTHER_NAV,
   secondarySidebar: {

@@ -19,6 +19,7 @@ import { IdentityManagerPage } from './views/IdentityManagerPage/IdentityManager
 import { SafeguardPage } from './views/SafeguardPage/SafeguardPage.js';
 import { GroupsPage } from './views/GroupsPage/GroupsPage.js';
 import { GroupDetailPage } from './views/GroupsPage/GroupDetailPage.js';
+import { CustomizationPage } from './views/CustomizationPage/CustomizationPage.js';
 import { AdvancedSearchProvider } from './lib/advancedSearchStore.js';
 
 export default function App() {
@@ -43,6 +44,16 @@ export default function App() {
           {route.name === 'favoritesList' && <FavoritesPage />}
           {route.name === 'groups' && <GroupsPage />}
           {route.name === 'groupDetail' && <GroupDetailPage groupId={route.params.id} />}
+          {route.name === 'customization' && <CustomizationPage section="home" />}
+          {route.name === 'customizationTasks' && <CustomizationPage section="tasks" />}
+          {route.name === 'customizationSettings' && <CustomizationPage section="settings" />}
+          {route.name === 'customizationObjectPages' && <CustomizationPage section="object-pages" />}
+          {route.name === 'customizationObjectDetail' && (
+            <CustomizationPage section="object-detail" objectId={route.params.objectId} />
+          )}
+          {route.name === 'customizationNewEntry' && (
+            <CustomizationPage section="new-entry" objectId={route.params.objectId} />
+          )}
           {route.name === 'devices' && <WipPage title="Devices" icon="Devices" />}
           {route.name === 'agents' && <WipPage title="Agents" icon="Robot" />}
           {route.name === 'applications' && <WipPage title="Applications" icon="Browsers" />}

@@ -9,6 +9,8 @@ export interface PageMenuProps {
   onFavorite?: () => void;
   onDownloadCsv?: () => void;
   onAskAi?: () => void;
+  onCustomize?: () => void;
+  customizeLabel?: string;
 }
 
 /** Shared page overflow menu matching the ARS page-menu pattern. */
@@ -18,9 +20,11 @@ export function PageMenu({
   onFavorite,
   onDownloadCsv,
   onAskAi,
+  onCustomize,
+  customizeLabel = 'Customize',
 }: PageMenuProps) {
   const items: MenuEntry[] = [
-    { kind: 'item', label: 'Customize', icon: 'Pencil' },
+    { kind: 'item', label: customizeLabel, icon: 'Pencil', onSelect: onCustomize },
     { kind: 'divider' },
     { kind: 'item', label: favoriteLabel, icon: 'Star', onSelect: onFavorite },
     { kind: 'item', label: 'Download view as .CSV', icon: 'DownloadSimple', onSelect: onDownloadCsv },

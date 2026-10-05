@@ -1,0 +1,374 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-l, 16px);
+}
+
+.workspace > :first-child {
+  margin-inline: var(--oi-spacing-xl);
+}
+
+.tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-l, 16px);
+  padding-inline: var(--oi-spacing-xl);
+  padding-bottom: var(--oi-spacing-xl);
+}
+
+.taskGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--oi-spacing-m, 12px);
+}
+
+.taskCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-spacing-m, 12px);
+  min-width: 0;
+  padding: var(--oi-spacing-l, 16px);
+  border: 1px solid var(--oi-border-color-muted, #e2e8f0);
+  border-radius: 8px;
+  background: var(--oi-background-color-primary, #fff);
+  color: var(--oi-content-color-primary, #0f172b);
+  box-shadow: 0 2px 2px rgba(2, 6, 24, 0.08);
+  text-align: left;
+  cursor: pointer;
+}
+
+.taskCard:hover {
+  border-color: var(--oi-border-color-focus, #00a6f4);
+}
+
+.taskCardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-spacing-m, 12px);
+  width: 100%;
+}
+
+.taskIcon {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--oi-content-color-link, #0084d1);
+  background: var(--oi-background-color-brand, #f0f9ff);
+}
+
+.taskCaret {
+  margin-left: auto;
+  color: var(--oi-content-color-link, #0084d1);
+}
+
+.taskSubtitle {
+  color: var(--oi-content-color-tertiary, #62748e);
+  font-size: 12px;
+}
+
+.infoPanel {
+  display: flex;
+  gap: var(--oi-spacing-m, 12px);
+  padding: var(--oi-spacing-m, 12px);
+  border: 1px solid var(--oi-border-color-default, #cad5e2);
+  border-radius: 6px;
+  color: var(--oi-content-color-primary, #0f172b);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.infoPanel > :first-child {
+  flex: 0 0 auto;
+  color: var(--oi-content-color-link, #0084d1);
+}
+
+.infoPanel p {
+  margin: 4px 0 0;
+}
+
+.settingsPage {
+  min-height: 684px;
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--oi-spacing-xl);
+  padding-bottom: var(--oi-spacing-xl);
+}
+
+.settingsRows {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 520px;
+}
+
+.settingRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.settingRow > :global(.TextInput),
+.settingRow input {
+  max-width: 400px;
+}
+
+.logoPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 48px;
+  border: 1px solid var(--oi-border-color-muted, #e2e8f0);
+  border-radius: 4px;
+  color: var(--oi-content-color-placeholder, #90a1b9);
+  background: var(--oi-background-color-secondary, #f1f5f9);
+}
+
+.settingActions {
+  display: flex;
+  gap: 8px;
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+.radioGroup legend {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.radioGroup label {
+  display: flex;
+  gap: 8px;
+}
+
+.settingsFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--oi-border-color-muted, #e2e8f0);
+}
+
+.objectPages,
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-inline: var(--oi-spacing-xl);
+  padding-bottom: var(--oi-spacing-xl);
+}
+
+.searchRow,
+.editorToolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchRow > :first-child,
+.editorToolbar > :first-child {
+  flex: 1;
+}
+
+.objectTable,
+.entryList {
+  border-top: 1px solid var(--oi-border-color-muted, #e2e8f0);
+}
+
+.objectRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--oi-border-color-muted, #e2e8f0);
+  background: var(--oi-background-color-primary, #fff);
+  color: var(--oi-content-color-primary, #0f172b);
+  text-align: left;
+  cursor: pointer;
+}
+
+.objectRow > span {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid var(--oi-border-color-muted, #e2e8f0);
+}
+
+.objectName {
+  gap: 8px;
+  color: var(--oi-content-color-link, #0084d1);
+}
+
+.objectRow:hover {
+  background: var(--oi-background-color-secondary, #f1f5f9);
+}
+
+.entryRow {
+  border-bottom: 1px solid var(--oi-border-color-muted, #e2e8f0);
+}
+
+.entryHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-inline-start: 8px;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  color: var(--oi-content-color-secondary, #45556c);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.entryRow:hover .dragHandle {
+  opacity: 1;
+}
+
+.orderInput {
+  width: 36px;
+  height: 24px;
+  padding: 2px 4px;
+  border: 1px solid var(--oi-border-color-strong, #90a1b9);
+  border-radius: var(--oi-border-radius-default, 4px);
+  background: var(--oi-background-color-secondary, #f1f5f9);
+  color: var(--oi-content-color-primary, #0f172b);
+  font: inherit;
+  text-align: center;
+}
+
+.entryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--oi-content-color-primary, #0f172b);
+  text-align: left;
+  cursor: pointer;
+}
+
+.entryDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.entryDetails > :first-child {
+  max-width: 394px;
+}
+
+.entryForm {
+  display: grid;
+  gap: 8px;
+}
+
+.advancedCopy,
+.empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--oi-content-color-secondary, #314158);
+}
+
+.entryModal {
+  height: min(738px, calc(100vh - 48px));
+}
+
+.entryModalBody {
+  padding: 0;
+  overflow: auto;
+}
+
+.modalMain {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  min-height: 606px;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 var(--oi-spacing-l) var(--oi-spacing-l);
+  border-right: 1px solid var(--oi-border-color-muted, #e2e8f0);
+}
+
+.modalFields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--oi-content-color-primary, #0f172b);
+  font-size: 14px;
+}
+
+.modalHelp {
+  padding: var(--oi-spacing-l);
+  color: var(--oi-content-color-tertiary, #62748e);
+}
+
+.modalHelp h3 {
+  margin: 0 0 4px;
+  color: var(--oi-content-color-primary, #0f172b);
+  font-size: 16px;
+}
+
+.modalHelp p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.nativeSelect {
+  width: 100%;
+  height: 32px;
+  padding: 4px 28px 4px 8px;
+  border: 1px solid var(--oi-border-color-strong, #90a1b9);
+  border-radius: var(--oi-border-radius-default, 4px);
+  background: var(--oi-background-color-secondary, #f1f5f9);
+  color: var(--oi-content-color-primary, #0f172b);
+  font: inherit;
+}
+
+@media (max-width: 960px) {
+  .taskGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modalMain {
+    grid-template-columns: 1fr;
+  }
+
+  .modalHelp {
+    display: none;
+  }
+}

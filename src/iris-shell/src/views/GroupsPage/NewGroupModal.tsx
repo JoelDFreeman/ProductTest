@@ -6,6 +6,7 @@ import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Textarea } from '../../components/Textarea/Textarea.js';
 import { Stepper } from '../../components/Stepper/Stepper.js';
 import { Icon } from '../../components/Icon/Icon.js';
+import { getObjectTemplate, loadCustomizedEntries, type CustomizationEntry } from '../../lib/customizationSchemas.js';
 import { useDirectory } from '../../lib/directoryStore.js';
 import { MoveGroupsModal } from './MoveGroupsModal.js';
 import styles from './NewGroupModal.module.css';
@@ -37,6 +38,20 @@ const EMPTY_DRAFT: NewGroupDraft = {
 
 export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroupModalProps) {
   const { getPath } = useDirectory();
+  const customizedEntries = useMemo(
+    () => loadCustomizedEntries(getObjectTemplate('group')!),
+    [open],
+  );
+  const customizedEntry = (id: string): CustomizationEntry | undefined =>
+    customizedEntries.find((entry) => entry.id === id);
+  const isRequired = (id: string, fallback = false) => customizedEntry(id)?.required ?? fallback;
+  const generalRowIds = ['groupName', 'groupDescription'].sort((left, right) => {
+    const index = (id: string) => {
+      const entryIndex = customizedEntries.findIndex((entry) => entry.id === id);
+      return entryIndex < 0 ? Number.MAX_SAFE_INTEGER : entryIndex;
+    };
+    return index(left) - index(right);
+  });
   const [draft, setDraft] = useState<NewGroupDraft>(() => ({
     ...EMPTY_DRAFT,
     directory: directories[0] ?? EMPTY_DRAFT.directory,
@@ -51,8 +66,13 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
   };
 
   const canContinue = useMemo(
-    () => Boolean(draft.name.trim() && draft.displayName.trim() && (!isAdDirectory || draft.location.trim())),
-    [draft.name, draft.displayName, draft.location, isAdDirectory],
+    () => Boolean(
+      draft.name.trim() &&
+      (!isRequired('groupName', true) || draft.displayName.trim()) &&
+      (!isRequired('groupDescription') || draft.description.trim()) &&
+      (!isAdDirectory || draft.location.trim()),
+    ),
+    [draft.name, draft.displayName, draft.description, draft.location, isAdDirectory, customizedEntries],
   );
 
   const close = () => {
@@ -60,6 +80,21 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
     setStep(1);
     setFurthestStep(1);
     onClose();
+  };
+
+  const renderGeneralRow = (rowId: string) => {
+    if (rowId === 'groupName') {
+      return (
+        <FormField key={rowId} label={customizedEntry('groupName')?.label ?? 'Display name'} required={isRequired('groupName', true)} helperText={customizedEntry('groupName')?.description || 'The name shown to other users.'}>
+          <TextInput value={draft.displayName} onChange={setTextField('displayName')} readOnly={customizedEntry('groupName')?.readOnly} />
+        </FormField>
+      );
+    }
+    return (
+      <FormField key={rowId} label={customizedEntry('groupDescription')?.label ?? 'Description'} required={isRequired('groupDescription')}>
+        <Textarea rows={4} value={draft.description} onChange={setTextField('description')} readOnly={customizedEntry('groupDescription')?.readOnly} />
+      </FormField>
+    );
   };
 
   return (
@@ -113,12 +148,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
             <FormField label="Name" required helperText="The object name used in the directory.">
               <TextInput value={draft.name} onChange={setTextField('name')} />
             </FormField>
-            <FormField label="Display name" required helperText="The name shown to other users.">
-              <TextInput value={draft.displayName} onChange={setTextField('displayName')} />
-            </FormField>
-            <FormField label="Description">
-              <Textarea rows={4} value={draft.description} onChange={setTextField('description')} />
-            </FormField>
+            {generalRowIds.map(renderGeneralRow)}
             <FormField label="Directory" required>
               <select className={styles.select} value={draft.directory} onChange={(event) => setDraft((current) => ({ ...current, directory: event.target.value, location: '' }))} aria-label="Directory">
                 {directories.map((directory) => <option key={directory} value={directory}>{directory}</option>)}
@@ -136,7 +166,7 @@ export function NewGroupModal({ open, onClose, directories, onCreate }: NewGroup
             <h3 className={styles.sectionTitle}>Group options</h3>
             <p className={styles.sectionHelp}>Choose the scope for this group.</p>
             <fieldset className={styles.scopeField}>
-              <legend>Group scope</legend>
+              <legend>{customizedEntry('groupScope')?.label ?? 'Group scope'}</legend>
               {(['Domain local', 'Global', 'Universal'] as const).map((scope) => (
                 <label key={scope}><input type="radio" name="new-group-scope" checked={draft.scope === scope} onChange={() => setDraft((current) => ({ ...current, scope }))} />{scope}</label>
               ))}
