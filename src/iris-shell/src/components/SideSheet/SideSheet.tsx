@@ -44,6 +44,7 @@ export function SideSheet({
   elevated,
 }: SideSheetProps) {
   const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
@@ -57,12 +58,15 @@ export function SideSheet({
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  // Mount immediately; defer unmount until the exit animation completes.
+  // Mount in the off-screen state, then enter on the next frame so the
+  // browser has distinct start and end states to animate between.
   useEffect(() => {
     if (open) {
       setMounted(true);
-      return undefined;
+      const frame = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(frame);
     }
+    setVisible(false);
     const t = setTimeout(() => setMounted(false), 200);
     return () => clearTimeout(t);
   }, [open]);
@@ -130,7 +134,7 @@ export function SideSheet({
 
   return createPortal(
     <div
-      className={cx(styles.root, open && styles.rootOpen, elevated && styles.rootElevated)}
+      className={cx(styles.root, visible && styles.rootOpen, elevated && styles.rootElevated)}
       // Scrim click closes; clicks inside panel stopPropagation below.
       onClick={onClose}
     >
@@ -140,7 +144,7 @@ export function SideSheet({
         aria-modal="true"
         aria-labelledby={ariaLabel ? undefined : titleId}
         aria-label={ariaLabel}
-        className={cx(styles.panel, open && styles.panelOpen, className)}
+        className={cx(styles.panel, visible && styles.panelOpen, className)}
         onClick={(e) => e.stopPropagation()}
       >
         <header className={styles.header}>

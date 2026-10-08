@@ -13,9 +13,12 @@ export type VerticalId = 'active-roles' | 'services' | 'identity-manager' | 'saf
 export interface VerticalNavEntry {
   value: string;
   label: string;
-  icon: string;
+  /** Leading glyph. Omitted for child rows, which reserve the space instead. */
+  icon?: string;
   /** Shown but not interactive (no route wired yet). */
   disabled?: boolean;
+  /** Nested nav rows revealed by the parent's caret toggle. */
+  children?: VerticalNavEntry[];
 }
 
 export interface VerticalSecondarySidebar {
@@ -59,7 +62,15 @@ export const ACTIVE_ROLES_VERTICAL: Vertical = {
     { value: 'directory', label: 'Directory management', icon: 'TreeView' },
     { value: 'insights', label: 'Insights', icon: 'PresentationChart' },
     { value: 'approval', label: 'Approval', icon: 'SealCheck', disabled: true },
-    { value: 'customization', label: 'Customization', icon: 'Wrench' },
+    {
+      value: 'customization',
+      label: 'Customization',
+      icon: 'Wrench',
+      children: [
+        { value: 'customization-forms', label: 'Forms and objects' },
+        { value: 'customization-branding', label: 'Branding and appearance' },
+      ],
+    },
   ],
   otherNav: COMMON_OTHER_NAV,
   secondarySidebar: {

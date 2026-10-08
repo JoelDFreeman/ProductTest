@@ -223,12 +223,87 @@
   flex-shrink: 0;
 }
 
+/* ── Nested child rows ─────────────────────────────────────────────── */
+
+.childGroup {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.childGroupMotion {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--oi-motion-duration-default) var(--oi-motion-ease-default),
+    opacity var(--oi-motion-duration-short) var(--oi-motion-ease-exit);
+}
+
+.childGroupMotionExpanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition-timing-function: var(--oi-motion-ease-enter);
+}
+
+.childGroupMotion > .childGroup {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.childGroup > li {
+  width: 100%;
+}
+
+/* Child rows show the tree trail instead of the parent's brand indicator. */
+.itemChild.itemActive::before {
+  content: none;
+}
+
+/* Children have no glyph — reserve just enough space to clear the trail. */
+.itemChild .itemIconBound {
+  width: var(--oi-spacing-m);
+}
+
+.childTrail {
+  position: absolute;
+  left: var(--oi-spacing-s);
+  top: 0;
+  width: 16px;
+  height: 32px;
+  pointer-events: none;
+}
+
+.itemCaret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  transition: transform var(--oi-motion-duration-default) var(--oi-motion-ease-default);
+}
+
+.itemCaretExpanded {
+  transform: rotate(180deg);
+}
+
 .itemLabel {
   flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .childGroupMotion,
+  .itemCaret {
+    transition: none;
+  }
 }
 
 /* ------------------------------------------------------------------ */
