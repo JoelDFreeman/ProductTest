@@ -49,6 +49,13 @@
   opacity: 1;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .panel {
+    transition: none;
+  }
+}
+
 /* ---------- header ---------- */
 
 .header {

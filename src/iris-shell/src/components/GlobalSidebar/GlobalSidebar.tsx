@@ -1,4 +1,4 @@
-import { type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { cx } from '../../lib/cx.js';
 import { Icon } from '../Icon/Icon.js';
 import { BrandLogo } from '../BrandLogo/BrandLogo.js';
@@ -100,14 +100,7 @@ export function GlobalSidebar({
           <ul className={styles.group} role="list">
             {vertical.mainNav.map((item) => (
               <li key={item.value}>
-                <NavItem
-                  item={item}
-                  active={item.value === activeItem}
-                  onSelect={() => {
-                    if (item.disabled) return;
-                    onItemChange?.(item.value);
-                  }}
-                />
+                <NavBranch item={item} activeItem={activeItem} onItemChange={onItemChange} />
               </li>
             ))}
           </ul>
@@ -154,21 +147,136 @@ interface NavItemProps {
   onSelect: () => void;
 }
 
-function NavItem({ item, active, onSelect }: NavItemProps) {
+/**
+ * NavBranch — a main-nav row plus, when the entry declares `children`, the
+ * nested rows it reveals. The parent row doubles as the expand/collapse
+ * control so the markup stays free of nested interactive elements.
+ */
+function NavBranch({
+  item,
+  activeItem,
+  onItemChange,
+}: {
+  item: NavEntry;
+  activeItem: string;
+  onItemChange?: (value: string) => void;
+}) {
+  const children = item.children ?? [];
+  const hasChildren = children.length > 0;
+  const childActive = children.some((child) => child.value === activeItem);
+  const [expanded, setExpanded] = useState(childActive);
+
+  useEffect(() => {
+    if (childActive) setExpanded(true);
+  }, [childActive]);
+
+  const select = (entry: NavEntry) => {
+    if (entry.disabled) return;
+    onItemChange?.(entry.value);
+  };
+
+  if (!hasChildren) {
+    return (
+      <NavItem item={item} active={item.value === activeItem} onSelect={() => select(item)} />
+    );
+  }
+
+  const listId = `global-nav-${item.value}-children`;
+
+  return (
+    <>
+      <NavItem
+        item={item}
+        active={item.value === activeItem}
+        expanded={expanded}
+        controls={listId}
+        onSelect={() => {
+          if (item.value === activeItem || childActive) {
+            setExpanded((current) => !current);
+            return;
+          }
+          setExpanded(true);
+          select(item);
+        }}
+        onToggle={() => setExpanded((current) => !current)}
+      />
+      <div
+        className={cx(styles.childGroupMotion, expanded && styles.childGroupMotionExpanded)}
+        aria-hidden={!expanded}
+        inert={!expanded}
+      >
+        <ul className={styles.childGroup} id={listId} role="list">
+          {children.map((child, index) => (
+            <li key={child.value}>
+              <NavItem
+                item={child}
+                active={child.value === activeItem}
+                childTrailEnds={index === children.length - 1}
+                onSelect={() => select(child)}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+}
+
+function NavItem({
+  item,
+  active,
+  expanded,
+  controls,
+  onSelect,
+  onToggle,
+  childTrailEnds,
+}: NavItemProps & {
+  expanded?: boolean;
+  controls?: string;
+  onToggle?: () => void;
+  childTrailEnds?: boolean;
+}) {
+  const isChild = !item.icon;
   return (
     <button
       type="button"
-      className={cx(styles.item, active && styles.itemActive, item.disabled && styles.itemDisabled)}
+      className={cx(
+        styles.item,
+        isChild && styles.itemChild,
+        active && styles.itemActive,
+        item.disabled && styles.itemDisabled,
+      )}
       onClick={onSelect}
       aria-current={active ? 'page' : undefined}
       aria-disabled={item.disabled || undefined}
+      aria-expanded={onToggle ? expanded : undefined}
+      aria-controls={onToggle ? controls : undefined}
       disabled={item.disabled}
       title={item.disabled ? `${item.label} — not available yet` : undefined}
     >
+      {isChild && (
+        <img
+          className={styles.childTrail}
+          src={childTrailEnds ? '/icons/sidebar-tree-trail-end.svg' : '/icons/sidebar-tree-trail.svg'}
+          alt=""
+        />
+      )}
       <span className={styles.itemIconBound} aria-hidden="true">
-        <Icon name={item.icon} size="16px" />
+        {item.icon ? <Icon name={item.icon} size="16px" /> : null}
       </span>
       <span className={styles.itemLabel}>{item.label}</span>
+      {onToggle && (
+        <span
+          className={cx(styles.itemCaret, expanded && styles.itemCaretExpanded)}
+          role="presentation"
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle();
+          }}
+        >
+          <Icon name="CaretDown" size="16px" />
+        </span>
+      )}
     </button>
   );
 }
