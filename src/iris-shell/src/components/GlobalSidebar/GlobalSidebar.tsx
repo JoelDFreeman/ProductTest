@@ -50,20 +50,16 @@ export function GlobalSidebar({
   const isPeek = mode === 'peek';
   const navRef = useRef<HTMLElement | null>(null);
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
-  const activeItemRef = useRef(activeItem);
   const didPaintIndicatorRef = useRef(false);
   const widthVars = {
     '--global-sidebar-width': `${width}px`,
   } as CSSProperties & Record<'--global-sidebar-width', string>;
-  activeItemRef.current = activeItem;
 
   const measureIndicator = (): { top: number; height: number } | null => {
     const nav = navRef.current;
     if (!nav) return null;
 
-    const active = Array.from(
-      nav.querySelectorAll<HTMLElement>('[data-nav-value]'),
-    ).find((entry) => entry.dataset.navValue === activeItemRef.current);
+    const active = nav.querySelector<HTMLElement>('[data-nav-indicator-target="true"]');
     if (!active) return null;
 
     const navRect = nav.getBoundingClientRect();
@@ -265,6 +261,7 @@ function NavBranch({
       <NavItem
         item={item}
         active={item.value === activeItem}
+        indicatorTarget={item.value === activeItem || (childActive && !expanded)}
         expanded={expanded}
         controls={listId}
         onSelect={() => {
@@ -289,6 +286,7 @@ function NavBranch({
               <NavItem
                 item={child}
                 active={child.value === activeItem}
+                indicatorTarget={child.value === activeItem && expanded}
                 childTrailEnds={index === children.length - 1}
                 onSelect={() => select(child)}
               />
@@ -303,12 +301,14 @@ function NavBranch({
 function NavItem({
   item,
   active,
+  indicatorTarget = active,
   expanded,
   controls,
   onSelect,
   onToggle,
   childTrailEnds,
 }: NavItemProps & {
+  indicatorTarget?: boolean;
   expanded?: boolean;
   controls?: string;
   onToggle?: () => void;
@@ -319,6 +319,7 @@ function NavItem({
     <button
       type="button"
       data-nav-value={item.value}
+      data-nav-indicator-target={indicatorTarget || undefined}
       className={cx(
         styles.item,
         isChild && styles.itemChild,
