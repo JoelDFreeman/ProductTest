@@ -899,32 +899,30 @@
 }
 
 .entryModal {
-  height: min(738px, calc(100vh - 48px));
+  max-width: 894px;
 }
 
 .entryModalBody {
   padding: 0;
-  overflow: auto;
 }
 
 .modalMain {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
-  min-height: 606px;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+  min-height: 480px;
 }
 
 .modalForm {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 0 var(--oi-spacing-l) var(--oi-spacing-l);
-  border-right: 1px solid var(--oi-border-color-muted, #e2e8f0);
+  gap: var(--oi-spacing-m);
+  padding: var(--oi-spacing-l);
 }
 
 .modalFields {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--oi-spacing-m);
 }
 
 .checkLabel {
@@ -937,19 +935,20 @@
 
 .modalHelp {
   padding: var(--oi-spacing-l);
-  color: var(--oi-content-color-tertiary, #62748e);
+  color: var(--oi-content-color-secondary);
 }
 
 .modalHelp h3 {
-  margin: 0 0 4px;
-  color: var(--oi-content-color-primary, #0f172b);
-  font-size: 16px;
+  margin: 0;
+  color: var(--oi-content-color-primary);
+  font-size: var(--oi-text-body-s-strong-font-size);
+  line-height: var(--oi-text-body-s-strong-line-height);
 }
 
 .modalHelp p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 20px;
+  margin: var(--oi-spacing-xs) 0 0;
+  font-size: var(--oi-text-body-s-font-size);
+  line-height: var(--oi-text-body-s-line-height);
 }
 
 .modalFooter {
@@ -957,6 +956,11 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+.modalFooter > span {
+  color: var(--oi-content-color-secondary);
+  font-size: var(--oi-text-caption-font-size);
 }
 
 .nativeSelect {
@@ -970,12 +974,12 @@
   font: inherit;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 720px) {
   .modalMain {
     grid-template-columns: 1fr;
   }
 
   .modalHelp {
-    display: none;
+    border-top: 1px solid var(--oi-border-color-default);
   }
 }
