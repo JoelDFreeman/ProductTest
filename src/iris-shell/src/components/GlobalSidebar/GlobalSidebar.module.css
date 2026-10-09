@@ -128,11 +128,28 @@
 /* ------------------------------------------------------------------ */
 
 .nav {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
   padding-bottom: var(--oi-spacing-s);
+}
+
+.navIndicator {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: calc(-1 * var(--oi-spacing-xs));
+  width: 2px;
+  height: 0;
+  border-radius: 0 var(--oi-border-radius-s) var(--oi-border-radius-s) 0;
+  background-color: var(--oi-base-color-brand);
+  transform: translateY(0);
+  transition:
+    transform var(--oi-motion-duration-default) cubic-bezier(0.22, 1, 0.36, 1),
+    height var(--oi-motion-duration-default) cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
 .group {
@@ -202,18 +219,6 @@
   color: var(--oi-content-color-secondary);
 }
 
-/* Brand indicator bar — left edge of sidebar padding */
-.itemActive::before {
-  content: '';
-  position: absolute;
-  left: calc(-1 * var(--oi-spacing-xs));
-  top: var(--oi-spacing-xs);
-  bottom: var(--oi-spacing-xs);
-  width: 2px;
-  background-color: var(--oi-base-color-brand);
-  border-radius: 0 var(--oi-border-radius-s) var(--oi-border-radius-s) 0;
-}
-
 .itemIconBound {
   display: inline-flex;
   align-items: center;
@@ -258,11 +263,6 @@
   width: 100%;
 }
 
-/* Child rows show the tree trail instead of the parent's brand indicator. */
-.itemChild.itemActive::before {
-  content: none;
-}
-
 /* Children have no glyph — reserve just enough space to clear the trail. */
 .itemChild .itemIconBound {
   width: var(--oi-spacing-m);
@@ -301,7 +301,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .childGroupMotion,
-  .itemCaret {
+  .itemCaret,
+  .navIndicator {
     transition: none;
   }
 }
