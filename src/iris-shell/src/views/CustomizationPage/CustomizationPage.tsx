@@ -9,6 +9,7 @@ import { Icon } from '../../components/Icon/Icon.js';
 import { IconButton } from '../../components/IconButton/IconButton.js';
 import { Modal } from '../../components/Modal/Modal.js';
 import { SideSheet } from '../../components/SideSheet/SideSheet.js';
+import { Stepper } from '../../components/Stepper/Stepper.js';
 import { Tabs } from '../../components/Tabs/Tabs.js';
 import { TextInput } from '../../components/TextInput/TextInput.js';
 import { Tooltip } from '../../components/Tooltip/Tooltip.js';
@@ -871,6 +872,7 @@ function EntryDetails({ entry, onChange }: { entry: CustomizationEntry; onChange
 
 function CreateEntryModal({ open, template, onClose, onCreate }: { open: boolean; template: ObjectTemplate; onClose: () => void; onCreate: (entry: CustomizationEntry) => void }) {
   const [step, setStep] = useState<1 | 2>(1);
+  const [furthestStep, setFurthestStep] = useState<1 | 2>(1);
   const [property, setProperty] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [showLdap, setShowLdap] = useState(false);
@@ -879,6 +881,7 @@ function CreateEntryModal({ open, template, onClose, onCreate }: { open: boolean
   useEffect(() => {
     if (open) {
       setStep(1);
+      setFurthestStep(1);
       setProperty('');
       setShowAll(false);
       setShowLdap(false);
@@ -920,22 +923,34 @@ function CreateEntryModal({ open, template, onClose, onCreate }: { open: boolean
           <span>Step {step} of 2</span>
           <Button
             disabled={step === 1 ? !property : !draft.name.trim() || !draft.tooltip.trim()}
-            iconTrail="ArrowRight"
-            onClick={() => step === 1 ? setStep(2) : save()}
+            onClick={() => {
+              if (step === 1) {
+                setStep(2);
+                setFurthestStep(2);
+                return;
+              }
+              save();
+            }}
           >
             {step === 1 ? 'Save and continue' : 'Create entry'}
           </Button>
         </div>
       }
     >
+      <Stepper
+        items={[{ label: 'Managed Property' }, { label: 'Properties' }]}
+        activeIndex={step - 1}
+        completedThrough={furthestStep - 1}
+        onStepChange={(index) => {
+          if (index === 1 && !property) return;
+          const nextStep = (index + 1) as 1 | 2;
+          setStep(nextStep);
+          setFurthestStep((current) => Math.max(current, nextStep) as 1 | 2);
+        }}
+        ariaLabel="Create entry steps"
+      />
       <div className={styles.modalMain}>
         <div className={styles.modalForm}>
-          <Tabs
-            items={[{ value: '1', label: 'Managed Property', counter: 1 }, { value: '2', label: 'Properties', counter: 2 }]}
-            value={String(step)}
-            onChange={(value) => value === '1' || property ? setStep(Number(value) as 1 | 2) : undefined}
-            ariaLabel="Create entry steps"
-          />
           {step === 1 ? (
             <div className={styles.modalFields}>
               <FormField label="Property" required>
