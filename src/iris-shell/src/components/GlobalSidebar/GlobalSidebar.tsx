@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { cx } from '../../lib/cx.js';
 import { Icon } from '../Icon/Icon.js';
 import { BrandLogo } from '../BrandLogo/BrandLogo.js';
@@ -48,9 +48,85 @@ export function GlobalSidebar({
   const vertical = useVertical();
   const productMenuItems = useProductMenuItems();
   const isPeek = mode === 'peek';
+  const navRef = useRef<HTMLElement | null>(null);
+  const indicatorRef = useRef<HTMLSpanElement | null>(null);
+  const activeItemRef = useRef(activeItem);
+  const didPaintIndicatorRef = useRef(false);
   const widthVars = {
     '--global-sidebar-width': `${width}px`,
   } as CSSProperties & Record<'--global-sidebar-width', string>;
+  activeItemRef.current = activeItem;
+
+  const measureIndicator = (): { top: number; height: number } | null => {
+    const nav = navRef.current;
+    if (!nav) return null;
+
+    const active = Array.from(
+      nav.querySelectorAll<HTMLElement>('[data-nav-value]'),
+    ).find((entry) => entry.dataset.navValue === activeItemRef.current);
+    if (!active) return null;
+
+    const navRect = nav.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    return {
+      top: activeRect.top - navRect.top + 4,
+      height: Math.max(0, activeRect.height - 8),
+    };
+  };
+
+  const writeIndicator = (
+    position: { top: number; height: number },
+    animate: boolean,
+  ) => {
+    const indicator = indicatorRef.current;
+    if (!indicator) return;
+
+    if (!animate) {
+      const previousTransition = indicator.style.transition;
+      indicator.style.transition = 'none';
+      indicator.style.transform = `translateY(${position.top}px)`;
+      indicator.style.height = `${position.height}px`;
+      void indicator.offsetHeight;
+      indicator.style.transition = previousTransition;
+    } else {
+      indicator.style.transform = `translateY(${position.top}px)`;
+      indicator.style.height = `${position.height}px`;
+    }
+  };
+
+  const moveIndicator = (animate: boolean) => {
+    const position = measureIndicator();
+    if (!position) {
+      if (indicatorRef.current) indicatorRef.current.style.height = '0px';
+      return;
+    }
+    writeIndicator(position, animate);
+  };
+
+  useLayoutEffect(() => {
+    moveIndicator(didPaintIndicatorRef.current);
+    didPaintIndicatorRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeItem, vertical]);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || typeof ResizeObserver === 'undefined') return undefined;
+
+    const handleResize = () => moveIndicator(false);
+    const observer = new ResizeObserver(() => moveIndicator(true));
+    observer.observe(nav);
+    nav.querySelectorAll<HTMLElement>('[data-nav-child-group]').forEach((group) => {
+      observer.observe(group);
+    });
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
@@ -96,7 +172,8 @@ export function GlobalSidebar({
         )}
 
         {/* ── Navigation ────────────────────────── */}
-        <nav className={styles.nav} aria-label="Global navigation">
+        <nav ref={navRef} className={styles.nav} aria-label="Global navigation">
+          <span ref={indicatorRef} aria-hidden="true" className={styles.navIndicator} />
           <ul className={styles.group} role="list">
             {vertical.mainNav.map((item) => (
               <li key={item.value}>
@@ -201,6 +278,7 @@ function NavBranch({
         onToggle={() => setExpanded((current) => !current)}
       />
       <div
+        data-nav-child-group
         className={cx(styles.childGroupMotion, expanded && styles.childGroupMotionExpanded)}
         aria-hidden={!expanded}
         inert={!expanded}
@@ -240,6 +318,7 @@ function NavItem({
   return (
     <button
       type="button"
+      data-nav-value={item.value}
       className={cx(
         styles.item,
         isChild && styles.itemChild,
